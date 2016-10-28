@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/google/go-github/github"
 	"log"
@@ -11,12 +12,19 @@ import (
 func main() {
 	client := github.NewClient(nil)
 	// Make these configurable
-	user := "amitsaha"
+	username := flag.String("username", "", "GitHub username")
+	backupdir := flag.String("backupdir", "~/.ghbackup", "Backup directory")
+	flag.Parse()
+
+	if len(*username) == 0 {
+		log.Fatal("Please specify your GitHub username")
+	}
+
 	repoType := "all"
-	BACKUP_DIR := "/tmp/ghbackup"
+	BACKUP_DIR := *backupdir
 	opt := &github.RepositoryListOptions{Type: repoType, Sort: "created", Direction: "desc"}
 	for {
-		repos, resp, err := client.Repositories.List(user, opt)
+		repos, resp, err := client.Repositories.List(*username, opt)
 		if err != nil {
 			fmt.Println(err)
 		} else {
