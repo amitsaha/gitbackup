@@ -46,6 +46,8 @@ func main() {
 					log.Fatal(err)
 				}
 			}
+			// TODO: Remove use of Chdir and do the cloning
+			// in a goroutine
 			err = os.Chdir(BACKUP_DIR)
 			if err != nil {
 				log.Fatal(err)
