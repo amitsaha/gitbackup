@@ -41,12 +41,15 @@ func main() {
 			_, err := os.Stat(BACKUP_DIR)
 			if err != nil {
 				fmt.Printf("%s doesn't exist, creating it\n", BACKUP_DIR)
-				err := os.Mkdir(BACKUP_DIR, os.ModeDir)
+				err := os.Mkdir(BACKUP_DIR, 0771)
 				if err != nil {
 					log.Fatal(err)
 				}
 			}
 			err = os.Chdir(BACKUP_DIR)
+			if err != nil {
+				log.Fatal(err)
+			}
 			for _, repo := range repos {
 				// Check if we have a copy of the repo already, if
 				// we do, we update the repo, else we do a fresh clone
