@@ -14,6 +14,12 @@
 			"revision": "9235644dd9e52eeae6fa48efd539fdc351a0af53",
 			"branch": "master",
 			"path": "/query"
+		},
+		{
+			"importpath": "github.com/mitchellh/go-homedir",
+			"repository": "https://github.com/mitchellh/go-homedir",
+			"revision": "756f7b183b7ab78acdbbee5c7f392838ed459dda",
+			"branch": "master"
 		}
 	]
 }

@@ -7,7 +7,7 @@ the [vendor](https://godoc.org/github.com/constabulary/gb/cmd/gb-vendor) plugin 
 Next, we will fetch the package using `gb vendor` as:
 
 ```
-gb vendor fetch ..
+gb vendor fetch github.com/mitchellh/go-homedir github.com/google/go-github/github
 ```
 This will create a `vendor` sub-directory which will have the dependencies (including their dependencies).
 

@@ -4,17 +4,26 @@ import (
 	"flag"
 	"fmt"
 	"github.com/google/go-github/github"
+	"github.com/mitchellh/go-homedir"
 	"log"
 	"os"
 	"os/exec"
+	"path"
 )
 
 func main() {
 	client := github.NewClient(nil)
 	// Make these configurable
 	username := flag.String("username", "", "GitHub username")
-	backupdir := flag.String("backupdir", "~/.ghbackup", "Backup directory")
+	homeDir, dirErr := homedir.Dir()
+	backupdir := flag.String("backupdir", path.Join(homeDir, ".ghbackup"), "Backup directory")
 	flag.Parse()
+
+	if dirErr != nil && len(*backupdir) == 0 {
+		log.Fatal("Couldn't retrieve your home directory. You must specify a backup directory")
+	}
+
+	// TODO: Check permissions for backup directory
 
 	if len(*username) == 0 {
 		log.Fatal("Please specify your GitHub username")
