@@ -19,7 +19,6 @@ func TestRepositoriesService_ListTrafficReferrers(t *testing.T) {
 
 	mux.HandleFunc("/repos/o/r/traffic/popular/referrers", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "GET")
-		testHeader(t, r, "Accept", mediaTypeTrafficPreview)
 		fmt.Fprintf(w, `[{
 			"referrer": "Google",
 			"count": 4,
@@ -48,7 +47,6 @@ func TestRepositoriesService_ListTrafficPaths(t *testing.T) {
 
 	mux.HandleFunc("/repos/o/r/traffic/popular/paths", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "GET")
-		testHeader(t, r, "Accept", mediaTypeTrafficPreview)
 		fmt.Fprintf(w, `[{
 			"path": "/github/hubot",
 			"title": "github/hubot: A customizable life embetterment robot.",
@@ -79,11 +77,10 @@ func TestRepositoriesService_ListTrafficViews(t *testing.T) {
 
 	mux.HandleFunc("/repos/o/r/traffic/views", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "GET")
-		testHeader(t, r, "Accept", mediaTypeTrafficPreview)
 		fmt.Fprintf(w, `{"count": 7,
 			"uniques": 6,
 			"views": [{
-				"timestamp": 1464710400000,
+				"timestamp": "2016-05-31T16:00:00.000Z",
 				"count": 7,
 				"uniques": 6
 		}]}`)
@@ -96,7 +93,7 @@ func TestRepositoriesService_ListTrafficViews(t *testing.T) {
 
 	want := &TrafficViews{
 		Views: []*TrafficData{{
-			Timestamp: &TimestampMS{time.Unix(1464710400, 0)},
+			Timestamp: &Timestamp{time.Date(2016, time.May, 31, 16, 0, 0, 0, time.UTC)},
 			Count:     Int(7),
 			Uniques:   Int(6),
 		}},
@@ -116,11 +113,10 @@ func TestRepositoriesService_ListTrafficClones(t *testing.T) {
 
 	mux.HandleFunc("/repos/o/r/traffic/clones", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "GET")
-		testHeader(t, r, "Accept", mediaTypeTrafficPreview)
 		fmt.Fprintf(w, `{"count": 7,
 			"uniques": 6,
 			"clones": [{
-				"timestamp": 1464710400000,
+				"timestamp": "2016-05-31T16:00:00.00Z",
 				"count": 7,
 				"uniques": 6
 		}]}`)
@@ -133,7 +129,7 @@ func TestRepositoriesService_ListTrafficClones(t *testing.T) {
 
 	want := &TrafficClones{
 		Clones: []*TrafficData{{
-			Timestamp: &TimestampMS{time.Unix(1464710400, 0)},
+			Timestamp: &Timestamp{time.Date(2016, time.May, 31, 16, 0, 0, 0, time.UTC)},
 			Count:     Int(7),
 			Uniques:   Int(6),
 		}},
