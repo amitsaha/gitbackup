@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"log"
 	"os"
@@ -16,24 +15,24 @@ import (
 // 2. Show progress
 // 4. Don't shell out to git?
 
+// Check if we have a copy of the repo already, if
+// we do, we update the repo, else we do a fresh clone
 func backUp(backupDir string, repo *Repository) {
-	// Check if we have a copy of the repo already, if
-	// we do, we update the repo, else we do a fresh clone
 	repoDir := path.Join(backupDir, repo.Name)
 	_, err := os.Stat(repoDir)
 	if err == nil {
-		fmt.Printf("%v exists, updating. \n", repo.Name)
+		log.Printf("%v exists, updating. \n", repo.Name)
 		cmd := exec.Command("git", "-C", repoDir, "pull")
 		err = cmd.Run()
 		if err != nil {
-			fmt.Printf("Error pulling %v: %v\n", repo.GitURL, err)
+			log.Printf("Error pulling %v: %v\n", repo.GitURL, err)
 		}
 	} else {
-		fmt.Printf("Cloning %v \n", repo.Name)
+		log.Printf("Cloning %v \n", repo.Name)
 		cmd := exec.Command("git", "clone", repo.GitURL, repoDir)
 		err := cmd.Run()
 		if err != nil {
-			fmt.Printf("Error cloning %v: %v", repo.Name, err)
+			log.Printf("Error cloning %v: %v", repo.Name, err)
 		}
 	}
 }
@@ -41,18 +40,18 @@ func backUp(backupDir string, repo *Repository) {
 func main() {
 	// TODO: Make these configurable via config file
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
-	if len(*service) == 0 {
-		log.Fatal("Please specify the git service type: github, gitlab")
-	}
 	// TODO:
 	//serviceUrl := flag.String("gitlab-url", "", "DNS of the another GitLab service")
 	username := flag.String("username", "", "GitHub username")
 	homeDir, dirErr := homedir.Dir()
-	backupDir := flag.String("backupdir", path.Join(homeDir, ".gitbackup", *service), "Backup directory")
+	backupDir := flag.String("backupdir", "", "Backup directory")
 	flag.Parse()
-
+	if len(*service) == 0 {
+		log.Fatal("Please specify the git service type: github, gitlab")
+	}
+	// Default backup directory, if none specified
 	if dirErr != nil && len(*backupDir) == 0 {
-		log.Fatal("Couldn't retrieve your home directory. You must specify a backup directory")
+		*backupDir = path.Join(homeDir, ".gitbackup", *service)
 	}
 
 	// TODO: Check permissions for backup directory
@@ -73,18 +72,19 @@ func main() {
 	for {
 		repos, resp, err := getRepositories(*service, client, *username, &opt)
 		if err != nil {
-			// TODO: Exit or continue
+			// TODO: Current exits on a first error
 			log.Fatal(err)
 		} else {
 			_, err := os.Stat(*backupDir)
 			if err != nil {
-				fmt.Printf("%s doesn't exist, creating it\n", backupDir)
+				log.Printf("%s doesn't exist, creating it\n", backupDir)
 				err := os.Mkdir(*backupDir, 0771)
 				if err != nil {
 					log.Fatal(err)
 				}
 			}
 			// Limit maximum concurrent operations to 20
+			// TODO: verify
 			tokens := make(chan struct{}, 20)
 			for _, repo := range repos {
 				tokens <- struct{}{}
