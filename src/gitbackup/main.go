@@ -41,11 +41,14 @@ func backUp(backupDir string, repo *Repository) {
 func main() {
 	// TODO: Make these configurable via config file
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
+	if len(*service) == 0 {
+		log.Fatal("Please specify the git service type: github, gitlab")
+	}
 	// TODO:
 	//serviceUrl := flag.String("gitlab-url", "", "DNS of the another GitLab service")
 	username := flag.String("username", "", "GitHub username")
 	homeDir, dirErr := homedir.Dir()
-	backupDir := flag.String("backupdir", path.Join(homeDir, ".ghbackup"), "Backup directory")
+	backupDir := flag.String("backupdir", path.Join(homeDir, ".gitbackup", *service), "Backup directory")
 	flag.Parse()
 
 	if dirErr != nil && len(*backupDir) == 0 {
@@ -53,10 +56,6 @@ func main() {
 	}
 
 	// TODO: Check permissions for backup directory
-
-	if len(*service) == 0 {
-		log.Fatal("Please specify the git service type: github, gitlab")
-	}
 
 	// Create an API client
 	client := NewClient(nil, *service)
@@ -77,7 +76,6 @@ func main() {
 			// TODO: Exit or continue
 			log.Fatal(err)
 		} else {
-			// default to ~/.ghbackup as the backup directory
 			_, err := os.Stat(*backupDir)
 			if err != nil {
 				fmt.Printf("%s doesn't exist, creating it\n", backupDir)
