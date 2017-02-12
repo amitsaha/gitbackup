@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"sync"
 )
 
 // TODO:
@@ -17,7 +18,8 @@ import (
 
 // Check if we have a copy of the repo already, if
 // we do, we update the repo, else we do a fresh clone
-func backUp(backupDir string, repo *Repository) {
+func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) {
+	defer wg.Done()
 	repoDir := path.Join(backupDir, repo.Name)
 	_, err := os.Stat(repoDir)
 	if err == nil {
@@ -38,6 +40,9 @@ func backUp(backupDir string, repo *Repository) {
 }
 
 func main() {
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
 	// TODO: Make these configurable via config file
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
 	// TODO:
@@ -50,7 +55,7 @@ func main() {
 		log.Fatal("Please specify the git service type: github, gitlab")
 	}
 	// Default backup directory, if none specified
-	if dirErr != nil && len(*backupDir) == 0 {
+	if dirErr == nil && len(*backupDir) == 0 {
 		*backupDir = path.Join(homeDir, ".gitbackup", *service)
 	}
 
@@ -72,13 +77,13 @@ func main() {
 	for {
 		repos, resp, err := getRepositories(*service, client, *username, &opt)
 		if err != nil {
-			// TODO: Current exits on a first error
+			// TODO: Currently exits on a first error
 			log.Fatal(err)
 		} else {
 			_, err := os.Stat(*backupDir)
 			if err != nil {
-				log.Printf("%s doesn't exist, creating it\n", backupDir)
-				err := os.Mkdir(*backupDir, 0771)
+				log.Printf("%s doesn't exist, creating it\n", *backupDir)
+				err := os.MkdirAll(*backupDir, 0771)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -88,8 +93,9 @@ func main() {
 			tokens := make(chan struct{}, 20)
 			for _, repo := range repos {
 				tokens <- struct{}{}
+				wg.Add(1)
 				go func(repo *Repository) {
-					backUp(*backupDir, repo)
+					backUp(*backupDir, repo, &wg)
 					<-tokens
 				}(repo)
 			}

@@ -53,14 +53,31 @@ func NewClient(httpClient *http.Client, service string) interface{} {
 }
 
 func getRepositories(service string, client interface{}, username string, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
-	var repositories []*Repository
 
 	if service == "github" {
 		options := github.RepositoryListOptions{Type: opt.repoType, Sort: opt.Sort, Direction: opt.Direction, ListOptions: opt.ListOptions}
-		repos, resp, err := client.(github.Client).Repositories.List(username, &options)
-		if err != nil {
+		repos, resp, err := client.(*github.Client).Repositories.List(username, &options)
+		var repositories []*Repository
+		if err == nil {
 			for _, repo := range repos {
 				repositories = append(repositories, &Repository{GitURL: *repo.GitURL, Name: *repo.Name})
+			}
+			return repositories, &Response{NextPage: resp.NextPage}, nil
+		} else {
+			return nil, &Response{Response: resp.Response}, err
+		}
+	}
+
+	if service == "gitlab" {
+		// TODO: other configuration options
+		// https://docs.gitlab.com/ce/api/projects.html#list-projects
+		//v := "internal"
+		options := gitlab.ListProjectsOptions{} //{Visibility: *v}
+		repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
+		var repositories []*Repository
+		if err == nil {
+			for _, repo := range repos {
+				repositories = append(repositories, &Repository{GitURL: repo.SSHURLToRepo, Name: repo.Name})
 			}
 			return repositories, &Response{NextPage: resp.NextPage}, nil
 		} else {
