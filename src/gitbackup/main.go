@@ -44,13 +44,18 @@ func main() {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	// TODO: Make these configurable via config file
+	// Generic flags
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
-	// TODO:
-	gitlabUrl := flag.String("gitlab.url", "", "DNS of the another GitLab service")
-	username := flag.String("username", "", "GitHub username")
 	homeDir, dirErr := homedir.Dir()
-	backupDir := flag.String("backupdir", "", "Backup directory")
+	backupDir := flag.String("backupdir", "", "Backup directory (~/.gitbackup)")
+
+	// Gitlab specific flags
+	gitlabUrl := flag.String("gitlab.url", "", "DNS of your the GitLab service")
+	gitlabRepoVisibility := flag.String("gitlab.repoVisibility", "private", "Visibility level of Repositories to clone")
+
+	// GitHub specific flags
+	githubUser := flag.String("github.username", "", "Your GitHub username")
+	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
 	flag.Parse()
 
 	// Either service or gitlab.url should be specified
@@ -70,6 +75,11 @@ func main() {
 	} else {
 		gitlabUrlPath = nil
 	}
+	// If service is github, we need a username
+	if *service == "github" && len(*githubUser) == 0 {
+		log.Fatal("Please specify your GitHub githubUser")
+	}
+
 	// Default backup directory, if none specified
 	if dirErr == nil && len(*backupDir) == 0 {
 		*backupDir = path.Join(homeDir, ".gitbackup", *service)
@@ -83,15 +93,9 @@ func main() {
 		log.Fatalf("Service %s not supported", *service)
 	}
 
-	// TODO: do away with username
-	if *service == "github" && len(*username) == 0 {
-		log.Fatal("Please specify your GitHub username")
-	}
-
-	// TODO: make these configurable via config file
-	opt := ListRepositoriesOptions{repoType: "all", Sort: "created", Direction: "desc"}
+	opt := ListRepositoriesOptions{repoType: *githubRepoType, repoVisibility: *gitlabRepoVisibility}
 	for {
-		repos, resp, err := getRepositories(*service, gitlabUrlPath, client, *username, &opt)
+		repos, resp, err := getRepositories(*service, gitlabUrlPath, client, *githubUser, &opt)
 		if err != nil {
 			// TODO: Currently exits on a first error
 			log.Fatal(err)

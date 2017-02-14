@@ -12,10 +12,9 @@ import (
 )
 
 type ListRepositoriesOptions struct {
-	repoType    string
-	Sort        string
-	Direction   string
-	ListOptions github.ListOptions
+	repoType       string // GitHub
+	repoVisibility string //GitLab
+	ListOptions    github.ListOptions
 }
 
 // https://github.com/google/go-github/blob/27c7c32b6d369610435bd2ad7b4d8554f235eb01/github/github.go#L301
@@ -57,7 +56,7 @@ func NewClient(httpClient *http.Client, service string) interface{} {
 func getRepositories(service string, gitlabUrlPath *url.URL, client interface{}, username string, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
 
 	if service == "github" {
-		options := github.RepositoryListOptions{Type: opt.repoType, Sort: opt.Sort, Direction: opt.Direction, ListOptions: opt.ListOptions}
+		options := github.RepositoryListOptions{Type: opt.repoType, ListOptions: opt.ListOptions}
 		repos, resp, err := client.(*github.Client).Repositories.List(username, &options)
 		var repositories []*Repository
 		if err == nil {
@@ -71,16 +70,13 @@ func getRepositories(service string, gitlabUrlPath *url.URL, client interface{},
 	}
 
 	if service == "gitlab" {
-		// TODO: other configuration options
-		// https://docs.gitlab.com/ce/api/projects.html#list-projects
-		//v := "internal"
-		options := gitlab.ListProjectsOptions{} //{Visibility: *v}
+		gitlabListOptions := gitlab.ListOptions{Page: opt.ListOptions.Page, PerPage: opt.ListOptions.PerPage}
+		options := gitlab.ListProjectsOptions{Visibility: &opt.repoVisibility, ListOptions: gitlabListOptions}
 		if gitlabUrlPath != nil {
 			gitlabUrlPath.Path = path.Join(gitlabUrlPath.Path, "api/v3")
 			client.(*gitlab.Client).SetBaseURL(gitlabUrlPath.String())
 		}
 		repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
-		log.Printf("Error: %v", err)
 		var repositories []*Repository
 		if err == nil {
 			for _, repo := range repos {
