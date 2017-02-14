@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/mitchellh/go-homedir"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -46,13 +47,28 @@ func main() {
 	// TODO: Make these configurable via config file
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
 	// TODO:
-	//serviceUrl := flag.String("gitlab-url", "", "DNS of the another GitLab service")
+	gitlabUrl := flag.String("gitlab.url", "", "DNS of the another GitLab service")
 	username := flag.String("username", "", "GitHub username")
 	homeDir, dirErr := homedir.Dir()
 	backupDir := flag.String("backupdir", "", "Backup directory")
 	flag.Parse()
-	if len(*service) == 0 {
+
+	// Either service or gitlab.url should be specified
+	if len(*service) == 0 && len(*gitlabUrl) == 0 {
 		log.Fatal("Please specify the git service type: github, gitlab")
+	}
+	// If gitlab.url is specified, we know it's gitlab
+	var gitlabUrlPath *url.URL
+	// TODO: fix
+	var err error
+	if len(*gitlabUrl) != 0 {
+		gitlabUrlPath, err = url.Parse(*gitlabUrl)
+		if err != nil {
+			log.Fatal("Invalid gitlab URL: %s", *gitlabUrl)
+		}
+		*service = "gitlab"
+	} else {
+		gitlabUrlPath = nil
 	}
 	// Default backup directory, if none specified
 	if dirErr == nil && len(*backupDir) == 0 {
@@ -75,7 +91,7 @@ func main() {
 	// TODO: make these configurable via config file
 	opt := ListRepositoriesOptions{repoType: "all", Sort: "created", Direction: "desc"}
 	for {
-		repos, resp, err := getRepositories(*service, client, *username, &opt)
+		repos, resp, err := getRepositories(*service, gitlabUrlPath, client, *username, &opt)
 		if err != nil {
 			// TODO: Currently exits on a first error
 			log.Fatal(err)

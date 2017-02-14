@@ -6,7 +6,9 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 )
 
 type ListRepositoriesOptions struct {
@@ -52,7 +54,7 @@ func NewClient(httpClient *http.Client, service string) interface{} {
 	return nil
 }
 
-func getRepositories(service string, client interface{}, username string, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
+func getRepositories(service string, gitlabUrlPath *url.URL, client interface{}, username string, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
 
 	if service == "github" {
 		options := github.RepositoryListOptions{Type: opt.repoType, Sort: opt.Sort, Direction: opt.Direction, ListOptions: opt.ListOptions}
@@ -73,7 +75,12 @@ func getRepositories(service string, client interface{}, username string, opt *L
 		// https://docs.gitlab.com/ce/api/projects.html#list-projects
 		//v := "internal"
 		options := gitlab.ListProjectsOptions{} //{Visibility: *v}
+		if gitlabUrlPath != nil {
+			gitlabUrlPath.Path = path.Join(gitlabUrlPath.Path, "api/v3")
+			client.(*gitlab.Client).SetBaseURL(gitlabUrlPath.String())
+		}
 		repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
+		log.Printf("Error: %v", err)
 		var repositories []*Repository
 		if err == nil {
 			for _, repo := range repos {
