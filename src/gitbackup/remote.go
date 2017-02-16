@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/google/go-github/github"
 	"github.com/xanzy/go-gitlab"
+	"golang.org/x/oauth2"
 	"log"
 	"net/http"
 	"net/url"
@@ -40,24 +41,38 @@ type Repository struct {
 
 func NewClient(httpClient *http.Client, service string) interface{} {
 	if service == "github" {
-		return github.NewClient(httpClient)
+		githubToken := os.Getenv("GITHUB_TOKEN")
+		if githubToken == "" {
+			log.Fatal("GITHUB_TOKEN environment variable not set")
+		}
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: githubToken},
+		)
+		tc := oauth2.NewClient(oauth2.NoContext, ts)
+		return github.NewClient(tc)
 	}
 
 	if service == "gitlab" {
-		gitLabToken := os.Getenv("GITLAB_TOKEN")
-		if gitLabToken == "" {
+		gitlabToken := os.Getenv("GITLAB_TOKEN")
+		if gitlabToken == "" {
 			log.Fatal("GITLAB_TOKEN environment variable not set")
 		}
-		return gitlab.NewClient(httpClient, gitLabToken)
+		return gitlab.NewClient(httpClient, gitlabToken)
 	}
 	return nil
 }
 
-func getRepositories(service string, gitlabUrlPath *url.URL, client interface{}, username string, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
+func getRepositories(service string, gitlabUrlPath *url.URL, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
 
+	client := NewClient(nil, service)
+	if client == nil {
+		log.Fatal("Couldn't acquire a client to talk to %s", service)
+	}
+
+	var remoteResponse *http.Response
 	if service == "github" {
 		options := github.RepositoryListOptions{Type: opt.repoType, ListOptions: opt.ListOptions}
-		repos, resp, err := client.(*github.Client).Repositories.List(username, &options)
+		repos, resp, err := client.(*github.Client).Repositories.List("", &options)
 		var repositories []*Repository
 		if err == nil {
 			for _, repo := range repos {
@@ -65,7 +80,10 @@ func getRepositories(service string, gitlabUrlPath *url.URL, client interface{},
 			}
 			return repositories, &Response{NextPage: resp.NextPage}, nil
 		} else {
-			return nil, &Response{Response: resp.Response}, err
+			if resp != nil {
+				remoteResponse = resp.Response
+			}
+			return nil, &Response{Response: remoteResponse}, err
 		}
 	}
 
@@ -84,10 +102,11 @@ func getRepositories(service string, gitlabUrlPath *url.URL, client interface{},
 			}
 			return repositories, &Response{NextPage: resp.NextPage}, nil
 		} else {
-			return nil, &Response{Response: resp.Response}, err
+			if resp != nil {
+				remoteResponse = resp.Response
+			}
+			return nil, &Response{Response: remoteResponse}, err
 		}
 	}
-
-	// TODO: fix
-	return nil, nil, errors.New("Something unexpected happened")
+	return nil, nil, errors.New("Unexpected Error")
 }
