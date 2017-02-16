@@ -37,9 +37,12 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) {
 }
 
 func main() {
+
+	// Used for waiting for all the goroutines to finish before exiting
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
+	// The services we know of
 	knownServices := map[string]bool{
 		"github": true,
 		"gitlab": true,
@@ -67,8 +70,10 @@ func main() {
 		log.Fatal("Unknown service: %s", *service)
 	}
 
-	var gitlabUrlPath *url.URL
-	var err error
+	var (
+		gitlabUrlPath *url.URL
+		err           error
+	)
 
 	// If gitlab.url is specified, we know it's gitlab
 	if len(*gitlabUrl) != 0 {
@@ -83,8 +88,8 @@ func main() {
 
 	// Default backup directory, if none specified
 	if len(*backupDir) == 0 {
-		homeDir, homeDirErr := homedir.Dir()
-		if homeDirErr == nil {
+		homeDir, err := homedir.Dir()
+		if err == nil {
 			*backupDir = path.Join(homeDir, ".gitbackup", *service)
 		} else {
 			log.Fatal("Could not determine home directory and backup directory not specified")
@@ -92,6 +97,9 @@ func main() {
 	}
 
 	opt := ListRepositoriesOptions{repoType: *githubRepoType, repoVisibility: *gitlabRepoVisibility}
+	// Limit maximum concurrent clones to 20
+	tokens := make(chan bool, 20)
+
 	for {
 		repos, resp, err := getRepositories(*service, gitlabUrlPath, &opt)
 		if err != nil {
@@ -105,12 +113,10 @@ func main() {
 					log.Fatal(err)
 				}
 			}
-			// Limit maximum concurrent operations to 20
-			// TODO: verify
-			tokens := make(chan struct{}, 20)
 			for _, repo := range repos {
-				tokens <- struct{}{}
+				tokens <- true
 				wg.Add(1)
+
 				go func(repo *Repository) {
 					backUp(*backupDir, repo, &wg)
 					<-tokens
