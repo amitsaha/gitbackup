@@ -57,7 +57,7 @@ func main() {
 
 	// Gitlab specific flags
 	gitlabUrl := flag.String("gitlab.url", "", "DNS of your the GitLab service")
-	gitlabRepoVisibility := flag.String("gitlab.repoVisibility", "private", "Visibility level of Repositories to clone")
+	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone")
 
 	flag.Parse()
 
