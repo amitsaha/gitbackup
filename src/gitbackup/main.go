@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/mitchellh/go-homedir"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -61,31 +60,15 @@ func main() {
 
 	flag.Parse()
 
-	// Either service or gitlab.url should be specified
-	if len(*service) == 0 && len(*gitlabUrl) == 0 {
-		log.Fatal("Please specify the git service type: github, gitlab")
-	}
-	// Check if this is a service we know of
-	if !knownServices[*service] && len(*gitlabUrl) == 0 {
-		log.Fatal("Unknown service: %s", *service)
-	}
-
-	var (
-		gitlabUrlPath *url.URL
-		err           error
-	)
-
 	// If gitlab.url is specified, we know it's gitlab
 	if len(*gitlabUrl) != 0 {
-		gitlabUrlPath, err = url.Parse(*gitlabUrl)
-		if err != nil {
-			log.Fatal("Invalid gitlab URL: %s", *gitlabUrl)
-		}
 		*service = "gitlab"
 	} else {
-		gitlabUrlPath = nil
+		// Either service or gitlab.url should be specified
+		if len(*service) == 0 || !knownServices[*service] {
+			log.Fatal("Please specify the git service type: github, gitlab")
+		}
 	}
-
 	// Default backup directory, if none specified
 	if len(*backupDir) == 0 {
 		homeDir, err := homedir.Dir()
@@ -101,7 +84,7 @@ func main() {
 	tokens := make(chan bool, 20)
 
 	for {
-		repos, resp, err := getRepositories(*service, gitlabUrlPath, &opt)
+		repos, resp, err := getRepositories(*service, *gitlabUrl, &opt)
 		if err != nil {
 			log.Fatal(err)
 		} else {

@@ -62,7 +62,7 @@ func NewClient(httpClient *http.Client, service string) interface{} {
 	return nil
 }
 
-func getRepositories(service string, gitlabUrlPath *url.URL, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
+func getRepositories(service string, gitlabUrl string, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
 
 	client := NewClient(nil, service)
 	if client == nil {
@@ -90,7 +90,11 @@ func getRepositories(service string, gitlabUrlPath *url.URL, opt *ListRepositori
 	if service == "gitlab" {
 		gitlabListOptions := gitlab.ListOptions{Page: opt.ListOptions.Page, PerPage: opt.ListOptions.PerPage}
 		options := gitlab.ListProjectsOptions{Visibility: &opt.repoVisibility, ListOptions: gitlabListOptions}
-		if gitlabUrlPath != nil {
+		if len(gitlabUrl) != 0 {
+			gitlabUrlPath, err := url.Parse(gitlabUrl)
+			if err != nil {
+				log.Fatal("Invalid gitlab URL: %s", gitlabUrl)
+			}
 			gitlabUrlPath.Path = path.Join(gitlabUrlPath.Path, "api/v3")
 			client.(*gitlab.Client).SetBaseURL(gitlabUrlPath.String())
 		}
