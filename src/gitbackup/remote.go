@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"github.com/google/go-github/github"
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
@@ -62,29 +61,32 @@ func NewClient(httpClient *http.Client, service string) interface{} {
 	return nil
 }
 
-func getRepositories(service string, gitlabUrl string, opt *ListRepositoriesOptions) ([]*Repository, *Response, error) {
+func getRepositories(service string, gitlabUrl string, opt *ListRepositoriesOptions) ([]*Repository, error) {
 
 	client := NewClient(nil, service)
 	if client == nil {
 		log.Fatal("Couldn't acquire a client to talk to %s", service)
 	}
 
-	var remoteResponse *http.Response
+	var repositories []*Repository
+
 	if service == "github" {
 		options := github.RepositoryListOptions{Type: opt.repoType, ListOptions: opt.ListOptions}
-		repos, resp, err := client.(*github.Client).Repositories.List("", &options)
-		var repositories []*Repository
-		if err == nil {
-			for _, repo := range repos {
-				repositories = append(repositories, &Repository{GitURL: *repo.GitURL, Name: *repo.Name})
+
+        for {
+            repos, resp, err := client.(*github.Client).Repositories.List("", &options)
+            if err == nil {
+                for _, repo := range repos {
+                    repositories = append(repositories, &Repository{GitURL: *repo.GitURL, Name: *repo.Name})
+                }
+            } else {
+                return nil, err
+            }
+            if resp.NextPage == 0 {
+				break
 			}
-			return repositories, &Response{NextPage: resp.NextPage}, nil
-		} else {
-			if resp != nil {
-				remoteResponse = resp.Response
-			}
-			return nil, &Response{Response: remoteResponse}, err
-		}
+			options.ListOptions.Page = resp.NextPage
+        }
 	}
 
 	if service == "gitlab" {
@@ -98,19 +100,20 @@ func getRepositories(service string, gitlabUrl string, opt *ListRepositoriesOpti
 			gitlabUrlPath.Path = path.Join(gitlabUrlPath.Path, "api/v3")
 			client.(*gitlab.Client).SetBaseURL(gitlabUrlPath.String())
 		}
-		repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
-		var repositories []*Repository
-		if err == nil {
-			for _, repo := range repos {
-				repositories = append(repositories, &Repository{GitURL: repo.SSHURLToRepo, Name: repo.Name})
+		for {
+			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
+			if err == nil {
+				for _, repo := range repos {
+					repositories = append(repositories, &Repository{GitURL: repo.SSHURLToRepo, Name: repo.Name})
+				}
+			} else {
+				return nil, err
 			}
-			return repositories, &Response{NextPage: resp.NextPage}, nil
-		} else {
-			if resp != nil {
-				remoteResponse = resp.Response
+			if resp.NextPage == 0 {
+				break
 			}
-			return nil, &Response{Response: remoteResponse}, err
+			options.ListOptions.Page = resp.NextPage
 		}
 	}
-	return nil, nil, errors.New("Unexpected Error")
+    return repositories, nil
 }

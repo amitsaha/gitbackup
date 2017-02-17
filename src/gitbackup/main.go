@@ -82,33 +82,25 @@ func main() {
 	opt := ListRepositoriesOptions{repoType: *githubRepoType, repoVisibility: *gitlabRepoVisibility}
 	// Limit maximum concurrent clones to 20
 	tokens := make(chan bool, 20)
-
-	for {
-		repos, resp, err := getRepositories(*service, *gitlabUrl, &opt)
+	repos, err := getRepositories(*service, *gitlabUrl, &opt)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		_, err := os.Stat(*backupDir)
 		if err != nil {
-			log.Fatal(err)
-		} else {
-			_, err := os.Stat(*backupDir)
+			log.Printf("%s doesn't exist, creating it\n", *backupDir)
+			err := os.MkdirAll(*backupDir, 0771)
 			if err != nil {
-				log.Printf("%s doesn't exist, creating it\n", *backupDir)
-				err := os.MkdirAll(*backupDir, 0771)
-				if err != nil {
-					log.Fatal(err)
-				}
+				log.Fatal(err)
 			}
-			for _, repo := range repos {
-				tokens <- true
-				wg.Add(1)
-
-				go func(repo *Repository) {
-					backUp(*backupDir, repo, &wg)
-					<-tokens
-				}(repo)
-			}
-			if resp.NextPage == 0 {
-				break
-			}
-			opt.ListOptions.Page = resp.NextPage
+		}
+		for _, repo := range repos {
+			tokens <- true
+			wg.Add(1)
+			go func(repo *Repository) {
+				backUp(*backupDir, repo, &wg)
+				<-tokens
+			}(repo)
 		}
 	}
 }
