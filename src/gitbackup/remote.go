@@ -11,12 +11,6 @@ import (
 	"path"
 )
 
-type ListRepositoriesOptions struct {
-	repoType       string // GitHub
-	repoVisibility string //GitLab
-	ListOptions    github.ListOptions
-}
-
 // https://github.com/google/go-github/blob/27c7c32b6d369610435bd2ad7b4d8554f235eb01/github/github.go#L301
 // https://github.com/xanzy/go-gitlab/blob/3acf8d75e9de17ad4b41839a7cabbf2537760ab4/gitlab.go#L286
 type Response struct {
@@ -61,7 +55,7 @@ func NewClient(httpClient *http.Client, service string) interface{} {
 	return nil
 }
 
-func getRepositories(service string, gitlabUrl string, opt *ListRepositoriesOptions) ([]*Repository, error) {
+func getRepositories(service string, gitlabUrl string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
 
 	client := NewClient(nil, service)
 	if client == nil {
@@ -71,27 +65,25 @@ func getRepositories(service string, gitlabUrl string, opt *ListRepositoriesOpti
 	var repositories []*Repository
 
 	if service == "github" {
-		options := github.RepositoryListOptions{Type: opt.repoType, ListOptions: opt.ListOptions}
-
-        for {
-            repos, resp, err := client.(*github.Client).Repositories.List("", &options)
-            if err == nil {
-                for _, repo := range repos {
-                    repositories = append(repositories, &Repository{GitURL: *repo.GitURL, Name: *repo.Name})
-                }
-            } else {
-                return nil, err
-            }
-            if resp.NextPage == 0 {
+		options := github.RepositoryListOptions{Type: githubRepoType}
+		for {
+			repos, resp, err := client.(*github.Client).Repositories.List("", &options)
+			if err == nil {
+				for _, repo := range repos {
+					repositories = append(repositories, &Repository{GitURL: *repo.GitURL, Name: *repo.Name})
+				}
+			} else {
+				return nil, err
+			}
+			if resp.NextPage == 0 {
 				break
 			}
 			options.ListOptions.Page = resp.NextPage
-        }
+		}
 	}
 
 	if service == "gitlab" {
-		gitlabListOptions := gitlab.ListOptions{Page: opt.ListOptions.Page, PerPage: opt.ListOptions.PerPage}
-		options := gitlab.ListProjectsOptions{Visibility: &opt.repoVisibility, ListOptions: gitlabListOptions}
+		options := gitlab.ListProjectsOptions{Visibility: &gitlabRepoVisibility}
 		if len(gitlabUrl) != 0 {
 			gitlabUrlPath, err := url.Parse(gitlabUrl)
 			if err != nil {
@@ -115,5 +107,5 @@ func getRepositories(service string, gitlabUrl string, opt *ListRepositoriesOpti
 			options.ListOptions.Page = resp.NextPage
 		}
 	}
-    return repositories, nil
+	return repositories, nil
 }

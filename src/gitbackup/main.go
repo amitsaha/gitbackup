@@ -79,10 +79,9 @@ func main() {
 		}
 	}
 
-	opt := ListRepositoriesOptions{repoType: *githubRepoType, repoVisibility: *gitlabRepoVisibility}
 	// Limit maximum concurrent clones to 20
 	tokens := make(chan bool, 20)
-	repos, err := getRepositories(*service, *gitlabUrl, &opt)
+	repos, err := getRepositories(*service, *gitlabUrl, *githubRepoType, *gitlabRepoVisibility)
 	if err != nil {
 		log.Fatal(err)
 	} else {
