@@ -10,6 +10,9 @@ import (
 	"sync"
 )
 
+// Maximum number of concurrent clones
+var MAX_CONCURRENT_CLONES int = 20
+
 // Check if we have a copy of the repo already, if
 // we do, we update the repo, else we do a fresh clone
 func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) {
@@ -19,18 +22,18 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) {
 	_, err := os.Stat(repoDir)
 
 	if err == nil {
-		log.Printf("%v exists, updating. \n", repo.Name)
+		log.Printf("%s exists, updating. \n", repo.Name)
 		cmd := exec.Command("git", "-C", repoDir, "pull")
 		err = cmd.Run()
 		if err != nil {
-			log.Printf("Error pulling %v: %v\n", repo.GitURL, err)
+			log.Printf("Error pulling %s: %v\n", repo.GitURL, err)
 		}
 	} else {
-		log.Printf("Cloning %v \n", repo.Name)
+		log.Printf("Cloning %s \n", repo.Name)
 		cmd := exec.Command("git", "clone", repo.GitURL, repoDir)
 		err := cmd.Run()
 		if err != nil {
-			log.Printf("Error cloning %v: %v", repo.Name, err)
+			log.Printf("Error cloning %s: %v", repo.Name, err)
 		}
 	}
 }
@@ -79,8 +82,8 @@ func main() {
 		}
 	}
 
-	// Limit maximum concurrent clones to 20
-	tokens := make(chan bool, 20)
+	// Limit maximum concurrent clones to MAX_CONCURRENT_CLONES
+	tokens := make(chan bool, MAX_CONCURRENT_CLONES)
 	repos, err := getRepositories(*service, *gitlabUrl, *githubRepoType, *gitlabRepoVisibility)
 	if err != nil {
 		log.Fatal(err)

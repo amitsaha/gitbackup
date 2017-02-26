@@ -32,7 +32,7 @@ type Repository struct {
 	Name   string
 }
 
-func NewClient(httpClient *http.Client, service string) interface{} {
+func NewClient(service string) interface{} {
 	if service == "github" {
 		githubToken := os.Getenv("GITHUB_TOKEN")
 		if githubToken == "" {
@@ -50,14 +50,14 @@ func NewClient(httpClient *http.Client, service string) interface{} {
 		if gitlabToken == "" {
 			log.Fatal("GITLAB_TOKEN environment variable not set")
 		}
-		return gitlab.NewClient(httpClient, gitlabToken)
+		return gitlab.NewClient(nil, gitlabToken)
 	}
 	return nil
 }
 
 func getRepositories(service string, gitlabUrl string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
 
-	client := NewClient(nil, service)
+	client := NewClient(service)
 	if client == nil {
 		log.Fatal("Couldn't acquire a client to talk to %s", service)
 	}
