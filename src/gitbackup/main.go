@@ -80,6 +80,16 @@ func main() {
 		} else {
 			log.Fatal("Could not determine home directory and backup directory not specified")
 		}
+	} else {
+		*backupDir = path.Join(*backupDir, *service)
+	}
+	_, err := os.Stat(*backupDir)
+	if err != nil {
+		log.Printf("%s doesn't exist, creating it\n", *backupDir)
+		err := os.MkdirAll(*backupDir, 0771)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Limit maximum concurrent clones to MAX_CONCURRENT_CLONES
@@ -88,14 +98,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		_, err := os.Stat(*backupDir)
-		if err != nil {
-			log.Printf("%s doesn't exist, creating it\n", *backupDir)
-			err := os.MkdirAll(*backupDir, 0771)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
 		for _, repo := range repos {
 			tokens <- true
 			wg.Add(1)
