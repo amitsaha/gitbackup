@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/amitsaha/gitbackup.svg?branch=master)](https://travis-ci.org/amitsaha/gitbackup)
+
 ## Building
 
 Install `gb` using the instructions [here](https://getgb.io/) and then also install
