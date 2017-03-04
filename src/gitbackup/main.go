@@ -58,7 +58,7 @@ func main() {
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
 
 	// Gitlab specific flags
-	gitlabUrl := flag.String("gitlab.url", "", "DNS of your the GitLab service")
+	gitlabUrl := flag.String("gitlab.url", "", "DNS of the GitLab service")
 	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone")
 
 	flag.Parse()
