@@ -13,6 +13,8 @@ import (
 // Maximum number of concurrent clones
 var MAX_CONCURRENT_CLONES int = 20
 
+var execCommand = exec.Command
+
 // Check if we have a copy of the repo already, if
 // we do, we update the repo, else we do a fresh clone
 func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) {
@@ -23,14 +25,14 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) {
 
 	if err == nil {
 		log.Printf("%s exists, updating. \n", repo.Name)
-		cmd := exec.Command("git", "-C", repoDir, "pull")
+		cmd := execCommand("git", "-C", repoDir, "pull")
 		err = cmd.Run()
 		if err != nil {
 			log.Printf("Error pulling %s: %v\n", repo.GitURL, err)
 		}
 	} else {
 		log.Printf("Cloning %s \n", repo.Name)
-		cmd := exec.Command("git", "clone", repo.GitURL, repoDir)
+		cmd := execCommand("git", "clone", repo.GitURL, repoDir)
 		err := cmd.Run()
 		if err != nil {
 			log.Printf("Error cloning %s: %v", repo.Name, err)

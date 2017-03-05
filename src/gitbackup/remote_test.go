@@ -3,24 +3,24 @@ package main
 import (
 	"github.com/google/go-github/github"
 	"github.com/xanzy/go-gitlab"
+	"os"
 	"testing"
-    "os"
 )
 
 func TestNewClient(t *testing.T) {
-    os.Setenv("GITHUB_TOKEN", "$$$randome")
+	os.Setenv("GITHUB_TOKEN", "$$$randome")
 	client := NewClient("github")
-    // Type assertion
+	// Type assertion
 	client = client.(*github.Client)
 
-    os.Setenv("GITLAB_TOKEN", "$$$randome")
+	os.Setenv("GITLAB_TOKEN", "$$$randome")
 	client = NewClient("gitlab")
-    // Type assertion
+	// Type assertion
 	client = client.(*gitlab.Client)
 
-    client = NewClient("notyetsupported")
-    if client != nil {
-        t.Errorf("Expected nil")
-    }
+	client = NewClient("notyetsupported")
+	if client != nil {
+		t.Errorf("Expected nil")
+	}
 
 }
