@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"sync"
@@ -10,10 +10,10 @@ import (
 
 // Help from https://npf.io/2015/06/testing-exec-command/
 
-func fakeExecCommand(command string, args ...string) *exec.Cmd {
+func fakeExecCommand(command string, args ...string) (cmd *exec.Cmd) {
 	cs := []string{"-test.run=TestHelperProcess", "--", command}
 	cs = append(cs, args...)
-	cmd := exec.Command(os.Args[0], cs...)
+	cmd = exec.Command(os.Args[0], cs...)
 	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
 	return cmd
 }
@@ -28,14 +28,19 @@ func TestBackup(t *testing.T) {
 	backupDir := "/tmp/backupdir"
 	repo := Repository{Name: "testrepo", GitURL: "git://foo.com/foo"}
 	wg.Add(1)
-	backUp(backupDir, &repo, &wg)
+	err := backUp(backupDir, &repo, &wg)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func TestHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
-	// some code here to check arguments perhaps?
-	fmt.Fprintf(os.Stdout, "cloned")
+	// Check that git command was executed
+	if os.Args[3] != "git" {
+		log.Fatal("Expected git to be executed. Got %v", os.Args[3:])
+	}
 	os.Exit(0)
 }
