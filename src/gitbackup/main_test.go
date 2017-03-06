@@ -20,7 +20,7 @@ func fakeExecCommand(command string, args ...string) *exec.Cmd {
 
 func TestBackup(t *testing.T) {
 	var wg sync.WaitGroup
-	execCommand := fakeExecCommand
+	execCommand = fakeExecCommand
 	defer func() {
 		execCommand = exec.Command
 		wg.Wait()
