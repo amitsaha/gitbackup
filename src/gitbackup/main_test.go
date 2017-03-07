@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"os/exec"
 	"sync"
@@ -28,9 +28,10 @@ func TestBackup(t *testing.T) {
 	backupDir := "/tmp/backupdir"
 	repo := Repository{Name: "testrepo", GitURL: "git://foo.com/foo"}
 	wg.Add(1)
-	err := backUp(backupDir, &repo, &wg)
+	stdoutStderr, err := backUp(backupDir, &repo, &wg)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("%s", stdoutStderr)
+		os.Exit(1)
 	}
 }
 
@@ -39,8 +40,9 @@ func TestHelperProcess(t *testing.T) {
 		return
 	}
 	// Check that git command was executed
-	if os.Args[3] != "git" {
-		log.Fatal("Expected git to be executed. Got %v", os.Args[3:])
+	if os.Args[3] != "git" && (os.Args[4] == "clone" || os.Args[4] == "pull") {
+		fmt.Fprintf(os.Stdout, "Expected git clone or pull to be executed. Got %v", os.Args[3:])
+		os.Exit(1)
 	}
 	os.Exit(0)
 }

@@ -18,23 +18,24 @@ var gitCommand = "git"
 
 // Check if we have a copy of the repo already, if
 // we do, we update the repo, else we do a fresh clone
-func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) error {
+func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, error) {
 	defer wg.Done()
 
 	repoDir := path.Join(backupDir, repo.Name)
 	_, err := os.Stat(repoDir)
 
+	var stdoutStderr []byte
 	if err == nil {
 		log.Printf("%s exists, updating. \n", repo.Name)
 		cmd := execCommand(gitCommand, "-C", repoDir, "pull")
-		err = cmd.Run()
+		stdoutStderr, err = cmd.CombinedOutput()
 	} else {
 		log.Printf("Cloning %s \n", repo.Name)
 		cmd := execCommand(gitCommand, "clone", repo.GitURL, repoDir)
-		err = cmd.Run()
+		stdoutStderr, err = cmd.CombinedOutput()
 	}
 
-	return err
+	return stdoutStderr, err
 }
 
 func main() {
@@ -101,8 +102,10 @@ func main() {
 			tokens <- true
 			wg.Add(1)
 			go func(repo *Repository) {
-				err := backUp(*backupDir, repo, &wg)
-				log.Printf("Error backing up %s: %v\n", repo.Name, err)
+				stdoutStderr, err := backUp(*backupDir, repo, &wg)
+				if err != nil {
+					log.Printf("Error backing up %s: %s\n", repo.Name, stdoutStderr)
+				}
 				<-tokens
 			}(repo)
 		}
