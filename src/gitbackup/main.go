@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/afero"
 	"log"
 	"os"
 	"os/exec"
@@ -14,6 +15,7 @@ import (
 var MAX_CONCURRENT_CLONES int = 20
 
 var execCommand = exec.Command
+var appFS = afero.NewOsFs()
 var gitCommand = "git"
 
 // Check if we have a copy of the repo already, if
@@ -22,7 +24,7 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, err
 	defer wg.Done()
 
 	repoDir := path.Join(backupDir, repo.Name)
-	_, err := os.Stat(repoDir)
+	_, err := appFS.Stat(repoDir)
 
 	var stdoutStderr []byte
 	if err == nil {
@@ -83,7 +85,7 @@ func main() {
 	} else {
 		*backupDir = path.Join(*backupDir, *service)
 	}
-	_, err := os.Stat(*backupDir)
+	_, err := appFS.Stat(*backupDir)
 	if err != nil {
 		log.Printf("%s doesn't exist, creating it\n", *backupDir)
 		err := os.MkdirAll(*backupDir, 0771)

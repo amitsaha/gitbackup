@@ -2,16 +2,24 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/afero"
 	"os"
 	"os/exec"
+	"path"
 	"sync"
 	"testing"
 )
 
-// Help from https://npf.io/2015/06/testing-exec-command/
+func fakePullCommand(command string, args ...string) (cmd *exec.Cmd) {
+	cs := []string{"-test.run=TestHelperPullProcess", "--", command}
+	cs = append(cs, args...)
+	cmd = exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+	return cmd
+}
 
-func fakeExecCommand(command string, args ...string) (cmd *exec.Cmd) {
-	cs := []string{"-test.run=TestHelperProcess", "--", command}
+func fakeCloneCommand(command string, args ...string) (cmd *exec.Cmd) {
+	cs := []string{"-test.run=TestHelperCloneProcess", "--", command}
 	cs = append(cs, args...)
 	cmd = exec.Command(os.Args[0], cs...)
 	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
@@ -20,28 +28,57 @@ func fakeExecCommand(command string, args ...string) (cmd *exec.Cmd) {
 
 func TestBackup(t *testing.T) {
 	var wg sync.WaitGroup
-	execCommand = fakeExecCommand
+	repo := Repository{Name: "testrepo", GitURL: "git://foo.com/foo"}
+	backupDir := "/tmp/backupdir"
+
+	// Memory FS
+	appFS = afero.NewMemMapFs()
+	appFS.MkdirAll(backupDir, 0771)
+
 	defer func() {
 		execCommand = exec.Command
 		wg.Wait()
 	}()
-	backupDir := "/tmp/backupdir"
-	repo := Repository{Name: "testrepo", GitURL: "git://foo.com/foo"}
+
+	// Test clone
+	execCommand = fakeCloneCommand
 	wg.Add(1)
 	stdoutStderr, err := backUp(backupDir, &repo, &wg)
 	if err != nil {
-		fmt.Printf("%s", stdoutStderr)
-		os.Exit(1)
+		t.Errorf("%s", stdoutStderr)
 	}
+
+	// Test pull
+	repoDir := path.Join(backupDir, repo.Name)
+	appFS.MkdirAll(repoDir, 0771)
+	execCommand = fakePullCommand
+	wg.Add(1)
+	stdoutStderr, err = backUp(backupDir, &repo, &wg)
+	if err != nil {
+		t.Errorf("%s", stdoutStderr)
+	}
+
 }
 
-func TestHelperProcess(t *testing.T) {
+func TestHelperPullProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
 	// Check that git command was executed
-	if os.Args[3] != "git" && (os.Args[4] == "clone" || os.Args[4] == "pull") {
-		fmt.Fprintf(os.Stdout, "Expected git clone or pull to be executed. Got %v", os.Args[3:])
+	if os.Args[3] != "git" || os.Args[6] != "pull" {
+		fmt.Fprintf(os.Stdout, "Expected git pull to be executed. Got %v", os.Args[3:])
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
+func TestHelperCloneProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+	// Check that git command was executed
+	if os.Args[3] != "git" || os.Args[4] != "clone" {
+		fmt.Fprintf(os.Stdout, "Expected git clone to be executed. Got %v", os.Args[3:])
 		os.Exit(1)
 	}
 	os.Exit(0)
