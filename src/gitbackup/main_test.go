@@ -2,15 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"github.com/spf13/afero"
 	"os"
 	"os/exec"
 	"path"
 	"sync"
 	"testing"
 )
-
-// Help from https://npf.io/2015/06/testing-exec-command/
 
 func fakePullCommand(command string, args ...string) (cmd *exec.Cmd) {
 	cs := []string{"-test.run=TestHelperPullProcess", "--", command}
@@ -30,34 +28,34 @@ func fakeCloneCommand(command string, args ...string) (cmd *exec.Cmd) {
 
 func TestBackup(t *testing.T) {
 	var wg sync.WaitGroup
+	repo := Repository{Name: "testrepo", GitURL: "git://foo.com/foo"}
 	backupDir := "/tmp/backupdir"
+
+	// Memory FS
+	appFS = afero.NewMemMapFs()
+	appFS.MkdirAll(backupDir, 0771)
+
 	defer func() {
 		execCommand = exec.Command
 		wg.Wait()
-		// Cleanup backupDir
-		os.RemoveAll(backupDir)
 	}()
-
-	os.MkdirAll(backupDir, 0771)
 
 	// Test clone
 	execCommand = fakeCloneCommand
-	repo := Repository{Name: "testrepo", GitURL: "git://foo.com/foo"}
 	wg.Add(1)
 	stdoutStderr, err := backUp(backupDir, &repo, &wg)
 	if err != nil {
-		log.Fatal("%s", stdoutStderr)
+		t.Errorf("%s", stdoutStderr)
 	}
 
 	// Test pull
 	repoDir := path.Join(backupDir, repo.Name)
-	os.Mkdir(repoDir, 0771)
+	appFS.MkdirAll(repoDir, 0771)
 	execCommand = fakePullCommand
 	wg.Add(1)
 	stdoutStderr, err = backUp(backupDir, &repo, &wg)
 	if err != nil {
-		fmt.Printf("%s", stdoutStderr)
-		os.Exit(1)
+		t.Errorf("%s", stdoutStderr)
 	}
 
 }
@@ -67,7 +65,7 @@ func TestHelperPullProcess(t *testing.T) {
 		return
 	}
 	// Check that git command was executed
-	if os.Args[3] != "git" || os.Args[4] != "pull" {
+	if os.Args[3] != "git" || os.Args[6] != "pull" {
 		fmt.Fprintf(os.Stdout, "Expected git pull to be executed. Got %v", os.Args[3:])
 		os.Exit(1)
 	}
