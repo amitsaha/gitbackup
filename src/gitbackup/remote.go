@@ -55,11 +55,10 @@ func NewClient(service string) interface{} {
 	return nil
 }
 
-func getRepositories(service string, gitlabUrl string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
+func getRepositories(client interface{}, service string, gitlabUrl string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
 
-	client := NewClient(service)
 	if client == nil {
-		log.Fatal("Couldn't acquire a client to talk to %s", service)
+		log.Fatalf("Couldn't acquire a client to talk to %s", service)
 	}
 
 	var repositories []*Repository
@@ -87,7 +86,7 @@ func getRepositories(service string, gitlabUrl string, githubRepoType string, gi
 		if len(gitlabUrl) != 0 {
 			gitlabUrlPath, err := url.Parse(gitlabUrl)
 			if err != nil {
-				log.Fatal("Invalid gitlab URL: %s", gitlabUrl)
+				log.Fatalf("Invalid gitlab URL: %s", gitlabUrl)
 			}
 			gitlabUrlPath.Path = path.Join(gitlabUrlPath.Path, "api/v3")
 			client.(*gitlab.Client).SetBaseURL(gitlabUrlPath.String())
