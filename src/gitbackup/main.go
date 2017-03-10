@@ -96,7 +96,8 @@ func main() {
 
 	// Limit maximum concurrent clones to MAX_CONCURRENT_CLONES
 	tokens := make(chan bool, MAX_CONCURRENT_CLONES)
-	repos, err := getRepositories(*service, *gitlabUrl, *githubRepoType, *gitlabRepoVisibility)
+	client := NewClient(*service)
+	repos, err := getRepositories(client, *service, *gitlabUrl, *githubRepoType, *gitlabRepoVisibility)
 	if err != nil {
 		log.Fatal(err)
 	} else {
