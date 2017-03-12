@@ -6,9 +6,7 @@ import (
 	"golang.org/x/oauth2"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"path"
 )
 
 // https://github.com/google/go-github/blob/27c7c32b6d369610435bd2ad7b4d8554f235eb01/github/github.go#L301
@@ -55,7 +53,7 @@ func NewClient(service string) interface{} {
 	return nil
 }
 
-func getRepositories(client interface{}, service string, gitlabUrl string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
+func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
 
 	if client == nil {
 		log.Fatalf("Couldn't acquire a client to talk to %s", service)
@@ -83,14 +81,6 @@ func getRepositories(client interface{}, service string, gitlabUrl string, githu
 
 	if service == "gitlab" {
 		options := gitlab.ListProjectsOptions{Visibility: &gitlabRepoVisibility}
-		if len(gitlabUrl) != 0 {
-			gitlabUrlPath, err := url.Parse(gitlabUrl)
-			if err != nil {
-				log.Fatalf("Invalid gitlab URL: %s", gitlabUrl)
-			}
-			gitlabUrlPath.Path = path.Join(gitlabUrlPath.Path, "api/v3")
-			client.(*gitlab.Client).SetBaseURL(gitlabUrlPath.String())
-		}
 		for {
 			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
 			if err == nil {

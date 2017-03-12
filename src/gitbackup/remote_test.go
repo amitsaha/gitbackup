@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	client *github.Client
-	mux    *http.ServeMux
-	server *httptest.Server
+	GitHubClient *github.Client
+	GitLabClient *gitlab.Client
+	mux          *http.ServeMux
+	server       *httptest.Server
 )
 
 func setup() {
@@ -25,12 +26,15 @@ func setup() {
 	// test server
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
+	url, _ := url.Parse(server.URL)
 
 	// github client configured to use test server
-	client = github.NewClient(nil)
-	url, _ := url.Parse(server.URL)
-	client.BaseURL = url
-	client.UploadURL = url
+	GitHubClient = github.NewClient(nil)
+	GitHubClient.BaseURL = url
+
+	// github client configured to use test server
+	GitLabClient = gitlab.NewClient(nil, "")
+	GitLabClient.SetBaseURL(url.String())
 }
 
 func teardown() {
@@ -58,7 +62,7 @@ func TestNewClient(t *testing.T) {
 
 }
 
-func TestGetRepositories(t *testing.T) {
+func TestGetGitHubRepositories(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -66,12 +70,31 @@ func TestGetRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"id":1, "git_url": "git://github.com/u/r1", "name": "r1"}]`)
 	})
 
-	repos, err := getRepositories(client, "github", "", "all", "")
+	repos, err := getRepositories(GitHubClient, "github", "all", "")
 	if err != nil {
 		t.Fatal("%v", err)
 	}
 	var expected []*Repository
 	expected = append(expected, &Repository{GitURL: "git://github.com/u/r1", Name: "r1"})
+	if !reflect.DeepEqual(repos, expected) {
+		t.Errorf("Expected %+v, Got %+v", expected, repos)
+	}
+}
+
+func TestGetGitLabRepositories(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/projects", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `[{"id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
+	})
+
+	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "")
+	if err != nil {
+		t.Fatal("%v", err)
+	}
+	var expected []*Repository
+	expected = append(expected, &Repository{GitURL: "git://gitlab.com/u/r1", Name: "r1"})
 	if !reflect.DeepEqual(repos, expected) {
 		t.Errorf("Expected %+v, Got %+v", expected, repos)
 	}
