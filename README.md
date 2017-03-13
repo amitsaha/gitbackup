@@ -35,9 +35,58 @@ To backup all your GitHub repositories to the default backup directory (``$HOME/
 $ GITHUB_TOKEN=secret$token gitbackup -service github
 ```
 
+To backup only the GitHub repositories which you are the "owner" of:
+
+```lang=bash
+$ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType owner
+```
+
+To backup only the GitHub repositories which you are the "member" of:
+
+```lang=bash
+$ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType member
+```
+
+### Backing up your GitLab repositories
+
+To backup all projects which have their [visibility](https://docs.gitlab.com/ce/api/projects.html#project-visibility-level) set to "internal" on ``https://gitlab.com`` to the default backup directory (``$HOME/.gitbackup/gitlab``):
+
+```lang=bash
+$ GITLAB_TOKEN=secret$token gitbackup -service gitlab
+```
+
+To backup only the GitLab projects which are "public"
+
+```lang=bash
+$ GITLAB_TOKEN=secret$token gitbackup -service gitlab -gitlab.projectVisibility public
+```
+
+To backup only the private repositories:
+
+```lang=bash
+$ GITLAB_TOKEN=secret$token gitbackup -service gitlab -gitlab.projectVisibility private
+```
+
+To specify a custom GitLab location, use the ``gitlab.url`` flag, like so:
+
+```lang=bash
+$ GITLAB_TOKEN=secret$token gitbackup -gitlab.url https://git.yourhost.com -gitlab.projectVisibility private
+```
+
+
+### Specifying a backup location
+
+To specify a custom backup directory, we can use the ``backupdir`` flag:
+
+```lang=bash
+$ GITHUB_TOKEN=secret$token gitbackup -service github -backupdir /data/
+```
+
+This will create a ``github`` directory in ``/data`` and backup all your repositories there instead.
+Similarly, it will create a ``gitlab`` directory, if you are backing up repositories from ``gitlab``.
+
 
 ## Building
-
 
 
 Setup Golang 1.8 and [gb](https://getgb.io) following my blog post [here](http://echorand.me/setup-golang-18-and-gb-on-fedora-and-other-linux-distributions.html) and then:
@@ -45,4 +94,4 @@ Setup Golang 1.8 and [gb](https://getgb.io) following my blog post [here](http:/
 $ gb build 
 ```
 
-
+The built binary will be in ``bin/gitbackup``.
