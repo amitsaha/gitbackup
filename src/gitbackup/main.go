@@ -4,9 +4,7 @@ import (
 	"flag"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
-	"github.com/xanzy/go-gitlab"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -98,15 +96,7 @@ func main() {
 
 	// Limit maximum concurrent clones to MAX_CONCURRENT_CLONES
 	tokens := make(chan bool, MAX_CONCURRENT_CLONES)
-	client := NewClient(*service)
-	if len(*gitlabUrl) != 0 {
-		gitlabUrlPath, err := url.Parse(*gitlabUrl)
-		if err != nil {
-			log.Fatalf("Invalid gitlab URL: %s", *gitlabUrl)
-		}
-		gitlabUrlPath.Path = path.Join(gitlabUrlPath.Path, "api/v3")
-		client.(*gitlab.Client).SetBaseURL(gitlabUrlPath.String())
-	}
+	client := NewClient(*service, *gitlabUrl)
 	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility)
 	if err != nil {
 		log.Fatal(err)

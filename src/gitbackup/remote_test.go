@@ -47,15 +47,25 @@ func TestNewClient(t *testing.T) {
 	setup()
 	defer teardown()
 
-	client := NewClient("github")
-	// Type assertion
+	client := NewClient("github", "")
 	client = client.(*github.Client)
 
-	client = NewClient("gitlab")
-	// Type assertion
+	client = NewClient("gitlab", "")
 	client = client.(*gitlab.Client)
 
-	client = NewClient("notyetsupported")
+	customGitLab, _ := url.Parse("https://git.mycompany.com")
+	client = NewClient("gitlab", customGitLab.String())
+
+	gotBaseURL := client.(*gitlab.Client).BaseURL()
+	// http://stackoverflow.com/questions/23051339/how-to-avoid-end-of-url-slash-being-removed-when-resolvereference-in-go
+	api, _ := url.Parse("api/v3/")
+	expectedGitLabBaseURL := customGitLab.ResolveReference(api)
+
+	if gotBaseURL.String() != expectedGitLabBaseURL.String() {
+		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitLabBaseURL, gotBaseURL)
+	}
+
+	client = NewClient("notyetsupported", "")
 	if client != nil {
 		t.Errorf("Expected nil")
 	}
