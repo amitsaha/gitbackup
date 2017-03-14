@@ -54,25 +54,20 @@ func main() {
 
 	// Generic flags
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
+	githostUrl := flag.String("githost.url", "", "DNS of the custom Git host")
 	backupDir := flag.String("backupdir", "", "Backup directory")
 
 	// GitHub specific flags
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
 
 	// Gitlab specific flags
-	gitlabUrl := flag.String("gitlab.url", "", "DNS of the GitLab service")
 	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone")
 
 	flag.Parse()
 
-	// If gitlab.url is specified, we know it's gitlab
-	if len(*gitlabUrl) != 0 {
-		*service = "gitlab"
-	} else {
-		// Either service or gitlab.url should be specified
-		if len(*service) == 0 || !knownServices[*service] {
-			log.Fatal("Please specify the git service type: github, gitlab")
-		}
+	// One of the recognized services must be specified
+	if len(*service) == 0 || !knownServices[*service] {
+		log.Fatal("Please specify the git service type: github, gitlab")
 	}
 	// Default backup directory, if none specified
 	if len(*backupDir) == 0 {
@@ -96,7 +91,7 @@ func main() {
 
 	// Limit maximum concurrent clones to MAX_CONCURRENT_CLONES
 	tokens := make(chan bool, MAX_CONCURRENT_CLONES)
-	client := NewClient(*service, *gitlabUrl)
+	client := NewClient(*service, *githostUrl)
 	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility)
 	if err != nil {
 		log.Fatal(err)

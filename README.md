@@ -3,9 +3,14 @@
 [![Build Status](https://travis-ci.org/amitsaha/gitbackup.svg?branch=master)](https://travis-ci.org/amitsaha/gitbackup)
 
 
-``gitbackup`` is a tool to backup your git repositories from GitHub or GitLab (including custom GitLab installations). ``gitbackup`` only creates a backup of the repository and does not currently support issues, pull requests or other data associated with a git repository.
+``gitbackup`` is a tool to backup your git repositories from GitHub (including GitHub enterprise) or 
+GitLab (including custom GitLab installations). 
 
-If you are following along my Linux Journal article, please obtain the version of the source tagged with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
+``gitbackup`` only creates a backup of the repository and does not currently support issues, 
+pull requests or other data associated with a git repository.
+
+If you are following along my Linux Journal article, please obtain the version of the source tagged 
+with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
 
 ## Using ``gitbackup``
 
@@ -14,16 +19,16 @@ If you are following along my Linux Journal article, please obtain the version o
 Typing ``-help`` will display the command line options that ``gitbackup`` recognizes:
 
 ```
-$ gitbackup -help
-Usage of gitbackup:
+./bin/gitbackup -help
+Usage of ./bin/gitbackup:
   -backupdir string
     	Backup directory
+  -githost.url string
+    	DNS of the custom Git host
   -github.repoType string
     	Repo types to backup (all, owner, member) (default "all")
   -gitlab.projectVisibility string
     	Visibility level of Projects to clone (default "internal")
-  -gitlab.url string
-    	DNS of the GitLab service
   -service string
     	Git Hosted Service Name (github/gitlab)
 ```
@@ -67,10 +72,13 @@ To backup only the private repositories:
 $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -gitlab.projectVisibility private
 ```
 
-To specify a custom GitLab location, use the ``gitlab.url`` flag, like so:
+
+### GitHub Enterprise or custom GitLab installation
+
+To specify a custom GitHub enterprise or GitLab location, use the ``githost.url`` flag, like so:
 
 ```lang=bash
-$ GITLAB_TOKEN=secret$token gitbackup -gitlab.url https://git.yourhost.com -gitlab.projectVisibility private
+$ GITLAB_TOKEN=secret$token gitbackup -service gitlab -githost.url https://git.yourhost.com -gitlab.projectVisibility private
 ```
 
 
