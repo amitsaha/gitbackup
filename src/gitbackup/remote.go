@@ -3,12 +3,8 @@ package main
 import (
 	"github.com/google/go-github/github"
 	"github.com/xanzy/go-gitlab"
-	"golang.org/x/oauth2"
 	"log"
 	"net/http"
-	"net/url"
-	"os"
-	"path"
 )
 
 // https://github.com/google/go-github/blob/27c7c32b6d369610435bd2ad7b4d8554f235eb01/github/github.go#L301
@@ -30,38 +26,6 @@ type Response struct {
 type Repository struct {
 	GitURL string
 	Name   string
-}
-
-func NewClient(service string, gitlabUrl string) interface{} {
-	if service == "github" {
-		githubToken := os.Getenv("GITHUB_TOKEN")
-		if githubToken == "" {
-			log.Fatal("GITHUB_TOKEN environment variable not set")
-		}
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: githubToken},
-		)
-		tc := oauth2.NewClient(oauth2.NoContext, ts)
-		return github.NewClient(tc)
-	}
-
-	if service == "gitlab" {
-		gitlabToken := os.Getenv("GITLAB_TOKEN")
-		if gitlabToken == "" {
-			log.Fatal("GITLAB_TOKEN environment variable not set")
-		}
-		client := gitlab.NewClient(nil, gitlabToken)
-		if len(gitlabUrl) != 0 {
-			gitlabUrlPath, err := url.Parse(gitlabUrl)
-			if err != nil {
-				log.Fatalf("Invalid gitlab URL: %s", gitlabUrl)
-			}
-			gitlabUrlPath.Path = path.Join(gitlabUrlPath.Path, "api/v3")
-			client.SetBaseURL(gitlabUrlPath.String())
-		}
-		return client
-	}
-	return nil
 }
 
 func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
