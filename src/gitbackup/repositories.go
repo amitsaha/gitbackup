@@ -5,6 +5,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"log"
 	"net/http"
+	"strings"
 )
 
 // https://github.com/google/go-github/blob/27c7c32b6d369610435bd2ad7b4d8554f235eb01/github/github.go#L301
@@ -24,8 +25,9 @@ type Response struct {
 }
 
 type Repository struct {
-	GitURL string
-	Name   string
+	GitURL    string
+	Name      string
+	Namespace string
 }
 
 func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
@@ -42,7 +44,8 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			repos, resp, err := client.(*github.Client).Repositories.List("", &options)
 			if err == nil {
 				for _, repo := range repos {
-					repositories = append(repositories, &Repository{GitURL: *repo.GitURL, Name: *repo.Name})
+					namespace := strings.Split(*repo.FullName, "/")[0]
+					repositories = append(repositories, &Repository{GitURL: *repo.GitURL, Name: *repo.Name, Namespace: namespace})
 				}
 			} else {
 				return nil, err
@@ -60,7 +63,8 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
 			if err == nil {
 				for _, repo := range repos {
-					repositories = append(repositories, &Repository{GitURL: repo.SSHURLToRepo, Name: repo.Name})
+					namespace := strings.Split(repo.NameWithNamespace, "/")[0]
+					repositories = append(repositories, &Repository{GitURL: repo.SSHURLToRepo, Name: repo.Name, Namespace: namespace})
 				}
 			} else {
 				return nil, err

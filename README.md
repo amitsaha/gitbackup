@@ -7,14 +7,19 @@
 GitLab (including custom GitLab installations). 
 
 ``gitbackup`` only creates a backup of the repository and does not currently support issues, 
-pull requests or other data associated with a git repository.
+pull requests or other data associated with a git repository. This may or may not be in the future
+scope of this tool.
 
 If you are following along my Linux Journal article, please obtain the version of the source tagged 
 with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
 
 ## Using ``gitbackup``
 
-``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for backing up GitHub repositories and [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens) for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` respectively.
+Binary releases will be available soon. For now, you will have to clone this repository and build ``gitbackup``.
+
+``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for 
+backing up GitHub repositories and [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens) 
+for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` respectively.
 
 Typing ``-help`` will display the command line options that ``gitbackup`` recognizes:
 
@@ -34,7 +39,7 @@ Usage of ./bin/gitbackup:
 ```
 ### Backing up your GitHub repositories
 
-To backup all your GitHub repositories to the default backup directory (``$HOME/.gitbackup/github``):
+To backup all your GitHub repositories to the default backup directory (``$HOME/.gitbackup/``):
 
 ```lang=bash
 $ GITHUB_TOKEN=secret$token gitbackup -service github
@@ -54,7 +59,8 @@ $ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType member
 
 ### Backing up your GitLab repositories
 
-To backup all projects which have their [visibility](https://docs.gitlab.com/ce/api/projects.html#project-visibility-level) set to "internal" on ``https://gitlab.com`` to the default backup directory (``$HOME/.gitbackup/gitlab``):
+To backup all projects which have their [visibility](https://docs.gitlab.com/ce/api/projects.html#project-visibility-level) set to 
+"internal" on ``https://gitlab.com`` to the default backup directory (``$HOME/.gitbackup/``):
 
 ```lang=bash
 $ GITLAB_TOKEN=secret$token gitbackup -service gitlab
@@ -75,10 +81,11 @@ $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -gitlab.projectVisibility 
 
 ### GitHub Enterprise or custom GitLab installation
 
-To specify a custom GitHub enterprise or GitLab location, use the ``githost.url`` flag, like so:
+To specify a custom GitHub enterprise or GitLab location, specify the ``service`` as well as the 
+the ``githost.url`` flag, like so
 
 ```lang=bash
-$ GITLAB_TOKEN=secret$token gitbackup -service gitlab -githost.url https://git.yourhost.com -gitlab.projectVisibility private
+$ GITLAB_TOKEN=secret$token gitbackup -service gitlab -githost.url https://git.yourhost.com
 ```
 
 
@@ -90,14 +97,16 @@ To specify a custom backup directory, we can use the ``backupdir`` flag:
 $ GITHUB_TOKEN=secret$token gitbackup -service github -backupdir /data/
 ```
 
-This will create a ``github`` directory in ``/data`` and backup all your repositories there instead.
-Similarly, it will create a ``gitlab`` directory, if you are backing up repositories from ``gitlab``.
+This will create a ``github.com`` directory in ``/data`` and backup all your repositories there instead.
+Similarly, it will create a ``gitlab.com`` directory, if you are backing up repositories from ``gitlab``.
+If you have specified a Git Host URL, it will create a directory structure ``data/host-url/``.
+
 
 
 ## Building
 
-
-Setup Golang 1.8 and [gb](https://getgb.io) following my blog post [here](http://echorand.me/setup-golang-18-and-gb-on-fedora-and-other-linux-distributions.html) and then:
+Setup Golang 1.8 and [gb](https://getgb.io) following my blog post [here](http://echorand.me/setup-golang-18-and-gb-on-fedora-and-other-linux-distributions.html) 
+and then:
 ```
 $ gb build 
 ```
