@@ -3,12 +3,10 @@ go:
     version: 1.7
     cgo: false
 repository:
-    path: ./src/gitbackup/
+    path: gitbackup
 build:
-    prefix: .
     binaries:
         - name: gitbackup
-          path: ./bin/gitbackup
     flags: -a -tags netgo
     ldflags: |
         -s
