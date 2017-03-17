@@ -2,43 +2,12 @@ package main
 
 import (
 	"flag"
-	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/afero"
 	"log"
-	"os"
-	"os/exec"
-	"path"
 	"sync"
 )
 
 // Maximum number of concurrent clones
 var MAX_CONCURRENT_CLONES int = 20
-
-var execCommand = exec.Command
-var appFS = afero.NewOsFs()
-var gitCommand = "git"
-
-// Check if we have a copy of the repo already, if
-// we do, we update the repo, else we do a fresh clone
-func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, error) {
-	defer wg.Done()
-
-	repoDir := path.Join(backupDir, repo.Name)
-	_, err := appFS.Stat(repoDir)
-
-	var stdoutStderr []byte
-	if err == nil {
-		log.Printf("%s exists, updating. \n", repo.Name)
-		cmd := execCommand(gitCommand, "-C", repoDir, "pull")
-		stdoutStderr, err = cmd.CombinedOutput()
-	} else {
-		log.Printf("Cloning %s \n", repo.Name)
-		cmd := execCommand(gitCommand, "clone", repo.GitURL, repoDir)
-		stdoutStderr, err = cmd.CombinedOutput()
-	}
-
-	return stdoutStderr, err
-}
 
 func main() {
 
@@ -65,31 +34,10 @@ func main() {
 
 	flag.Parse()
 
-	// One of the recognized services must be specified
 	if len(*service) == 0 || !knownServices[*service] {
 		log.Fatal("Please specify the git service type: github, gitlab")
 	}
-	// Default backup directory, if none specified
-	if len(*backupDir) == 0 {
-		homeDir, err := homedir.Dir()
-		if err == nil {
-			*backupDir = path.Join(homeDir, ".gitbackup", *service)
-		} else {
-			log.Fatal("Could not determine home directory and backup directory not specified")
-		}
-	} else {
-		*backupDir = path.Join(*backupDir, *service)
-	}
-	_, err := appFS.Stat(*backupDir)
-	if err != nil {
-		log.Printf("%s doesn't exist, creating it\n", *backupDir)
-		err := os.MkdirAll(*backupDir, 0771)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	// Limit maximum concurrent clones to MAX_CONCURRENT_CLONES
+	*backupDir = setupBackupDir(*backupDir, *service, *githostUrl)
 	tokens := make(chan bool, MAX_CONCURRENT_CLONES)
 	client := NewClient(*service, *githostUrl)
 	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility)

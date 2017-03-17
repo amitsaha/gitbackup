@@ -48,7 +48,7 @@ func TestGetGitHubRepositories(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/user/repos", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"id":1, "git_url": "git://github.com/u/r1", "name": "r1"}]`)
+		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "git_url": "git://github.com/u/r1", "name": "r1"}]`)
 	})
 
 	repos, err := getRepositories(GitHubClient, "github", "all", "")
@@ -56,7 +56,7 @@ func TestGetGitHubRepositories(t *testing.T) {
 		t.Fatal("%v", err)
 	}
 	var expected []*Repository
-	expected = append(expected, &Repository{GitURL: "git://github.com/u/r1", Name: "r1"})
+	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://github.com/u/r1", Name: "r1"})
 	if !reflect.DeepEqual(repos, expected) {
 		t.Errorf("Expected %+v, Got %+v", expected, repos)
 	}
@@ -67,7 +67,7 @@ func TestGetGitLabRepositories(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/projects", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
+		fmt.Fprint(w, `[{"name_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
 	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "")
@@ -75,7 +75,7 @@ func TestGetGitLabRepositories(t *testing.T) {
 		t.Fatal("%v", err)
 	}
 	var expected []*Repository
-	expected = append(expected, &Repository{GitURL: "git://gitlab.com/u/r1", Name: "r1"})
+	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://gitlab.com/u/r1", Name: "r1"})
 	if !reflect.DeepEqual(repos, expected) {
 		t.Errorf("Expected %+v, Got %+v", expected, repos)
 	}
