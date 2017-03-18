@@ -15,7 +15,7 @@ with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
 
 ## Using ``gitbackup``
 
-Binary releases will be available soon. For now, you will have to clone this repository and build ``gitbackup``.
+Binary releases are available from the [Releases](https://github.com/amitsaha/gitbackup/releases/) page. Please download the ZIP corresponding to your OS and architecture and unzip the binary somewhere in your ``$PATH``.
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for 
 backing up GitHub repositories and [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens) 
@@ -24,7 +24,7 @@ for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and
 Typing ``-help`` will display the command line options that ``gitbackup`` recognizes:
 
 ```
-./bin/gitbackup -help
+$ gitbackup -help
 Usage of ./bin/gitbackup:
   -backupdir string
     	Backup directory
