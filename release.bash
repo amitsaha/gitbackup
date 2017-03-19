@@ -10,7 +10,7 @@ for pair in linux/386 linux/amd64 linux/arm linux/arm64 darwin/amd64 dragonfly/a
 	GOOS=`echo $pair | cut -d'/' -f1`
     GOARCH=`echo $pair | cut -d'/' -f2` 
     OBJECT_FILE="gitbackup-$VERSION-$GOOS-$GOARCH"
-    GOOS=$GOOS GOARCH=$GOARCH GOPATH=`pwd`/vendor/  go build -o "$DISTDIR/$OBJECT_FILE" src/gitbackup/main.go src/gitbackup/client.go src/gitbackup/backup.go src/gitbackup/repositories.go
+    GOOS=$GOOS GOARCH=$GOARCH go build -o "$DISTDIR/$OBJECT_FILE" 
     pushd $DISTDIR
     echo $OBJECT_FILE
     zip "$OBJECT_FILE.zip" $OBJECT_FILE
