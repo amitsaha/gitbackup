@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/google/go-github/github"
 	"github.com/xanzy/go-gitlab"
 	"log"
@@ -39,9 +40,10 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 	var repositories []*Repository
 
 	if service == "github" {
+		ctx := context.Background()
 		options := github.RepositoryListOptions{Type: githubRepoType}
 		for {
-			repos, resp, err := client.(*github.Client).Repositories.List("", &options)
+			repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
 			if err == nil {
 				for _, repo := range repos {
 					namespace := strings.Split(*repo.FullName, "/")[0]
