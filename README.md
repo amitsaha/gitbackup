@@ -18,7 +18,7 @@ Binary releases are available from the [Releases](https://github.com/amitsaha/gi
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for 
 backing up GitHub repositories and [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens) 
-for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` respectively.
+for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment variables respectively.
 
 Typing ``-help`` will display the command line options that ``gitbackup`` recognizes:
 
