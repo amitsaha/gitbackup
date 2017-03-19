@@ -10,6 +10,5 @@ install: true
 
 script:
   - cd $GOPATH/src/github.com/amitsaha/gitbackup/
-  - GOPATH=$GOPATH/src/github.com/amitsaha/gitbackup/vendor go build -o bin/gitbackup src/gitbackup/main.go src/gitbackup/client.go src/gitbackup/backup.go src/gitbackup/repositories.go
-  - cd src/gitbackup/
-  - GOPATH=$GOPATH/src/github.com/amitsaha/gitbackup/vendor go test -v
+  - go build
+  - go test -v
