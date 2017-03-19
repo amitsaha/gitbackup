@@ -7,6 +7,7 @@ package github
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -33,7 +34,7 @@ var (
 )
 
 // setup sets up a test HTTP server along with a github.Client that is
-// configured to talk to that test server.  Tests should register handlers on
+// configured to talk to that test server. Tests should register handlers on
 // mux which provide mock responses for the API method being tested.
 func setup() {
 	// test server
@@ -54,7 +55,7 @@ func teardown() {
 
 // openTestFile creates a new file with the given name and content for testing.
 // In order to ensure the exact file name, this function will create a new temp
-// directory, and create the file in that directory.  It is the caller's
+// directory, and create the file in that directory. It is the caller's
 // responsibility to remove the directory and its contents when no longer needed.
 func openTestFile(name, content string) (file *os.File, dir string, err error) {
 	dir, err = ioutil.TempDir("", "go-github")
@@ -90,7 +91,7 @@ type values map[string]string
 func testFormValues(t *testing.T, r *http.Request, values values) {
 	want := url.Values{}
 	for k, v := range values {
-		want.Add(k, v)
+		want.Set(k, v)
 	}
 
 	r.ParseForm()
@@ -231,9 +232,9 @@ func TestNewRequest_emptyUserAgent(t *testing.T) {
 }
 
 // If a nil body is passed to github.NewRequest, make sure that nil is also
-// passed to http.NewRequest.  In most cases, passing an io.Reader that returns
+// passed to http.NewRequest. In most cases, passing an io.Reader that returns
 // no content is fine, since there is no difference between an HTTP request
-// body that is an empty string versus one that is not set at all.  However in
+// body that is an empty string versus one that is not set at all. However in
 // certain cases, intermediate systems may treat these differently resulting in
 // subtle errors.
 func TestNewRequest_emptyBody(t *testing.T) {
@@ -329,7 +330,7 @@ func TestDo(t *testing.T) {
 
 	req, _ := client.NewRequest("GET", "/", nil)
 	body := new(foo)
-	client.Do(req, body)
+	client.Do(context.Background(), req, body)
 
 	want := &foo{"a"}
 	if !reflect.DeepEqual(body, want) {
@@ -346,7 +347,7 @@ func TestDo_httpError(t *testing.T) {
 	})
 
 	req, _ := client.NewRequest("GET", "/", nil)
-	_, err := client.Do(req, nil)
+	_, err := client.Do(context.Background(), req, nil)
 
 	if err == nil {
 		t.Error("Expected HTTP 400 error.")
@@ -354,7 +355,7 @@ func TestDo_httpError(t *testing.T) {
 }
 
 // Test handling of an error caused by the internal http client's Do()
-// function.  A redirect loop is pretty unlikely to occur within the GitHub
+// function. A redirect loop is pretty unlikely to occur within the GitHub
 // API, but does allow us to exercise the right code path.
 func TestDo_redirectLoop(t *testing.T) {
 	setup()
@@ -365,7 +366,7 @@ func TestDo_redirectLoop(t *testing.T) {
 	})
 
 	req, _ := client.NewRequest("GET", "/", nil)
-	_, err := client.Do(req, nil)
+	_, err := client.Do(context.Background(), req, nil)
 
 	if err == nil {
 		t.Error("Expected error to be returned.")
@@ -388,7 +389,7 @@ func TestDo_sanitizeURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewRequest returned unexpected error: %v", err)
 	}
-	_, err = unauthedClient.Do(req, nil)
+	_, err = unauthedClient.Do(context.Background(), req, nil)
 	if err == nil {
 		t.Fatal("Expected error to be returned.")
 	}
@@ -402,35 +403,25 @@ func TestDo_rateLimit(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(headerRateLimit, "60")
-		w.Header().Add(headerRateRemaining, "59")
-		w.Header().Add(headerRateReset, "1372700873")
+		w.Header().Set(headerRateLimit, "60")
+		w.Header().Set(headerRateRemaining, "59")
+		w.Header().Set(headerRateReset, "1372700873")
 	})
 
-	if got, want := client.Rate().Limit, 0; got != want {
-		t.Errorf("Client rate limit = %v, want %v", got, want)
-	}
-	if got, want := client.Rate().Remaining, 0; got != want {
-		t.Errorf("Client rate remaining = %v, got %v", got, want)
-	}
-	if !client.Rate().Reset.IsZero() {
-		t.Errorf("Client rate reset not initialized to zero value")
-	}
-
 	req, _ := client.NewRequest("GET", "/", nil)
-	_, err := client.Do(req, nil)
+	resp, err := client.Do(context.Background(), req, nil)
 	if err != nil {
 		t.Errorf("Do returned unexpected error: %v", err)
 	}
-	if got, want := client.Rate().Limit, 60; got != want {
+	if got, want := resp.Rate.Limit, 60; got != want {
 		t.Errorf("Client rate limit = %v, want %v", got, want)
 	}
-	if got, want := client.Rate().Remaining, 59; got != want {
+	if got, want := resp.Rate.Remaining, 59; got != want {
 		t.Errorf("Client rate remaining = %v, want %v", got, want)
 	}
 	reset := time.Date(2013, 7, 1, 17, 47, 53, 0, time.UTC)
-	if client.Rate().Reset.UTC() != reset {
-		t.Errorf("Client rate reset = %v, want %v", client.Rate().Reset, reset)
+	if resp.Rate.Reset.UTC() != reset {
+		t.Errorf("Client rate reset = %v, want %v", resp.Rate.Reset, reset)
 	}
 }
 
@@ -440,30 +431,29 @@ func TestDo_rateLimit_errorResponse(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(headerRateLimit, "60")
-		w.Header().Add(headerRateRemaining, "59")
-		w.Header().Add(headerRateReset, "1372700873")
+		w.Header().Set(headerRateLimit, "60")
+		w.Header().Set(headerRateRemaining, "59")
+		w.Header().Set(headerRateReset, "1372700873")
 		http.Error(w, "Bad Request", 400)
 	})
 
 	req, _ := client.NewRequest("GET", "/", nil)
-	_, err := client.Do(req, nil)
-
+	resp, err := client.Do(context.Background(), req, nil)
 	if err == nil {
 		t.Error("Expected error to be returned.")
 	}
 	if _, ok := err.(*RateLimitError); ok {
 		t.Errorf("Did not expect a *RateLimitError error; got %#v.", err)
 	}
-	if got, want := client.Rate().Limit, 60; got != want {
+	if got, want := resp.Rate.Limit, 60; got != want {
 		t.Errorf("Client rate limit = %v, want %v", got, want)
 	}
-	if got, want := client.Rate().Remaining, 59; got != want {
+	if got, want := resp.Rate.Remaining, 59; got != want {
 		t.Errorf("Client rate remaining = %v, want %v", got, want)
 	}
 	reset := time.Date(2013, 7, 1, 17, 47, 53, 0, time.UTC)
-	if client.Rate().Reset.UTC() != reset {
-		t.Errorf("Client rate reset = %v, want %v", client.Rate().Reset, reset)
+	if resp.Rate.Reset.UTC() != reset {
+		t.Errorf("Client rate reset = %v, want %v", resp.Rate.Reset, reset)
 	}
 }
 
@@ -473,9 +463,9 @@ func TestDo_rateLimit_rateLimitError(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(headerRateLimit, "60")
-		w.Header().Add(headerRateRemaining, "0")
-		w.Header().Add(headerRateReset, "1372700873")
+		w.Header().Set(headerRateLimit, "60")
+		w.Header().Set(headerRateRemaining, "0")
+		w.Header().Set(headerRateReset, "1372700873")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintln(w, `{
@@ -485,7 +475,7 @@ func TestDo_rateLimit_rateLimitError(t *testing.T) {
 	})
 
 	req, _ := client.NewRequest("GET", "/", nil)
-	_, err := client.Do(req, nil)
+	_, err := client.Do(context.Background(), req, nil)
 
 	if err == nil {
 		t.Error("Expected error to be returned.")
@@ -511,12 +501,12 @@ func TestDo_rateLimit_noNetworkCall(t *testing.T) {
 	setup()
 	defer teardown()
 
-	reset := time.Now().UTC().Round(time.Second).Add(time.Minute) // Rate reset is a minute from now, with 1 second precision.
+	reset := time.Now().UTC().Add(time.Minute).Round(time.Second) // Rate reset is a minute from now, with 1 second precision.
 
 	mux.HandleFunc("/first", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(headerRateLimit, "60")
-		w.Header().Add(headerRateRemaining, "0")
-		w.Header().Add(headerRateReset, fmt.Sprint(reset.Unix()))
+		w.Header().Set(headerRateLimit, "60")
+		w.Header().Set(headerRateRemaining, "0")
+		w.Header().Set(headerRateReset, fmt.Sprint(reset.Unix()))
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintln(w, `{
@@ -532,11 +522,11 @@ func TestDo_rateLimit_noNetworkCall(t *testing.T) {
 
 	// First request is made, and it makes the client aware of rate reset time being in the future.
 	req, _ := client.NewRequest("GET", "/first", nil)
-	client.Do(req, nil)
+	client.Do(context.Background(), req, nil)
 
 	// Second request should not cause a network call to be made, since client can predict a rate limit error.
 	req, _ = client.NewRequest("GET", "/second", nil)
-	_, err := client.Do(req, nil)
+	_, err := client.Do(context.Background(), req, nil)
 
 	if madeNetworkCall {
 		t.Fatal("Network call was made, even though rate limit is known to still be exceeded.")
@@ -578,7 +568,7 @@ func TestDo_rateLimit_abuseRateLimitError(t *testing.T) {
 	})
 
 	req, _ := client.NewRequest("GET", "/", nil)
-	_, err := client.Do(req, nil)
+	_, err := client.Do(context.Background(), req, nil)
 
 	if err == nil {
 		t.Error("Expected error to be returned.")
@@ -608,7 +598,7 @@ func TestDo_rateLimit_abuseRateLimitError_retryAfter(t *testing.T) {
 	})
 
 	req, _ := client.NewRequest("GET", "/", nil)
-	_, err := client.Do(req, nil)
+	_, err := client.Do(context.Background(), req, nil)
 
 	if err == nil {
 		t.Error("Expected error to be returned.")
@@ -636,7 +626,7 @@ func TestDo_noContent(t *testing.T) {
 	var body json.RawMessage
 
 	req, _ := client.NewRequest("GET", "/", nil)
-	_, err := client.Do(req, &body)
+	_, err := client.Do(context.Background(), req, &body)
 	if err != nil {
 		t.Fatalf("Do returned unexpected error: %v", err)
 	}
@@ -764,35 +754,6 @@ func TestError_Error(t *testing.T) {
 	}
 }
 
-func TestRateLimit(t *testing.T) {
-	setup()
-	defer teardown()
-
-	mux.HandleFunc("/rate_limit", func(w http.ResponseWriter, r *http.Request) {
-		if m := "GET"; m != r.Method {
-			t.Errorf("Request method = %v, want %v", r.Method, m)
-		}
-		fmt.Fprint(w, `{"resources":{
-			"core": {"limit":2,"remaining":1,"reset":1372700873},
-			"search": {"limit":3,"remaining":2,"reset":1372700874}
-		}}`)
-	})
-
-	rate, _, err := client.RateLimit()
-	if err != nil {
-		t.Errorf("Rate limit returned error: %v", err)
-	}
-
-	want := &Rate{
-		Limit:     2,
-		Remaining: 1,
-		Reset:     Timestamp{time.Date(2013, 7, 1, 17, 47, 53, 0, time.UTC).Local()},
-	}
-	if !reflect.DeepEqual(rate, want) {
-		t.Errorf("RateLimit returned %+v, want %+v", rate, want)
-	}
-}
-
 func TestRateLimits(t *testing.T) {
 	setup()
 	defer teardown()
@@ -807,7 +768,7 @@ func TestRateLimits(t *testing.T) {
 		}}`)
 	})
 
-	rate, _, err := client.RateLimits()
+	rate, _, err := client.RateLimits(context.Background())
 	if err != nil {
 		t.Errorf("RateLimits returned error: %v", err)
 	}
@@ -858,7 +819,7 @@ func TestUnauthenticatedRateLimitedTransport(t *testing.T) {
 	unauthedClient := NewClient(tp.Client())
 	unauthedClient.BaseURL = client.BaseURL
 	req, _ := unauthedClient.NewRequest("GET", "/", nil)
-	unauthedClient.Do(req, nil)
+	unauthedClient.Do(context.Background(), req, nil)
 }
 
 func TestUnauthenticatedRateLimitedTransport_missingFields(t *testing.T) {
@@ -932,7 +893,7 @@ func TestBasicAuthTransport(t *testing.T) {
 	basicAuthClient := NewClient(tp.Client())
 	basicAuthClient.BaseURL = client.BaseURL
 	req, _ := basicAuthClient.NewRequest("GET", "/", nil)
-	basicAuthClient.Do(req, nil)
+	basicAuthClient.Do(context.Background(), req, nil)
 }
 
 func TestBasicAuthTransport_transport(t *testing.T) {
