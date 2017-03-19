@@ -6,7 +6,10 @@ go:
   - 1.7
   - 1.8
 
+install: true
+
 script:
-  - go build -o bin/gitbackup src/gitbackup/main.go src/gitbackup/client.go src/gitbackup/backup.go src/gitbackup/repositories.go
+  - cd $GOPATH/src/github.com/amitsaha/gitbackup/
+  - GOPATH=$GOPATH/src/github.com/amitsaha/gitbackup/vendor go build -o bin/gitbackup src/gitbackup/main.go src/gitbackup/client.go src/gitbackup/backup.go src/gitbackup/repositories.go
   - cd src/gitbackup/
-  - go test -v
+  - GOPATH=$GOPATH/src/github.com/amitsaha/gitbackup/vendor go test -v
