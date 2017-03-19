@@ -29,8 +29,5 @@ build: off
 
 test_script:
   - cd c:\gopath\src\github.com\amitsaha\gitbackup
-  - set gopath=c:\gopath\src\github.com\amitsaha\gitbackup\vendor;%gopath%
-  - go build -o bin\gitbackup.exe src\gitbackup\main.go src\gitbackup\client.go src\gitbackup\backup.go src\gitbackup\repositories.go
-  - ls bin\
-  - cd src\gitbackup\
+  - go build -o bin\gitbackup.exe 
   - go test -v
