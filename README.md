@@ -1,6 +1,6 @@
 # gitbackup - Backup your GitHub and GitLab repositories
 
-[![Build Status](https://travis-ci.org/amitsaha/gitbackup.svg?branch=master)](https://travis-ci.org/amitsaha/gitbackup) [![Build status](https://ci.appveyor.com/api/projects/status/fwki40x1havyian2/branch/master?svg=true)](https://ci.appveyor.com/project/amitsaha/gitbackup/branch/master)
+Linux/Mac OS X [![Build Status](https://travis-ci.org/amitsaha/gitbackup.svg?branch=master)](https://travis-ci.org/amitsaha/gitbackup) Windows [![Build status](https://ci.appveyor.com/api/projects/status/fwki40x1havyian2/branch/master?svg=true)](https://ci.appveyor.com/project/amitsaha/gitbackup/branch/master)
 
 ``gitbackup`` is a tool to backup your git repositories from GitHub (including GitHub enterprise) or 
 GitLab (including custom GitLab installations). 
