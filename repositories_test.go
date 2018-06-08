@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/google/go-github/github"
+	"github.com/xanzy/go-gitlab"
 )
 
 var (
@@ -53,7 +54,7 @@ func TestGetGitHubRepositories(t *testing.T) {
 
 	repos, err := getRepositories(GitHubClient, "github", "all", "")
 	if err != nil {
-		t.Fatal("%v", err)
+		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
 	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://github.com/u/r1", Name: "r1"})
@@ -72,7 +73,7 @@ func TestGetGitLabRepositories(t *testing.T) {
 
 	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "")
 	if err != nil {
-		t.Fatal("%v", err)
+		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
 	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://gitlab.com/u/r1", Name: "r1"})
