@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -27,7 +28,14 @@ func setup() {
 	// test server
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
-	url, _ := url.Parse(server.URL)
+	base, _ := url.Parse(server.URL)
+
+	// Add a trailing slash because GitHub SDK expects it
+	u, err := url.Parse("/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	url := base.ResolveReference(u)
 
 	// github client configured to use test server
 	GitHubClient = github.NewClient(nil)
@@ -67,8 +75,8 @@ func TestGetGitLabRepositories(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/projects", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"name_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
+	mux.HandleFunc("/api/v4/projects", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
 	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "")
@@ -78,6 +86,8 @@ func TestGetGitLabRepositories(t *testing.T) {
 	var expected []*Repository
 	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://gitlab.com/u/r1", Name: "r1"})
 	if !reflect.DeepEqual(repos, expected) {
-		t.Errorf("Expected %+v, Got %+v", expected, repos)
+		for i := 0; i < len(repos); i++ {
+			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
+		}
 	}
 }

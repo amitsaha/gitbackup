@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/afero"
 	"log"
 	"net/url"
 	"os/exec"
 	"path"
 	"sync"
+
+	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/afero"
 )
 
 // We have them here so that we can override these in the tests

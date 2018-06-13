@@ -77,7 +77,7 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
 			if err == nil {
 				for _, repo := range repos {
-					namespace := strings.Split(repo.NameWithNamespace, "/")[0]
+					namespace := strings.Split(repo.PathWithNamespace, "/")[0]
 					repositories = append(repositories, &Repository{GitURL: repo.SSHURLToRepo, Name: repo.Name, Namespace: namespace})
 				}
 			} else {
