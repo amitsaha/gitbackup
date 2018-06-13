@@ -24,10 +24,7 @@ install:
   - go version
   - go env
 
-build: off
-
-
-test_script:
+build_script:
   - cd c:\gopath\src\github.com\amitsaha\gitbackup
   - go build -o bin\gitbackup.exe 
   - go test -v
