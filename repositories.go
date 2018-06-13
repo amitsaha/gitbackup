@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/google/go-github/github"
+	"github.com/xanzy/go-gitlab"
 )
 
 // https://github.com/google/go-github/blob/27c7c32b6d369610435bd2ad7b4d8554f235eb01/github/github.go#L301
@@ -60,12 +61,23 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 	}
 
 	if service == "gitlab" {
-		options := gitlab.ListProjectsOptions{Visibility: &gitlabRepoVisibility}
+		var visibility gitlab.VisibilityValue
+		switch gitlabRepoVisibility {
+		case "public":
+			visibility = gitlab.PublicVisibility
+		case "private":
+			visibility = gitlab.PrivateVisibility
+		case "internal":
+			fallthrough
+		case "default":
+			visibility = gitlab.InternalVisibility
+		}
+		options := gitlab.ListProjectsOptions{Visibility: &visibility}
 		for {
 			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
 			if err == nil {
 				for _, repo := range repos {
-					namespace := strings.Split(repo.NameWithNamespace, "/")[0]
+					namespace := strings.Split(repo.PathWithNamespace, "/")[0]
 					repositories = append(repositories, &Repository{GitURL: repo.SSHURLToRepo, Name: repo.Name, Namespace: namespace})
 				}
 			} else {

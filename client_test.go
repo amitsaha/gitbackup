@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
 	"net/url"
 	"testing"
+
+	"github.com/google/go-github/github"
+	"github.com/xanzy/go-gitlab"
 )
 
 func TestNewClient(t *testing.T) {
@@ -13,7 +14,7 @@ func TestNewClient(t *testing.T) {
 
 	customGitHost, _ := url.Parse("https://git.mycompany.com")
 	// http://stackoverflow.com/questions/23051339/how-to-avoid-end-of-url-slash-being-removed-when-resolvereference-in-go
-	api, _ := url.Parse("api/v3/")
+	api, _ := url.Parse("api/v4/")
 	expectedGitHostBaseURL := customGitHost.ResolveReference(api)
 
 	// Client for github.com

@@ -1,5 +1,5 @@
 //
-// Copyright 2015, Sander van Harmelen
+// Copyright 2017, Sander van Harmelen
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,28 +33,43 @@ type TagsService struct {
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/tags.html
 type Tag struct {
-	Commit  *Commit `json:"commit"`
-	Name    string  `json:"name"`
-	Message string  `json:"message"`
+	Commit  *Commit  `json:"commit"`
+	Release *Release `json:"release"`
+	Name    string   `json:"name"`
+	Message string   `json:"message"`
 }
 
-func (r Tag) String() string {
-	return Stringify(r)
+// Release represents a GitLab version release.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/tags.html
+type Release struct {
+	TagName     string `json:"tag_name"`
+	Description string `json:"description"`
 }
+
+func (t Tag) String() string {
+	return Stringify(t)
+}
+
+// ListTagsOptions represents the available ListTags() options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/tags.html#list-project-repository-tags
+type ListTagsOptions ListOptions
 
 // ListTags gets a list of tags from a project, sorted by name in reverse
 // alphabetical order.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/tags.html#list-project-repository-tags
-func (s *TagsService) ListTags(pid interface{}, options ...OptionFunc) ([]*Tag, *Response, error) {
+func (s *TagsService) ListTags(pid interface{}, opt *ListTagsOptions, options ...OptionFunc) ([]*Tag, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/repository/tags", url.QueryEscape(project))
 
-	req, err := s.client.NewRequest("GET", u, nil, options)
+	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -99,9 +114,10 @@ func (s *TagsService) GetTag(pid interface{}, tag string, options ...OptionFunc)
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/tags.html#create-a-new-tag
 type CreateTagOptions struct {
-	TagName *string `url:"tag_name,omitempty" json:"tag_name,omitempty"`
-	Ref     *string `url:"ref,omitempty" json:"ref,omitempty"`
-	Message *string `url:"message,omitempty" json:"message,omitempty"`
+	TagName            *string `url:"tag_name,omitempty" json:"tag_name,omitempty"`
+	Ref                *string `url:"ref,omitempty" json:"ref,omitempty"`
+	Message            *string `url:"message,omitempty" json:"message,omitempty"`
+	ReleaseDescription *string `url:"release_description:omitempty" json:"release_description,omitempty"`
 }
 
 // CreateTag creates a new tag in the repository that points to the supplied ref.
@@ -146,4 +162,71 @@ func (s *TagsService) DeleteTag(pid interface{}, tag string, options ...OptionFu
 	}
 
 	return s.client.Do(req, nil)
+}
+
+// CreateReleaseOptions represents the available CreateRelease() options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/tags.html#create-a-new-release
+type CreateReleaseOptions struct {
+	Description *string `url:"description:omitempty" json:"description,omitempty"`
+}
+
+// CreateRelease Add release notes to the existing git tag.
+// If there already exists a release for the given tag, status code 409 is returned.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/tags.html#create-a-new-release
+func (s *TagsService) CreateRelease(pid interface{}, tag string, opt *CreateReleaseOptions, options ...OptionFunc) (*Release, *Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("projects/%s/repository/tags/%s/release", url.QueryEscape(project), tag)
+
+	req, err := s.client.NewRequest("POST", u, opt, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	r := new(Release)
+	resp, err := s.client.Do(req, r)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return r, resp, err
+}
+
+// UpdateReleaseOptions represents the available UpdateRelease() options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/tags.html#update-a-release
+type UpdateReleaseOptions struct {
+	Description *string `url:"description:omitempty" json:"description,omitempty"`
+}
+
+// UpdateRelease Updates the release notes of a given release.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/tags.html#update-a-release
+func (s *TagsService) UpdateRelease(pid interface{}, tag string, opt *UpdateReleaseOptions, options ...OptionFunc) (*Release, *Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("projects/%s/repository/tags/%s/release", url.QueryEscape(project), tag)
+
+	req, err := s.client.NewRequest("PUT", u, opt, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	r := new(Release)
+	resp, err := s.client.Do(req, r)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return r, resp, err
 }

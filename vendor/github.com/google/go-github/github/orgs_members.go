@@ -278,7 +278,7 @@ func (s *OrganizationsService) RemoveOrgMembership(ctx context.Context, user, or
 // ListPendingOrgInvitations returns a list of pending invitations.
 //
 // GitHub API docs: https://developer.github.com/v3/orgs/members/#list-pending-organization-invitations
-func (s *OrganizationsService) ListPendingOrgInvitations(ctx context.Context, org int, opt *ListOptions) ([]*Invitation, *Response, error) {
+func (s *OrganizationsService) ListPendingOrgInvitations(ctx context.Context, org string, opt *ListOptions) ([]*Invitation, *Response, error) {
 	u := fmt.Sprintf("orgs/%v/invitations", org)
 	u, err := addOptions(u, opt)
 	if err != nil {
@@ -289,9 +289,6 @@ func (s *OrganizationsService) ListPendingOrgInvitations(ctx context.Context, or
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeOrgMembershipPreview)
 
 	var pendingInvitations []*Invitation
 	resp, err := s.client.Do(ctx, req, &pendingInvitations)

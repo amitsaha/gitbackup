@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/google/go-github/github"
+	"github.com/xanzy/go-gitlab"
 )
 
 var (
@@ -26,7 +28,14 @@ func setup() {
 	// test server
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
-	url, _ := url.Parse(server.URL)
+	base, _ := url.Parse(server.URL)
+
+	// Add a trailing slash because GitHub SDK expects it
+	u, err := url.Parse("/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	url := base.ResolveReference(u)
 
 	// github client configured to use test server
 	GitHubClient = github.NewClient(nil)
@@ -53,7 +62,7 @@ func TestGetGitHubRepositories(t *testing.T) {
 
 	repos, err := getRepositories(GitHubClient, "github", "all", "")
 	if err != nil {
-		t.Fatal("%v", err)
+		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
 	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://github.com/u/r1", Name: "r1"})
@@ -66,17 +75,19 @@ func TestGetGitLabRepositories(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/projects", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"name_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
+	mux.HandleFunc("/api/v4/projects", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
 	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "")
 	if err != nil {
-		t.Fatal("%v", err)
+		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
 	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://gitlab.com/u/r1", Name: "r1"})
 	if !reflect.DeepEqual(repos, expected) {
-		t.Errorf("Expected %+v, Got %+v", expected, repos)
+		for i := 0; i < len(repos); i++ {
+			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
+		}
 	}
 }
