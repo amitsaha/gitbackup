@@ -1,24 +1,27 @@
 package main
 
 import (
-	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
-	"golang.org/x/oauth2"
 	"log"
 	"net/url"
 	"os"
+
+	"github.com/google/go-github/github"
+	"github.com/xanzy/go-gitlab"
+	"golang.org/x/oauth2"
 )
 
 func NewClient(service string, gitHostUrl string) interface{} {
 	var gitHostUrlParsed *url.URL
 	var err error
 
+	// If a git host URL has been passed in, we assume it's
+	// a gitlab installation
 	if len(gitHostUrl) != 0 {
 		gitHostUrlParsed, err = url.Parse(gitHostUrl)
 		if err != nil {
 			log.Fatalf("Invalid gitlab URL: %s", gitHostUrl)
 		}
-		api, _ := url.Parse("api/v3/")
+		api, _ := url.Parse("api/v4/")
 		gitHostUrlParsed = gitHostUrlParsed.ResolveReference(api)
 	}
 
