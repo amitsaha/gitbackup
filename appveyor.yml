@@ -15,7 +15,7 @@ environment:
 
 # Build
 
-build: off
+build:
 
 install:
   # Install the specific Go version.
