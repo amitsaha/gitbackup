@@ -15,7 +15,7 @@ environment:
 
 # Build
 
-build: Script
+build: off
 
 install:
   # Install the specific Go version.
@@ -26,7 +26,7 @@ install:
   - go version
   - go env
 
-build_script:
+test_script:
   - cd c:\gopath\src\github.com\amitsaha\gitbackup
   - go build -o bin\gitbackup.exe 
   - go test -v
