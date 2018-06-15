@@ -13,3 +13,13 @@ script:
   - go build
   - go test -v
   - bash ./build-binaries.bash
+
+deploy:
+  provider: releases
+  api_key:
+    secure: $GITBACKUP_RELEASE
+  file_glob: true
+  file: dist/*.zip
+  skip_cleanup: true
+  on:
+    tags: true
