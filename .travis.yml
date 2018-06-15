@@ -12,3 +12,4 @@ script:
   - cd $GOPATH/src/github.com/amitsaha/gitbackup/
   - go build
   - go test -v
+  - bash ./build-binaries.sh
