@@ -19,7 +19,7 @@ deploy:
   api_key:
     secure: $GITBACKUP_RELEASE
   file_glob: true
-  file: dist/*.zip
+  file: artifacts/*.zip
   skip_cleanup: true
   on:
     tags: true
