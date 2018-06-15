@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 VERSION=$(git describe --abbrev=0 --tags)
+DISTDIR="artifacts/"
 
 for pair in linux/386 linux/amd64 linux/arm linux/arm64 darwin/amd64 dragonfly/amd64 freebsd/amd64 netbsd/amd64 openbsd/amd64 windows/amd64; do
 	GOOS=`echo $pair | cut -d'/' -f1`
@@ -12,3 +13,5 @@ for pair in linux/386 linux/amd64 linux/arm linux/arm64 darwin/amd64 dragonfly/a
     zip "$OBJECT_FILE.zip" $OBJECT_FILE
     popd
 done
+
+ls $DISTDIR
