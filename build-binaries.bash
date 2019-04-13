@@ -2,6 +2,7 @@
 
 VERSION=$(git describe --abbrev=0 --tags)
 DISTDIR="artifacts/"
+export GO111MODULE=on
 
 for pair in linux/386 linux/amd64 linux/arm linux/arm64 darwin/amd64 dragonfly/amd64 freebsd/amd64 netbsd/amd64 openbsd/amd64 windows/amd64; do
     GOOS=`echo $pair | cut -d'/' -f1`

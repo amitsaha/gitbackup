@@ -3,15 +3,14 @@ os:
   - linux
   - osx
 go: 
-  - 1.7
-  - 1.8
+  - 1.11.x
 
 install: true
 
 script:
   - cd $GOPATH/src/github.com/amitsaha/gitbackup/
-  - go build
-  - go test -v
+  - env GO111MODULE=on go build
+  - env GO111MODULE=on go test -v
   - bash ./build-binaries.bash
 
 deploy:

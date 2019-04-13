@@ -1,17 +1,11 @@
 version: "{build}"
 
-# Source Config
-clone_folder: c:\gopath\src\github.com\amitsaha\gitbackup
-
 # Build host
 
 environment:
-  GOPATH: c:\gopath
   matrix:
     - environment:
-      GOVERSION: 1.7.5
-    - environment:
-      GOVERSION: 1.8
+      GOVERSION: 1.12.4
 
 # Build
 
@@ -22,12 +16,9 @@ install:
   - msiexec /i go%GOVERSION%.windows-amd64.msi /q
   - set Path=c:\go\bin;c:\gopath\bin;%Path%
   - go version
-  - go env
 
 build: off
 
-
 test_script:
-  - cd c:\gopath\src\github.com\amitsaha\gitbackup
   - go build -o bin\gitbackup.exe 
   - go test -v
