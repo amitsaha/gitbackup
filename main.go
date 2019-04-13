@@ -30,8 +30,8 @@ func main() {
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
 
 	// Gitlab specific flags
-	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone")
-	gitlabProjectMembership := flag.String("gitlab.projectMembershipType", "all", "Project type to clone")
+	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone (internal, public, private)")
+	gitlabProjectMembership := flag.String("gitlab.projectMembershipType", "both", "Project type to clone (owner, member, both)")
 
 	flag.Parse()
 

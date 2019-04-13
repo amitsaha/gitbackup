@@ -62,19 +62,10 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 
 	if service == "gitlab" {
 		var visibility gitlab.VisibilityValue
+		var options gitlab.ListProjectsOptions
+
 		var owned bool
 		var memberOf bool
-
-		switch gitlabRepoVisibility {
-		case "public":
-			visibility = gitlab.PublicVisibility
-		case "private":
-			visibility = gitlab.PrivateVisibility
-		case "internal":
-			fallthrough
-		case "default":
-			visibility = gitlab.InternalVisibility
-		}
 
 		if gitlabProjectType == "owner" {
 			owned = true
@@ -82,8 +73,28 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 		if gitlabProjectType == "member" {
 			memberOf = true
 		}
-		
-		options := gitlab.ListProjectsOptions{Visibility: &visibility, Membership: &memberOf, Owned: &owned}
+
+		if gitlabProjectType == "both" {
+			owned = true
+			memberOf = true
+		}
+
+		if gitlabRepoVisibility != "all" {
+			switch gitlabRepoVisibility {
+			case "public":
+				visibility = gitlab.PublicVisibility
+			case "private":
+				visibility = gitlab.PrivateVisibility
+			case "internal":
+				fallthrough
+			case "default":
+				visibility = gitlab.InternalVisibility
+			}
+			options = gitlab.ListProjectsOptions{Visibility: &visibility, Membership: &memberOf, Owned: &owned}
+		} else {
+			options = gitlab.ListProjectsOptions{Membership: &memberOf, Owned: &owned}
+		}
+
 		for {
 			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
 			if err == nil {
