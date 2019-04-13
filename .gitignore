@@ -33,7 +33,9 @@ _testmain.go
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+gitbackup
 # external packages folder
 #vendor/
 #
-.DS_Store
+
+#

@@ -31,6 +31,7 @@ func main() {
 
 	// Gitlab specific flags
 	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone")
+	gitlabProjectMembership := flag.String("gitlab.projectMembershipType", "all", "Project type to clone")
 
 	flag.Parse()
 
@@ -40,7 +41,7 @@ func main() {
 	*backupDir = setupBackupDir(*backupDir, *service, *githostUrl)
 	tokens := make(chan bool, MAX_CONCURRENT_CLONES)
 	client := NewClient(*service, *githostUrl)
-	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility)
+	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership)
 	if err != nil {
 		log.Fatal(err)
 	} else {

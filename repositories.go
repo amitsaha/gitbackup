@@ -32,7 +32,7 @@ type Repository struct {
 	Namespace string
 }
 
-func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string) ([]*Repository, error) {
+func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string, gitlabProjectType string) ([]*Repository, error) {
 
 	if client == nil {
 		log.Fatalf("Couldn't acquire a client to talk to %s", service)
@@ -62,6 +62,9 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 
 	if service == "gitlab" {
 		var visibility gitlab.VisibilityValue
+		var owned bool
+		var memberOf bool
+
 		switch gitlabRepoVisibility {
 		case "public":
 			visibility = gitlab.PublicVisibility
@@ -72,7 +75,15 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 		case "default":
 			visibility = gitlab.InternalVisibility
 		}
-		options := gitlab.ListProjectsOptions{Visibility: &visibility}
+
+		if gitlabProjectType == "owner" {
+			owned = true
+		}
+		if gitlabProjectType == "member" {
+			memberOf = true
+		}
+		
+		options := gitlab.ListProjectsOptions{Visibility: &visibility, Membership: &memberOf, Owned: &owned}
 		for {
 			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
 			if err == nil {
