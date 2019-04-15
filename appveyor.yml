@@ -14,16 +14,13 @@ install:
   - rmdir c:\go /s /q
   - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-amd64.msi
   - msiexec /i go%GOVERSION%.windows-amd64.msi /q
-  - set Path=c:\go\bin;c:\gopath\bin;%Path%
-  - go version
-  - go get -u golang.org/x/lint/golint
 
 build: off
 
 test_script:
-  - set Path=c:\go\bin;c:\gopath\bin;%Path%
+  - go get -u golang.org/x/lint/golint
+  - set Path=c:\go\bin;%Path%
   - go build -o bin\gitbackup.exe
   - dir c:\go\bin
-  - dir c:\gopath\bin
   - golint.exe -set_exit_status
   - go test -v
