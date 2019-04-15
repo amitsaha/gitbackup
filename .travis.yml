@@ -10,9 +10,7 @@ install: true
 script:
   - go get -u golang.org/x/lint/golint
   - cd $GOPATH/src/github.com/amitsaha/gitbackup/
-  - env GO111MODULE=on go build
-  - env GO111MODULE=on $(go env GOBIN)/golint
-  - env GO111MODULE=on go test -v
+  - bash ./check_test.bash
   - bash ./build-binaries.bash
 
 deploy:
