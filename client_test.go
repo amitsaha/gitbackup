@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
+	gitlab "github.com/xanzy/go-gitlab"
 )
 
 func TestNewClient(t *testing.T) {
@@ -18,29 +18,29 @@ func TestNewClient(t *testing.T) {
 	expectedGitHostBaseURL := customGitHost.ResolveReference(api)
 
 	// Client for github.com
-	client := NewClient("github", "")
+	client := newClient("github", "")
 	client = client.(*github.Client)
 
 	// Client for Enterprise Github
-	client = NewClient("github", customGitHost.String())
+	client = newClient("github", customGitHost.String())
 	gotBaseURL := client.(*github.Client).BaseURL
 	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
 	// Client for gitlab.com
-	client = NewClient("gitlab", "")
+	client = newClient("gitlab", "")
 	client = client.(*gitlab.Client)
 
 	// Client for custom gitlab installation
-	client = NewClient("gitlab", customGitHost.String())
+	client = newClient("gitlab", customGitHost.String())
 	gotBaseURL = client.(*gitlab.Client).BaseURL()
 	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
 	// Not yet supported
-	client = NewClient("notyetsupported", "")
+	client = newClient("notyetsupported", "")
 	if client != nil {
 		t.Errorf("Expected nil")
 	}

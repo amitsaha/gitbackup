@@ -60,7 +60,7 @@ func TestGetGitHubRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "git_url": "git://github.com/u/r1", "name": "r1"}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "all", "")
+	repos, err := getRepositories(GitHubClient, "github", "all", "", "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -79,7 +79,7 @@ func TestGetGitLabRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
-	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "")
+	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "","")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

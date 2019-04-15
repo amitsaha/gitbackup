@@ -7,7 +7,7 @@ import (
 	"path"
 	"sync"
 
-	"github.com/mitchellh/go-homedir"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 )
 
@@ -38,7 +38,7 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, err
 	return stdoutStderr, err
 }
 
-func setupBackupDir(backupDir string, service string, githostUrl string) string {
+func setupBackupDir(backupDir string, service string, githostURL string) string {
 	if len(backupDir) == 0 {
 		homeDir, err := homedir.Dir()
 		if err == nil {
@@ -48,11 +48,11 @@ func setupBackupDir(backupDir string, service string, githostUrl string) string 
 			log.Fatal("Could not determine home directory and backup directory not specified")
 		}
 	} else {
-		if len(githostUrl) == 0 {
+		if len(githostURL) == 0 {
 			service = service + ".com"
 			backupDir = path.Join(backupDir, service)
 		} else {
-			u, err := url.Parse(githostUrl)
+			u, err := url.Parse(githostURL)
 			if err != nil {
 				panic(err)
 			}
