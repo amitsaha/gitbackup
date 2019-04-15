@@ -60,32 +60,23 @@ $ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType member
 
 ### Backing up your GitLab repositories
 
-To backup all projects which have their [visibility](https://docs.gitlab.com/ce/api/projects.html#project-visibility-level) set to
+To backup all projects you either own or are a member of which have their [visibility](https://docs.gitlab.com/ce/api/projects.html#project-visibility-level) set to
 "internal" on ``https://gitlab.com`` to the default backup directory (``$HOME/.gitbackup/``):
 
 ```lang=bash
 $ GITLAB_TOKEN=secret$token gitbackup -service gitlab
 ```
 
-To backup only the GitLab projects which are "public"
+To backup only the GitLab projects (either you are an owner or member of) which are "public"
 
 ```lang=bash
 $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -gitlab.projectVisibility public
 ```
 
-To backup only the private repositories:
+To backup only the private repositories (either you are an owner or member of):
 
 ```lang=bash
 $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -gitlab.projectVisibility private
-```
-
-To backup private repositories which you are a member or owner of:
-
-```lang=bash
-$ GITLAB_TOKEN=secret$token gitbackup \
-    -service gitlab \
-    -gitlab.projectVisibility private \
-    -gitlab.projectMembershipType both
 ```
 
 To backup public repositories which you are an owner of:
@@ -97,6 +88,14 @@ $ GITLAB_TOKEN=secret$token gitbackup \
     -gitlab.projectMembershipType owner
 ```
 
+To backup public repositories which you are an member of:
+
+```lang=bash
+$ GITLAB_TOKEN=secret$token gitbackup \
+    -service gitlab \
+    -gitlab.projectVisibility public \
+    -gitlab.projectMembershipType member
+```
 
 ### GitHub Enterprise or custom GitLab installation
 
