@@ -21,6 +21,7 @@ install:
 build: off
 
 test_script:
+  - set Path=c:\go\bin;c:\gopath\bin;%Path%
   - go build -o bin\gitbackup.exe
-  - golint
+  - golint.exe
   - go test -v
