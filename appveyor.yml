@@ -23,5 +23,7 @@ build: off
 test_script:
   - set Path=c:\go\bin;c:\gopath\bin;%Path%
   - go build -o bin\gitbackup.exe
-  - golint.exe
+  - dir c:\go\bin
+  - dir c:\gopath\bin
+  - golint.exe -set_exit_status
   - go test -v

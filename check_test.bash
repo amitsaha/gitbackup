@@ -4,6 +4,6 @@ set -e
 
 export GO111MODULE=on
 go env
-golint
+golint -set_exit_status
 go build
 go test
