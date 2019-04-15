@@ -2,15 +2,16 @@ language: go
 os:
   - linux
   - osx
-go: 
+go:
   - 1.12.x
 
 install: true
 
 script:
+  - go get -u golang.org/x/lint/golint
   - cd $GOPATH/src/github.com/amitsaha/gitbackup/
   - env GO111MODULE=on go build
-  - env GO111MODULE=on golint
+  - env GO111MODULE=on $(go env GOBIN)/golint
   - env GO111MODULE=on go test -v
   - bash ./build-binaries.bash
 

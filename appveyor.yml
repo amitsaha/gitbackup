@@ -16,10 +16,11 @@ install:
   - msiexec /i go%GOVERSION%.windows-amd64.msi /q
   - set Path=c:\go\bin;c:\gopath\bin;%Path%
   - go version
+  - go get -u golang.org/x/lint/golint
 
 build: off
 
 test_script:
-  - go build -o bin\gitbackup.exe 
+  - go build -o bin\gitbackup.exe
   - golint
   - go test -v
