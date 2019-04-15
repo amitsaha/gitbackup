@@ -6,23 +6,23 @@ import (
 	"os"
 
 	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
+	gitlab "github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
 )
 
-func NewClient(service string, gitHostUrl string) interface{} {
-	var gitHostUrlParsed *url.URL
+func newClient(service string, gitHostURL string) interface{} {
+	var gitHostURLParsed *url.URL
 	var err error
 
 	// If a git host URL has been passed in, we assume it's
 	// a gitlab installation
-	if len(gitHostUrl) != 0 {
-		gitHostUrlParsed, err = url.Parse(gitHostUrl)
+	if len(gitHostURL) != 0 {
+		gitHostURLParsed, err = url.Parse(gitHostURL)
 		if err != nil {
-			log.Fatalf("Invalid gitlab URL: %s", gitHostUrl)
+			log.Fatalf("Invalid gitlab URL: %s", gitHostURL)
 		}
 		api, _ := url.Parse("api/v4/")
-		gitHostUrlParsed = gitHostUrlParsed.ResolveReference(api)
+		gitHostURLParsed = gitHostURLParsed.ResolveReference(api)
 	}
 
 	if service == "github" {
@@ -35,8 +35,8 @@ func NewClient(service string, gitHostUrl string) interface{} {
 		)
 		tc := oauth2.NewClient(oauth2.NoContext, ts)
 		client := github.NewClient(tc)
-		if gitHostUrlParsed != nil {
-			client.BaseURL = gitHostUrlParsed
+		if gitHostURLParsed != nil {
+			client.BaseURL = gitHostURLParsed
 		}
 		return client
 	}
@@ -47,8 +47,8 @@ func NewClient(service string, gitHostUrl string) interface{} {
 			log.Fatal("GITLAB_TOKEN environment variable not set")
 		}
 		client := gitlab.NewClient(nil, gitlabToken)
-		if gitHostUrlParsed != nil {
-			client.SetBaseURL(gitHostUrlParsed.String())
+		if gitHostURLParsed != nil {
+			client.SetBaseURL(gitHostURLParsed.String())
 		}
 		return client
 	}

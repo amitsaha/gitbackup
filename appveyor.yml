@@ -18,9 +18,5 @@ install:
 build: off
 
 test_script:
-  - go get -u golang.org/x/lint/golint
-  - set Path=c:\go\bin;%Path%
   - go build -o bin\gitbackup.exe
-  - dir c:\go\bin
-  - golint.exe -set_exit_status
   - go test -v

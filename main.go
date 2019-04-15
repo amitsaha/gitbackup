@@ -6,8 +6,9 @@ import (
 	"sync"
 )
 
-// Maximum number of concurrent clones
-var MAX_CONCURRENT_CLONES int = 20
+// MaxConcurrentClones is the upper limit of the maximum number of
+// concurrent git clones
+var MaxConcurrentClones = 20
 
 func main() {
 
@@ -23,7 +24,7 @@ func main() {
 
 	// Generic flags
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
-	githostUrl := flag.String("githost.url", "", "DNS of the custom Git host")
+	githostURL := flag.String("githost.url", "", "DNS of the custom Git host")
 	backupDir := flag.String("backupdir", "", "Backup directory")
 
 	// GitHub specific flags
@@ -38,9 +39,9 @@ func main() {
 	if len(*service) == 0 || !knownServices[*service] {
 		log.Fatal("Please specify the git service type: github, gitlab")
 	}
-	*backupDir = setupBackupDir(*backupDir, *service, *githostUrl)
-	tokens := make(chan bool, MAX_CONCURRENT_CLONES)
-	client := NewClient(*service, *githostUrl)
+	*backupDir = setupBackupDir(*backupDir, *service, *githostURL)
+	tokens := make(chan bool, MaxConcurrentClones)
+	client := newClient(*service, *githostURL)
 	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership)
 	if err != nil {
 		log.Fatal(err)

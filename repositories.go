@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
+	gitlab "github.com/xanzy/go-gitlab"
 )
 
+// Response is derived from the following sources:
 // https://github.com/google/go-github/blob/27c7c32b6d369610435bd2ad7b4d8554f235eb01/github/github.go#L301
 // https://github.com/xanzy/go-gitlab/blob/3acf8d75e9de17ad4b41839a7cabbf2537760ab4/gitlab.go#L286
 type Response struct {
@@ -26,6 +27,8 @@ type Response struct {
 	LastPage  int
 }
 
+// Repository is a container for the details for a repository
+// we will backup
 type Repository struct {
 	GitURL    string
 	Name      string
