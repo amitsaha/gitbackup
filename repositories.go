@@ -77,7 +77,7 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			memberOf = true
 		}
 
-		if gitlabProjectType == "both" {
+		if gitlabProjectType == "all" {
 			owned = true
 			memberOf = true
 		}
