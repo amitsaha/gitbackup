@@ -32,7 +32,7 @@ func main() {
 
 	// Gitlab specific flags
 	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone (internal, public, private)")
-	gitlabProjectMembership := flag.String("gitlab.projectMembershipType", "both", "Project type to clone (owner, member, both)")
+	gitlabProjectMembership := flag.String("gitlab.projectMembershipType", "all", "Project type to clone (all, owner, member)")
 
 	flag.Parse()
 
@@ -46,6 +46,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	} else {
+		log.Printf("Backing up %v repositories now..\n", len(repos))
 		for _, repo := range repos {
 			tokens <- true
 			wg.Add(1)

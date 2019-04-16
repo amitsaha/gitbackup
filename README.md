@@ -32,7 +32,7 @@ Usage of ./bin/gitbackup:
   -github.repoType string
         Repo types to backup (all, owner, member) (default "all")
   -gitlab.projectMembershipType string
-        Project type to clone (owner, member, both) (default "both")
+        Project type to clone (all, owner, member) (default "all")
   -gitlab.projectVisibility string
         Visibility level of Projects to clone (internal, public, private) (default "internal")
   -service string
