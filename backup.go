@@ -38,7 +38,7 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, err
 			// https://gitlab.com/amitsaha/testproject1 => https://amitsaha:token@gitlab.com/amitsaha/testproject1
 			u, err := url.Parse(repo.CloneURL)
 			if err != nil {
-				log.Fatal("Inavlid clone URL: %v\n", err)
+				log.Fatalf("Inavlid clone URL: %v\n", err)
 			}
 			log.Printf(repo.CloneURL)
 			repo.CloneURL = u.Scheme + "://" + os.Getenv("GITHOST_USERNAME") + ":" + gitHostToken + "@" + u.Host + u.Path

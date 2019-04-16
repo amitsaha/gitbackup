@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/afero"
 	"os"
 	"os/exec"
 	"path"
 	"sync"
 	"testing"
+
+	"github.com/spf13/afero"
 )
 
 func fakePullCommand(command string, args ...string) (cmd *exec.Cmd) {
@@ -28,7 +29,7 @@ func fakeCloneCommand(command string, args ...string) (cmd *exec.Cmd) {
 
 func TestBackup(t *testing.T) {
 	var wg sync.WaitGroup
-	repo := Repository{Name: "testrepo", GitURL: "git://foo.com/foo"}
+	repo := Repository{Name: "testrepo", CloneURL: "git://foo.com/foo"}
 	backupDir := "/tmp/backupdir"
 
 	// Memory FS
