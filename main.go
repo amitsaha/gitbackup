@@ -10,6 +10,8 @@ import (
 // concurrent git clones
 var MaxConcurrentClones = 20
 
+var gitHostToken string
+
 func main() {
 
 	// Used for waiting for all the goroutines to finish before exiting

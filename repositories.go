@@ -30,9 +30,10 @@ type Response struct {
 // Repository is a container for the details for a repository
 // we will backup
 type Repository struct {
-	GitURL    string
+	CloneURL  string
 	Name      string
 	Namespace string
+	Private   bool
 }
 
 func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string, gitlabProjectType string) ([]*Repository, error) {
@@ -51,7 +52,7 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			if err == nil {
 				for _, repo := range repos {
 					namespace := strings.Split(*repo.FullName, "/")[0]
-					repositories = append(repositories, &Repository{GitURL: *repo.GitURL, Name: *repo.Name, Namespace: namespace})
+					repositories = append(repositories, &Repository{CloneURL: *repo.CloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
 				}
 			} else {
 				return nil, err
@@ -103,7 +104,7 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			if err == nil {
 				for _, repo := range repos {
 					namespace := strings.Split(repo.PathWithNamespace, "/")[0]
-					repositories = append(repositories, &Repository{GitURL: repo.SSHURLToRepo, Name: repo.Name, Namespace: namespace})
+					repositories = append(repositories, &Repository{CloneURL: repo.WebURL, Name: repo.Name, Namespace: namespace, Private: repo.Visibility == gitlab.PrivateVisibility || repo.Visibility == gitlab.InternalVisibility})
 				}
 			} else {
 				return nil, err
