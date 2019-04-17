@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/url"
-	"os"
 	"os/exec"
 	"path"
 	"sync"
@@ -41,7 +40,7 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, err
 				log.Fatalf("Inavlid clone URL: %v\n", err)
 			}
 			log.Printf(repo.CloneURL)
-			repo.CloneURL = u.Scheme + "://" + os.Getenv("GITHOST_USERNAME") + ":" + gitHostToken + "@" + u.Host + u.Path
+			repo.CloneURL = u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
 		}
 		cmd := execCommand(gitCommand, "clone", repo.CloneURL, repoDir)
 		stdoutStderr, err = cmd.CombinedOutput()

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 	"sync"
 )
 
@@ -11,6 +12,7 @@ import (
 var MaxConcurrentClones = 20
 
 var gitHostToken string
+var gitHostUsername string
 
 func main() {
 
@@ -28,6 +30,7 @@ func main() {
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
 	githostURL := flag.String("githost.url", "", "DNS of the custom Git host")
 	backupDir := flag.String("backupdir", "", "Backup directory")
+	ignorePrivate := flag.Bool("ignore-private", false, "Ignore private repositories/projects")
 
 	// GitHub specific flags
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
@@ -44,6 +47,15 @@ func main() {
 	*backupDir = setupBackupDir(*backupDir, *service, *githostURL)
 	tokens := make(chan bool, MaxConcurrentClones)
 	client := newClient(*service, *githostURL)
+
+	if os.Getenv("GITHOST_USERNAME") == "" {
+		gitHostUsername = getUsername(client, *service)
+	} else {
+		gitHostUsername = os.Getenv("GITHOST_USERNAME")
+	}
+	if len(gitHostUsername) == 0 && !*ignorePrivate {
+		log.Fatal("Your Git host's username is needed for backing up private repositories")
+	}
 	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership)
 	if err != nil {
 		log.Fatal(err)
