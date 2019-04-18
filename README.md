@@ -9,7 +9,7 @@ GitLab (including custom GitLab installations).
 pull requests or other data associated with a git repository. This may or may not be in the future
 scope of this tool.
 
-If you are following along my Linux Journal article, please obtain the version of the source tagged
+If you are following along my Linux Journal article (published in 2017), please obtain the version of the source tagged
 with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
 
 ## Installling `gitbackup`
@@ -21,7 +21,23 @@ and architecture and copy the binary somewhere in your ``$PATH``. It is recommen
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for
 backing up GitHub repositories and [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens)
-for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment variables respectively.
+for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment 
+
+variables respectively.
+
+### OAuth Scopes required
+
+#### GitHub
+
+- `repo`: Reading repositories, including private repositories
+- `user - read:user`: Reading the authenticated user details. This is needed for retrieving username which is needed for retrieving private repositories.
+
+#### GitLab
+
+- `api`: Grants complete read/write access to the API, including all groups and projects.
+For some reason, `read_user` and `read_repository` is not sufficient.
+
+### Examples
 
 Typing ``-help`` will display the command line options that `gitbackup` recognizes:
 

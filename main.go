@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"log"
-	"os"
 	"sync"
 )
 
@@ -48,11 +47,8 @@ func main() {
 	tokens := make(chan bool, MaxConcurrentClones)
 	client := newClient(*service, *githostURL)
 
-	if os.Getenv("GITHOST_USERNAME") == "" {
-		gitHostUsername = getUsername(client, *service)
-	} else {
-		gitHostUsername = os.Getenv("GITHOST_USERNAME")
-	}
+	gitHostUsername = getUsername(client, *service)
+
 	if len(gitHostUsername) == 0 && !*ignorePrivate {
 		log.Fatal("Your Git host's username is needed for backing up private repositories")
 	}
