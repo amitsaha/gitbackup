@@ -39,7 +39,6 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, err
 			if err != nil {
 				log.Fatalf("Inavlid clone URL: %v\n", err)
 			}
-			log.Printf(repo.CloneURL)
 			repo.CloneURL = u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
 		}
 		cmd := execCommand(gitCommand, "clone", repo.CloneURL, repoDir)
