@@ -41,6 +41,9 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, err
 			}
 			repo.CloneURL = u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
 		}
+
+		log.Printf("Cloning %s \n", repo.Name)
+		log.Printf(repo.GitURL)
 		cmd := execCommand(gitCommand, "clone", repo.CloneURL, repoDir)
 		stdoutStderr, err = cmd.CombinedOutput()
 	}

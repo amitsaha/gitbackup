@@ -52,7 +52,7 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			if err == nil {
 				for _, repo := range repos {
 					namespace := strings.Split(*repo.FullName, "/")[0]
-					repositories = append(repositories, &Repository{CloneURL: *repo.CloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
+					repositories = append(repositories, &Repository{GitURL: *repo.SSHURL, Name: *repo.Name, Namespace: namespace})
 				}
 			} else {
 				return nil, err
