@@ -57,7 +57,7 @@ func TestGetGitHubRepositories(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/user/repos", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "clone_url": "https://github.com/u/r1", "name": "r1", "private": false}]`)
+		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false}]`)
 	})
 
 	repos, err := getRepositories(GitHubClient, "github", "all", "", "")
@@ -76,7 +76,7 @@ func TestGetGitLabRepositories(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/api/v4/projects", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "web_url": "https://gitlab.com/u/r1", "name": "r1"}]`)
+		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
 	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "", "")
