@@ -38,7 +38,8 @@ For some reason, `read_user` and `read_repository` is not sufficient.
 ### Security and credentials
 
 When you provide the tokens via environment variables, they remain accessible in your shell history 
-and via the processes' environment for the lifetime of the process. Private repositories
+and via the processes' environment for the lifetime of the process. By default, SSH authentication
+is used to clone your repositories. If `use-https-clone` is specified, private repositories
 are cloned via `https` basic auth and the token provided will be stored  in the repositories' 
 `.git/config`.
 
@@ -59,8 +60,12 @@ Usage of ./bin/gitbackup:
         Project type to clone (all, owner, member) (default "all")
   -gitlab.projectVisibility string
         Visibility level of Projects to clone (internal, public, private) (default "internal")
+  -ignore-private
+    	Ignore private repositories/projects
   -service string
-        Git Hosted Service Name (github/gitlab)
+    	Git Hosted Service Name (github/gitlab)
+  -use-https-clone
+    	Use HTTPS for cloning instead of SSH
 ```
 ### Backing up your GitHub repositories
 

@@ -43,6 +43,7 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 	}
 
 	var repositories []*Repository
+	var cloneURL string
 
 	if service == "github" {
 		ctx := context.Background()
@@ -52,7 +53,12 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			if err == nil {
 				for _, repo := range repos {
 					namespace := strings.Split(*repo.FullName, "/")[0]
-					repositories = append(repositories, &Repository{CloneURL: *repo.SSHURL, Name: *repo.Name, Namespace: namespace})
+					if useHTTPSClone != nil && *useHTTPSClone {
+						cloneURL = *repo.CloneURL
+					} else {
+						cloneURL = *repo.SSHURL
+					}
+					repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
 				}
 			} else {
 				return nil, err
@@ -104,7 +110,12 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			if err == nil {
 				for _, repo := range repos {
 					namespace := strings.Split(repo.PathWithNamespace, "/")[0]
-					repositories = append(repositories, &Repository{CloneURL: repo.SSHURLToRepo, Name: repo.Name, Namespace: namespace, Private: repo.Visibility == gitlab.PrivateVisibility || repo.Visibility == gitlab.InternalVisibility})
+					if useHTTPSClone != nil && *useHTTPSClone {
+						cloneURL = repo.WebURL
+					} else {
+						cloneURL = repo.SSHURLToRepo
+					}
+					repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: repo.Name, Namespace: namespace, Private: repo.Public})
 				}
 			} else {
 				return nil, err
