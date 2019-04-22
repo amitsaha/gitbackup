@@ -30,6 +30,7 @@ func newClient(service string, gitHostURL string) interface{} {
 		if githubToken == "" {
 			log.Fatal("GITHUB_TOKEN environment variable not set")
 		}
+		gitHostToken = githubToken
 		ts := oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: githubToken},
 		)
@@ -46,6 +47,7 @@ func newClient(service string, gitHostURL string) interface{} {
 		if gitlabToken == "" {
 			log.Fatal("GITLAB_TOKEN environment variable not set")
 		}
+		gitHostToken = gitlabToken
 		client := gitlab.NewClient(nil, gitlabToken)
 		if gitHostURLParsed != nil {
 			client.SetBaseURL(gitHostURLParsed.String())

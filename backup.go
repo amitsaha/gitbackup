@@ -30,8 +30,20 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, err
 		cmd := execCommand(gitCommand, "-C", repoDir, "pull")
 		stdoutStderr, err = cmd.CombinedOutput()
 	} else {
-		log.Printf("Cloning %s \n", repo.Name)
-		cmd := execCommand(gitCommand, "clone", repo.GitURL, repoDir)
+		log.Printf("Cloning %s\n", repo.Name)
+		log.Printf("%#v\n", repo)
+
+		if repo.Private && useHTTPSClone != nil && *useHTTPSClone && ignorePrivate != nil && !*ignorePrivate {
+			// Add username and token to the clone URL
+			// https://gitlab.com/amitsaha/testproject1 => https://amitsaha:token@gitlab.com/amitsaha/testproject1
+			u, err := url.Parse(repo.CloneURL)
+			if err != nil {
+				log.Fatalf("Invalid clone URL: %v\n", err)
+			}
+			repo.CloneURL = u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
+		}
+
+		cmd := execCommand(gitCommand, "clone", repo.CloneURL, repoDir)
 		stdoutStderr, err = cmd.CombinedOutput()
 	}
 

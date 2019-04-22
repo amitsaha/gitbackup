@@ -9,8 +9,8 @@ GitLab (including custom GitLab installations).
 pull requests or other data associated with a git repository. This may or may not be in the future
 scope of this tool.
 
-If you are following along my Linux Journal article, please obtain the version of the source tagged
-with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
+If you are following along my Linux Journal article (published in 2017), please obtain the version of the 
+source tagged with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
 
 ## Installling `gitbackup`
 
@@ -22,6 +22,28 @@ and architecture and copy the binary somewhere in your ``$PATH``. It is recommen
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for
 backing up GitHub repositories and [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens)
 for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment variables respectively.
+
+### OAuth Scopes required
+
+#### GitHub
+
+- `repo`: Reading repositories, including private repositories
+- `user - read:user`: Reading the authenticated user details. This is needed for retrieving username which is needed for retrieving private repositories.
+
+#### GitLab
+
+- `api`: Grants complete read/write access to the API, including all groups and projects.
+For some reason, `read_user` and `read_repository` is not sufficient.
+
+### Security and credentials
+
+When you provide the tokens via environment variables, they remain accessible in your shell history 
+and via the processes' environment for the lifetime of the process. By default, SSH authentication
+is used to clone your repositories. If `use-https-clone` is specified, private repositories
+are cloned via `https` basic auth and the token provided will be stored  in the repositories' 
+`.git/config`.
+
+### Examples
 
 Typing ``-help`` will display the command line options that `gitbackup` recognizes:
 
@@ -38,8 +60,12 @@ Usage of ./bin/gitbackup:
         Project type to clone (all, owner, member) (default "all")
   -gitlab.projectVisibility string
         Visibility level of Projects to clone (internal, public, private) (default "internal")
+  -ignore-private
+    	Ignore private repositories/projects
   -service string
-        Git Hosted Service Name (github/gitlab)
+    	Git Hosted Service Name (github/gitlab)
+  -use-https-clone
+    	Use HTTPS for cloning instead of SSH
 ```
 ### Backing up your GitHub repositories
 
@@ -121,7 +147,6 @@ $ GITHUB_TOKEN=secret$token gitbackup -service github -backupdir /data/
 This will create a ``github.com`` directory in ``/data`` and backup all your repositories there instead.
 Similarly, it will create a ``gitlab.com`` directory, if you are backing up repositories from ``gitlab``.
 If you have specified a Git Host URL, it will create a directory structure ``data/host-url/``.
-
 
 
 ## Building

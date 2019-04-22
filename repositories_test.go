@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/go-github/github"
-	"github.com/xanzy/go-gitlab"
+	gitlab "github.com/xanzy/go-gitlab"
 )
 
 var (
@@ -57,7 +57,7 @@ func TestGetGitHubRepositories(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/user/repos", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "git_url": "git://github.com/u/r1", "name": "r1"}]`)
+		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false}]`)
 	})
 
 	repos, err := getRepositories(GitHubClient, "github", "all", "", "")
@@ -65,7 +65,7 @@ func TestGetGitHubRepositories(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
-	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://github.com/u/r1", Name: "r1"})
+	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://github.com/u/r1", Name: "r1", Private: false})
 	if !reflect.DeepEqual(repos, expected) {
 		t.Errorf("Expected %+v, Got %+v", expected, repos)
 	}
@@ -76,15 +76,15 @@ func TestGetGitLabRepositories(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/api/v4/projects", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "git://gitlab.com/u/r1", "name": "r1"}]`)
+		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
-	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "","")
+	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "", "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
-	expected = append(expected, &Repository{Namespace: "test", GitURL: "git://gitlab.com/u/r1", Name: "r1"})
+	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://gitlab.com/u/r1", Name: "r1"})
 	if !reflect.DeepEqual(repos, expected) {
 		for i := 0; i < len(repos); i++ {
 			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
