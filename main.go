@@ -11,6 +11,7 @@ import (
 var MaxConcurrentClones = 20
 
 var gitHostToken string
+var useHTTPSClone bool
 var gitHostUsername string
 
 func main() {
@@ -30,6 +31,7 @@ func main() {
 	githostURL := flag.String("githost.url", "", "DNS of the custom Git host")
 	backupDir := flag.String("backupdir", "", "Backup directory")
 	ignorePrivate := flag.Bool("ignore-private", false, "Ignore private repositories/projects")
+	useHTTPSClone := flag.Bool("use-https-clone", false, "Use HTTPS for cloning instead of SSH")
 
 	// GitHub specific flags
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
@@ -49,7 +51,7 @@ func main() {
 
 	gitHostUsername = getUsername(client, *service)
 
-	if len(gitHostUsername) == 0 && !*ignorePrivate {
+	if len(gitHostUsername) == 0 && !*ignorePrivate && *useHTTPSClone {
 		log.Fatal("Your Git host's username is needed for backing up private repositories")
 	}
 	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership)

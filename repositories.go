@@ -52,7 +52,7 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			if err == nil {
 				for _, repo := range repos {
 					namespace := strings.Split(*repo.FullName, "/")[0]
-					repositories = append(repositories, &Repository{GitURL: *repo.SSHURL, Name: *repo.Name, Namespace: namespace})
+					repositories = append(repositories, &Repository{CloneURL: *repo.SSHURL, Name: *repo.Name, Namespace: namespace})
 				}
 			} else {
 				return nil, err
@@ -104,7 +104,7 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			if err == nil {
 				for _, repo := range repos {
 					namespace := strings.Split(repo.PathWithNamespace, "/")[0]
-					repositories = append(repositories, &Repository{CloneURL: repo.WebURL, Name: repo.Name, Namespace: namespace, Private: repo.Visibility == gitlab.PrivateVisibility || repo.Visibility == gitlab.InternalVisibility})
+					repositories = append(repositories, &Repository{CloneURL: repo.SSHURLToRepo, Name: repo.Name, Namespace: namespace, Private: repo.Visibility == gitlab.PrivateVisibility || repo.Visibility == gitlab.InternalVisibility})
 				}
 			} else {
 				return nil, err
