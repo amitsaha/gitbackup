@@ -28,7 +28,8 @@ for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and
 #### GitHub
 
 - `repo`: Reading repositories, including private repositories
-- `user - read:user`: Reading the authenticated user details. This is needed for retrieving username which is needed for retrieving private repositories.
+- `user - read:user`: Reading the authenticated user details. This is only needed for retrieving your username when cloning
+via HTTPS and retrieving private repositories.
 
 #### GitLab
 
