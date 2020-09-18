@@ -20,7 +20,7 @@ func getUsername(client interface{}, service string) string {
 		if err != nil {
 			log.Fatal("Error retrieving username", err.Error())
 		}
-		return *user.Name
+		return *user.Login
 	}
 
 	if service == "gitlab" {
