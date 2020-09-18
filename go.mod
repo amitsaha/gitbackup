@@ -3,7 +3,7 @@ module github.com/amitsaha/gitbackup
 go 1.12
 
 require (
-	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-github/v32 v32.1.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/afero v1.2.2
 	github.com/xanzy/go-gitlab v0.16.1

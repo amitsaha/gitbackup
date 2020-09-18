@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v32/github"
 	gitlab "github.com/xanzy/go-gitlab"
 )
 
