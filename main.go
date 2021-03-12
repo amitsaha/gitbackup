@@ -46,6 +46,11 @@ func main() {
 	if len(*service) == 0 || !knownServices[*service] {
 		log.Fatal("Please specify the git service type: github, gitlab")
 	}
+
+	if !validGitlabProjectMembership(*gitlabProjectMembership) {
+		log.Fatal("Please specify a valid gitlab project membership - all/owner/member")
+	}
+
 	*backupDir = setupBackupDir(*backupDir, *service, *githostURL)
 	tokens := make(chan bool, MaxConcurrentClones)
 	client := newClient(*service, *githostURL)
