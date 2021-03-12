@@ -1,6 +1,10 @@
 module github.com/amitsaha/gitbackup
 
+<<<<<<< HEAD
 go 1.15
+=======
+go 1.16
+>>>>>>> 27021e0 (update CI files)
 
 require (
 	github.com/99designs/keyring v1.1.6
