@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -56,6 +57,9 @@ func getToken(service string) (string, error) {
 	ring, err := keyring.Open(keyring.Config{
 		ServiceName: "gitbackup",
 	})
+	if err != nil {
+		return "", err
+	}
 	i, err := ring.Get(service + "_TOKEN")
 	if err != nil {
 		return "", err
@@ -99,7 +103,7 @@ func newClient(service string, gitHostURL string) interface{} {
 		ts := oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: githubToken},
 		)
-		tc := oauth2.NewClient(oauth2.NoContext, ts)
+		tc := oauth2.NewClient(context.Background(), ts)
 		client := github.NewClient(tc)
 		if gitHostURLParsed != nil {
 			client.BaseURL = gitHostURLParsed
