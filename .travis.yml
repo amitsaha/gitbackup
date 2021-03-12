@@ -3,7 +3,11 @@ os:
   - linux
   - osx
 go:
+<<<<<<< HEAD
   - 1.15.x
+=======
+  - 1.16.x
+>>>>>>> 27021e0 (update CI files)
 
 install: true
 
