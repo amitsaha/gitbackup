@@ -17,8 +17,11 @@ import (
 	"github.com/cli/oauth/device"
 )
 
+var keyringServiceName = "gitbackup-cli"
+var gitbackupClientId = "7b56a77c7dfba0800524"
+
 func startOAuthFlow() string {
-	clientID := "7b56a77c7dfba0800524"
+	clientID := gitbackupClientId
 	scopes := []string{"repo", "read:user"}
 	httpClient := http.DefaultClient
 
@@ -40,7 +43,7 @@ func startOAuthFlow() string {
 
 func saveToken(service string, token string) error {
 	ring, err := keyring.Open(keyring.Config{
-		ServiceName: "gitbackup",
+		ServiceName: keyringServiceName,
 	})
 	if err != nil {
 		return err
@@ -55,7 +58,7 @@ func saveToken(service string, token string) error {
 
 func getToken(service string) (string, error) {
 	ring, err := keyring.Open(keyring.Config{
-		ServiceName: "gitbackup",
+		ServiceName: keyringServiceName,
 	})
 	if err != nil {
 		return "", err
@@ -86,7 +89,6 @@ func newClient(service string, gitHostURL string) interface{} {
 		githubToken := os.Getenv("GITHUB_TOKEN")
 		if githubToken == "" {
 			githubToken, err = getToken("GITHUB")
-			log.Printf("Got token from keyring")
 			if err != nil {
 				githubToken = startOAuthFlow()
 			}

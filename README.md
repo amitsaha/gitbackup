@@ -152,7 +152,7 @@ If you have specified a Git Host URL, it will create a directory structure ``dat
 
 ## Building
 
-If you have Golang 1.12.x+ installed, you can clone the repository and:
+If you have Golang 1.16.x+ installed, you can clone the repository and:
 ```
 $ go build
 ```
