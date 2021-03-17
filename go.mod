@@ -10,4 +10,5 @@ require (
 	github.com/spf13/afero v1.2.2
 	github.com/xanzy/go-gitlab v0.16.1
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
+	golang.org/x/text v0.3.5 // indirect
 )
