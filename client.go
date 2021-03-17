@@ -18,10 +18,10 @@ import (
 )
 
 var keyringServiceName = "gitbackup-cli"
-var gitbackupClientId = "7b56a77c7dfba0800524"
+var gitbackupClientID = "7b56a77c7dfba0800524"
 
 func startOAuthFlow() string {
-	clientID := gitbackupClientId
+	clientID := gitbackupClientID
 	scopes := []string{"repo", "read:user"}
 	httpClient := http.DefaultClient
 
