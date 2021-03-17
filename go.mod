@@ -1,6 +1,6 @@
 module github.com/amitsaha/gitbackup
 
-go 1.16
+go 1.15
 
 require (
 	github.com/99designs/keyring v1.1.6
