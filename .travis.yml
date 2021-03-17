@@ -4,10 +4,14 @@ os:
   - osx
 go:
 <<<<<<< HEAD
+<<<<<<< HEAD
   - 1.15.x
 =======
   - 1.16.x
 >>>>>>> 27021e0 (update CI files)
+=======
+  - 1.15.x
+>>>>>>> af62ec1 (Switch to go 1.15)
 
 install: true
 
