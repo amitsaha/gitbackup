@@ -32,10 +32,12 @@ func main() {
 	githostURL := flag.String("githost.url", "", "DNS of the custom Git host")
 	backupDir := flag.String("backupdir", "", "Backup directory")
 	ignorePrivate = flag.Bool("ignore-private", false, "Ignore private repositories/projects")
+	ignoreFork := flag.Bool("ignore-fork", false, "Ignore repositories which are forks")
 	useHTTPSClone = flag.Bool("use-https-clone", false, "Use HTTPS for cloning instead of SSH")
 
 	// GitHub specific flags
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
+	githubUserData := flag.Bool("github.userData", false, "Download user data")
 
 	// Gitlab specific flags
 	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone (internal, public, private)")
@@ -52,29 +54,38 @@ func main() {
 	}
 
 	*backupDir = setupBackupDir(*backupDir, *service, *githostURL)
-	tokens := make(chan bool, MaxConcurrentClones)
+
 	client := newClient(*service, *githostURL)
 
-	gitHostUsername = getUsername(client, *service)
-
-	if len(gitHostUsername) == 0 && !*ignorePrivate && *useHTTPSClone {
-		log.Fatal("Your Git host's username is needed for backing up private repositories via HTTPS")
-	}
-	repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership)
-	if err != nil {
-		log.Fatal(err)
+	if *githubUserData {
+		repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership, *ignoreFork)
+		if err != nil {
+			log.Fatalf("Error getting list of repositories: %v", err)
+		}
+		getGithubUserData(client, *backupDir, repos)
 	} else {
-		log.Printf("Backing up %v repositories now..\n", len(repos))
-		for _, repo := range repos {
-			tokens <- true
-			wg.Add(1)
-			go func(repo *Repository) {
-				stdoutStderr, err := backUp(*backupDir, repo, &wg)
-				if err != nil {
-					log.Printf("Error backing up %s: %s\n", repo.Name, stdoutStderr)
-				}
-				<-tokens
-			}(repo)
+		tokens := make(chan bool, MaxConcurrentClones)
+		gitHostUsername = getUsername(client, *service)
+
+		if len(gitHostUsername) == 0 && !*ignorePrivate && *useHTTPSClone {
+			log.Fatal("Your Git host's username is needed for backing up private repositories via HTTPS")
+		}
+		repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership, *ignoreFork)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			log.Printf("Backing up %v repositories now..\n", len(repos))
+			for _, repo := range repos {
+				tokens <- true
+				wg.Add(1)
+				go func(repo *Repository) {
+					stdoutStderr, err := backUp(*backupDir, repo, &wg)
+					if err != nil {
+						log.Printf("Error backing up %s: %s\n", repo.Name, stdoutStderr)
+					}
+					<-tokens
+				}(repo)
+			}
 		}
 	}
 }
