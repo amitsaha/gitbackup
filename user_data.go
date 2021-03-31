@@ -84,6 +84,7 @@ func downloadGithubUserData(client interface{}, backupDir string, id *int64) {
 	}
 }
 
+// Type for listing migration result
 type ListGithubUserMigrationsResult struct {
 	GUID  *string `json:"guid"`
 	ID    *int64  `json:"id"`
@@ -121,11 +122,13 @@ func GetGithubUserMigration(client interface{}, id *int64) (*github.UserMigratio
 	return ms, err
 }
 
+// Type for deletion result
 type GithubUserMigrationDeleteResult struct {
 	GhStatusCode   int    `json:"status_code"`
 	GhResponseBody string `json:"mesage"`
 }
 
+// Delete an existing migration
 func DeleteGithubUserMigration(id *int64) GithubUserMigrationDeleteResult {
 	client := newClient("github", "https://github.com")
 	ctx := context.Background()
