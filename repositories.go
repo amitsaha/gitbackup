@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/go-github/v34/github"
+	"github.com/google/go-github/v32/github"
 	gitlab "github.com/xanzy/go-gitlab"
 )
 
@@ -36,7 +36,7 @@ type Repository struct {
 	Private   bool
 }
 
-func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string, gitlabProjectType string, ignoreFork bool) ([]*Repository, error) {
+func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string, gitlabProjectType string) ([]*Repository, error) {
 
 	if client == nil {
 		log.Fatalf("Couldn't acquire a client to talk to %s", service)
@@ -52,9 +52,6 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
 			if err == nil {
 				for _, repo := range repos {
-					if *repo.Fork && ignoreFork {
-						continue
-					}
 					namespace := strings.Split(*repo.FullName, "/")[0]
 					if useHTTPSClone != nil && *useHTTPSClone {
 						cloneURL = *repo.CloneURL

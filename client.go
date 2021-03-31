@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/google/go-github/v34/github"
+	"github.com/google/go-github/v32/github"
 	gitlab "github.com/xanzy/go-gitlab"
 
 	"github.com/99designs/keyring"
@@ -22,7 +22,7 @@ var gitbackupClientID = "7b56a77c7dfba0800524"
 
 func startOAuthFlow() string {
 	clientID := gitbackupClientID
-	scopes := []string{"repo", "user", "admin:org"}
+	scopes := []string{"repo", "read:user"}
 	httpClient := http.DefaultClient
 
 	code, err := device.RequestCode(httpClient, "https://github.com/login/device/code", clientID, scopes)
