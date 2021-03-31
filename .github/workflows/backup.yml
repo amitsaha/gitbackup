@@ -1,17 +1,13 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Backup
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
   schedule:
-    # At 04:05 on Tuesday (UTC)
-    - cron:  '5 4 * * 2'
+    # At 04:05 everyday
+    - cron:  '5 4 * * *'
 
 jobs:
   build:
@@ -36,4 +32,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY}}
           AWS_DEFAULT_REGION: 'ap-southeast-2'
         run: |
-          aws s3 sync ~/.gitbackup/*.tar.gz s3://gitbackup-echorand/
+          aws s3 sync ~/.gitbackup/github.com/*.tar.gz s3://gitbackup-echorand/
