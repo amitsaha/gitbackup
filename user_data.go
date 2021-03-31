@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"time"
@@ -15,52 +14,45 @@ import (
 	"github.com/google/go-github/v34/github"
 )
 
-func createGithubUserMigration(ctx context.Context, client *github.Client, repos []string) (*github.UserMigration, error) {
+func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository) (*github.UserMigration, error) {
 	migrationOpts := github.UserMigrationOptions{
 		LockRepositories:   false,
 		ExcludeAttachments: false,
 	}
-	m, _, err := client.Migrations.StartUserMigration(ctx, repos, &migrationOpts)
-	return m, err
-}
-
-func getGithubUserData(client interface{}, backupDir string, repos []*Repository) {
-
-	var ms *github.UserMigration
-	ctx := context.Background()
-
 	var repoPaths []string
 	for _, repo := range repos {
 		repoPaths = append(repoPaths, fmt.Sprintf("%s/%s", repo.Namespace, repo.Name))
 	}
-	m, err := createGithubUserMigration(ctx, client.(*github.Client), repoPaths)
-	if err != nil {
-		log.Fatal(err)
+	log.Printf("Repos: %v\n", repoPaths)
+	repoPaths = []string{
+		"amitsaha/amitsaha.github.io",
 	}
+	m, _, err := client.(*github.Client).Migrations.StartUserMigration(ctx, repoPaths, &migrationOpts)
+	return m, err
+}
 
-	ms, _, err = client.(*github.Client).Migrations.UserMigrationStatus(ctx, *m.ID)
+func downloadGithubUserData(client interface{}, backupDir string, id *int64) {
+
+	var ms *github.UserMigration
+	ctx := context.Background()
+
+	ms, _, err := client.(*github.Client).Migrations.UserMigrationStatus(ctx, *id)
 	if err != nil {
 		panic(err)
 	}
 
-	var result GithubUserMigrationState
-	result.ID = ms.ID
-	result.State = ms.State
-	result.CreatedAt = ms.CreatedAt
-	result.UpdatedAt = ms.UpdatedAt
-
 	for {
 
-		// URL can be null since GitHub only keeps the archive URL for 7 days
+		if *ms.State == "failed" {
+			log.Fatal("Migration failed.")
+		}
 		if *ms.State == "exported" {
-			log.Printf("Migration state: %v\n", ms.State)
 			archiveURL, err := client.(*github.Client).Migrations.UserMigrationArchiveURL(ctx, *ms.ID)
 			if err != nil {
 				panic(err)
 			}
-			result.ArchiveURL = &archiveURL
-			parsedURL, _ := url.Parse(archiveURL)
-			archiveFilepath := path.Join(backupDir, parsedURL.EscapedPath())
+
+			archiveFilepath := path.Join(backupDir, fmt.Sprintf("user-migration-%d.tar.gz", *ms.ID))
 			log.Printf("Downloading file to: %s\n", archiveFilepath)
 
 			resp, err := http.Get(archiveURL)
@@ -82,9 +74,9 @@ func getGithubUserData(client interface{}, backupDir string, repos []*Repository
 			break
 		} else {
 			log.Printf("Waiting for migration state to be exported: %v\n", ms.State)
-			time.Sleep(30 * time.Second)
+			time.Sleep(60 * time.Second)
 
-			ms, _, err = client.(*github.Client).Migrations.UserMigrationStatus(ctx, *m.ID)
+			ms, _, err = client.(*github.Client).Migrations.UserMigrationStatus(ctx, *ms.ID)
 			if err != nil {
 				panic(err)
 			}
@@ -99,13 +91,13 @@ type ListGithubUserMigrationsResult struct {
 }
 
 // List Github user migrations
-func getGithubUserMigrations(client *github.Client) []ListGithubUserMigrationsResult {
+func getGithubUserMigrations(client interface{}) ([]ListGithubUserMigrationsResult, error) {
 
 	ctx := context.Background()
-	migrations, _, err := client.Migrations.ListUserMigrations(ctx)
+	migrations, _, err := client.(*github.Client).Migrations.ListUserMigrations(ctx)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var result []ListGithubUserMigrationsResult
@@ -119,42 +111,14 @@ func getGithubUserMigrations(client *github.Client) []ListGithubUserMigrationsRe
 		result = append(result, r)
 	}
 
-	return result
-}
-
-type GithubUserMigrationState struct {
-	ID         *int64  `json:"id"`
-	CreatedAt  *string `json:"created_at"`
-	UpdatedAt  *string `json:"updated_at"`
-	State      *string `json:"state"`
-	ArchiveURL *string `json:"archive_url"`
+	return result, nil
 }
 
 // Get the status of a migration
-func GetGithubUserMigration(id *int64) GithubUserMigrationState {
-	client := newClient("github", "https://github.com")
+func GetGithubUserMigration(client interface{}, id *int64) (*github.UserMigration, error) {
 	ctx := context.Background()
 	ms, _, err := client.(*github.Client).Migrations.UserMigrationStatus(ctx, *id)
-
-	if err != nil {
-		panic(err)
-	}
-	var result GithubUserMigrationState
-	result.ID = ms.ID
-	result.State = ms.State
-	result.CreatedAt = ms.CreatedAt
-	result.UpdatedAt = ms.UpdatedAt
-
-	// URL can be null since GitHub only keeps the archive URL for 7 days
-	if *ms.State == "exported" {
-		url, err := client.(*github.Client).Migrations.UserMigrationArchiveURL(ctx, *id)
-		if err != nil {
-			panic(err)
-		}
-		result.ArchiveURL = &url
-	}
-
-	return result
+	return ms, err
 }
 
 type GithubUserMigrationDeleteResult struct {

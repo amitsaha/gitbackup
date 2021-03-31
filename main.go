@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"log"
 	"sync"
+
+	"github.com/google/go-github/v34/github"
 )
 
 // MaxConcurrentClones is the upper limit of the maximum number of
@@ -37,7 +41,11 @@ func main() {
 
 	// GitHub specific flags
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
-	githubUserData := flag.Bool("github.userData", false, "Download user data")
+
+	githubCreateUserMigration := flag.Bool("github.createUserMigration", false, "Download user data")
+
+	githubListUserMigrations := flag.Bool("github.listUserMigrations", false, "List available user migrations")
+	githubWaitForMigrationComplete := flag.Bool("github.waitForUserMigration", true, "Wait for migration to complete")
 
 	// Gitlab specific flags
 	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone (internal, public, private)")
@@ -52,12 +60,43 @@ func main() {
 
 	client := newClient(*service, *githostURL)
 
-	if *githubUserData {
+	if *githubListUserMigrations {
+		mList, err := getGithubUserMigrations(client)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, m := range mList {
+			mData, err := GetGithubUserMigration(client, m.ID)
+			if err != nil {
+				fmt.Printf("Error getting migration data: %v", *m.ID)
+				// FIXME
+				continue
+			}
+
+			var archiveURL string
+			_, err = client.(*github.Client).Migrations.UserMigrationArchiveURL(context.Background(), *m.ID)
+			if err != nil {
+				archiveURL = "No Longer Available"
+			} else {
+				archiveURL = "Available for Download"
+			}
+			fmt.Printf("%v - %v - %v - %v\n", *mData.ID, *mData.CreatedAt, *mData.State, archiveURL)
+		}
+
+	} else if *githubCreateUserMigration {
 		repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership, *ignoreFork)
 		if err != nil {
 			log.Fatalf("Error getting list of repositories: %v", err)
 		}
-		getGithubUserData(client, *backupDir, repos)
+		m, err := createGithubUserMigration(context.Background(), client, repos)
+		if err != nil {
+			log.Fatalf("Error creating migration: %v", err)
+		}
+		fmt.Printf("%v - %v\n", m.ID, m.State)
+		if *githubWaitForMigrationComplete {
+			downloadGithubUserData(client, *backupDir, m.ID)
+		}
 	} else {
 		tokens := make(chan bool, MaxConcurrentClones)
 		gitHostUsername = getUsername(client, *service)
