@@ -84,7 +84,7 @@ func downloadGithubUserData(client interface{}, backupDir string, id *int64) {
 	}
 }
 
-// ListGithubUserMigrationResult type is for listing migration result
+// ListGithubUserMigrationsResult type is for listing migration result
 type ListGithubUserMigrationsResult struct {
 	GUID  *string `json:"guid"`
 	ID    *int64  `json:"id"`
