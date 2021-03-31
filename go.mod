@@ -1,15 +1,6 @@
 module github.com/amitsaha/gitbackup
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 go 1.15
-=======
-go 1.16
->>>>>>> 27021e0 (update CI files)
-=======
-go 1.15
->>>>>>> af62ec1 (Switch to go 1.15)
-
 require (
 	github.com/99designs/keyring v1.1.6
 	github.com/cli/oauth v0.8.0
