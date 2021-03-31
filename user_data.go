@@ -23,10 +23,7 @@ func createGithubUserMigration(ctx context.Context, client interface{}, repos []
 	for _, repo := range repos {
 		repoPaths = append(repoPaths, fmt.Sprintf("%s/%s", repo.Namespace, repo.Name))
 	}
-	log.Printf("Repos: %v\n", repoPaths)
-	repoPaths = []string{
-		"amitsaha/amitsaha.github.io",
-	}
+	log.Printf("Found Repos: %d\n", len(repoPaths))
 	m, _, err := client.(*github.Client).Migrations.StartUserMigration(ctx, repoPaths, &migrationOpts)
 	return m, err
 }
