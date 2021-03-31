@@ -7,7 +7,7 @@ name: Backup
 on:
   schedule:
     # At 04:05 everyday
-    - cron:  '5 4 * * *'
+    - cron:  '45 4 * * *'
 
 jobs:
   build:
