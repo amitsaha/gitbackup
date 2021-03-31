@@ -24,7 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITBACKUP_TOKEN}}
         run: |
-          ./gitbackup -service github -github.createUserMigration
+          ./gitbackup -service github -github.createUserMigration -ignore-fork
       
 
       - name: Push to S3
