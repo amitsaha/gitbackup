@@ -33,4 +33,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY}}
           AWS_DEFAULT_REGION: 'ap-southeast-2'
         run: |
-          aws s3 sync ~/.gitbackup/github.com/*.tar.gz s3://gitbackup-echorand/
+          aws s3 cp ~/.gitbackup/github.com/*.tar.gz s3://gitbackup-echorand/
