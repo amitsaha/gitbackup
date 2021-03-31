@@ -57,10 +57,10 @@ func TestGetPublicGitHubRepositories(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/user/repos", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false}]`)
+		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false, "fork": false}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "all", "", "")
+	repos, err := getRepositories(GitHubClient, "github", "all", "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -76,10 +76,10 @@ func TestGetPrivateGitHubRepositories(t *testing.T) {
 	defer teardown()
 
 	mux.HandleFunc("/user/repos", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true}]`)
+		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true, "fork": false}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "all", "", "")
+	repos, err := getRepositories(GitHubClient, "github", "all", "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -98,7 +98,7 @@ func TestGetGitLabRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
-	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "", "")
+	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

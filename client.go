@@ -110,7 +110,6 @@ func newClient(service string, gitHostURL string) interface{} {
 		if gitHostURLParsed != nil {
 			client.BaseURL = gitHostURLParsed
 		}
-		log.Printf("%#v\n", client.BaseURL)
 		return client
 	}
 
