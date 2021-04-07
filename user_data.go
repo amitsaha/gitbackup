@@ -27,7 +27,7 @@ func createGithubUserMigration(ctx context.Context, client interface{}, repos []
 	m, resp, err := client.(*github.Client).Migrations.StartUserMigration(ctx, repoPaths, &migrationOpts)
 	if err != nil {
 		defer resp.Body.Close()
-		data, _ := io.ReadAll(resp.Body)
+		data, _ := ioutil.ReadAll(resp.Body)
 		log.Printf("%v", string(data))
 	}
 	return m, err
