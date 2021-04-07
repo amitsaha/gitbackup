@@ -94,6 +94,22 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error getting list of repositories: %v", err)
 		}
+		orgs, err := getUserOrgs(client)
+		if err != nil {
+			log.Fatal("Error getting user organizations", err)
+		}
+		orgRepos, err := getGithubOrgRepositories(client, orgs)
+		if err != nil {
+			log.Fatal("Error getting user organizations", err)
+		}
+		repos = append(repos, orgRepos...)
+
+		log.Printf("Creating a migration for %d repos", len(repos))
+		for _, r := range repos {
+			log.Printf("%#v\n", r)
+		}
+		log.Fatal()
+
 		m, err := createGithubUserMigration(context.Background(), client, repos)
 		if err != nil {
 			log.Fatalf("Error creating migration: %v", err)

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/v34/github"
@@ -150,4 +151,47 @@ func DeleteGithubUserMigration(id *int64) GithubUserMigrationDeleteResult {
 		result.GhResponseBody = string(data)
 	}
 	return result
+}
+
+func getUserOrgs(client interface{}) ([]*github.Organization, error) {
+	ctx := context.Background()
+	orgs, _, err := client.(*github.Client).Organizations.List(ctx, "", nil)
+	return orgs, err
+}
+
+func getGithubOrgRepositories(client interface{}, orgs []*github.Organization) ([]*Repository, error) {
+
+	var repositories []*Repository
+	var cloneURL string
+
+	githubRepoType := "owner"
+	ignoreFork := true
+
+	ctx := context.Background()
+	options := github.RepositoryListOptions{Type: githubRepoType}
+	for {
+		repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
+		if err == nil {
+			for _, repo := range repos {
+				if *repo.Fork && ignoreFork {
+					continue
+				}
+				namespace := strings.Split(*repo.FullName, "/")[0]
+				if useHTTPSClone != nil && *useHTTPSClone {
+					cloneURL = *repo.CloneURL
+				} else {
+					cloneURL = *repo.SSHURL
+				}
+				repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
+			}
+		} else {
+			return nil, err
+		}
+		if resp.NextPage == 0 {
+			break
+		}
+		options.ListOptions.Page = resp.NextPage
+	}
+
+	return repositories, nil
 }
