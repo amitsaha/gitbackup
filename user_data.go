@@ -254,7 +254,6 @@ func getGithubOrgRepositories(client interface{}, o *github.Organization) ([]*Re
 	options := github.RepositoryListByOrgOptions{}
 
 	for {
-		log.Printf("%v\n", o)
 		// Login seems to be the safer attribute to use than organization Name
 		repos, resp, err := client.(*github.Client).Repositories.ListByOrg(ctx, *o.Login, &options)
 		if err == nil {
@@ -276,6 +275,5 @@ func getGithubOrgRepositories(client interface{}, o *github.Organization) ([]*Re
 		options.ListOptions.Page = resp.NextPage
 
 	}
-
 	return repositories, nil
 }

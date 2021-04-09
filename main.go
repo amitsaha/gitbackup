@@ -114,12 +114,15 @@ func main() {
 			if err != nil {
 				log.Fatal("Error getting org repos", err)
 			}
+			if len(orgRepos) == 0 {
+				log.Printf("No repos found in %s", *o.Login)
+				continue
+			}
 			log.Printf("Creating a org migration (%s) for %d repos", *o.Login, len(orgRepos))
 			oMigration, err := createGithubOrgMigration(context.Background(), client, *o.Login, orgRepos)
 			if err != nil {
 				log.Fatalf("Error creating migration: %v", err)
 			}
-
 			if *githubWaitForMigrationComplete {
 				downloadGithubOrgMigrationData(client, *o.Login, *backupDir, oMigration.ID)
 			}
