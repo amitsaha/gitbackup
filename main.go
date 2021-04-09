@@ -90,18 +90,41 @@ func main() {
 		}
 
 	} else if *githubCreateUserMigration {
+
 		repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership, *ignoreFork)
 		if err != nil {
 			log.Fatalf("Error getting list of repositories: %v", err)
 		}
+
+		log.Printf("Creating a user migration for %d repos", len(repos))
 		m, err := createGithubUserMigration(context.Background(), client, repos)
 		if err != nil {
 			log.Fatalf("Error creating migration: %v", err)
 		}
-		fmt.Printf("%v - %v\n", m.ID, m.State)
 		if *githubWaitForMigrationComplete {
-			downloadGithubUserData(client, *backupDir, m.ID)
+			downloadGithubUserMigrationData(client, *backupDir, m.ID)
 		}
+
+		orgs, err := getUserOwnedOrgs(client)
+		if err != nil {
+			log.Fatal("Error getting user organizations", err)
+		}
+		for _, o := range orgs {
+			orgRepos, err := getGithubOrgRepositories(client, o)
+			if err != nil {
+				log.Fatal("Error getting org repos", err)
+			}
+			log.Printf("Creating a org migration (%s) for %d repos", *o.Login, len(orgRepos))
+			oMigration, err := createGithubOrgMigration(context.Background(), client, *o.Login, orgRepos)
+			if err != nil {
+				log.Fatalf("Error creating migration: %v", err)
+			}
+
+			if *githubWaitForMigrationComplete {
+				downloadGithubOrgMigrationData(client, *o.Login, *backupDir, oMigration.ID)
+			}
+		}
+
 	} else {
 		tokens := make(chan bool, MaxConcurrentClones)
 		gitHostUsername = getUsername(client, *service)
