@@ -40,7 +40,7 @@ func main() {
 	useHTTPSClone = flag.Bool("use-https-clone", false, "Use HTTPS for cloning instead of SSH")
 
 	// GitHub specific flags
-	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
+	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member, starred)")
 
 	githubCreateUserMigration := flag.Bool("github.createUserMigration", false, "Download user data")
 
