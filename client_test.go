@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v34/github"
+	"github.com/ktrysmt/go-bitbucket"
 	gitlab "github.com/xanzy/go-gitlab"
 )
 
@@ -38,6 +39,10 @@ func TestNewClient(t *testing.T) {
 	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
+
+	// Client for bitbucket.com
+	client = newClient("bitbucket", "")
+	client = client.(*bitbucket.Client)
 
 	// Not yet supported
 	client = newClient("notyetsupported", "")

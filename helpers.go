@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/google/go-github/v34/github"
+	"github.com/ktrysmt/go-bitbucket"
 	gitlab "github.com/xanzy/go-gitlab"
 )
 
@@ -25,6 +26,14 @@ func getUsername(client interface{}, service string) string {
 
 	if service == "gitlab" {
 		user, _, err := client.(*gitlab.Client).Users.CurrentUser()
+		if err != nil {
+			log.Fatal("Error retrieving username", err.Error())
+		}
+		return user.Username
+	}
+
+	if service == "bitbucket" {
+		user, err := client.(*bitbucket.Client).User.Profile()
 		if err != nil {
 			log.Fatal("Error retrieving username", err.Error())
 		}
