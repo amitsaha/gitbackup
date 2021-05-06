@@ -27,6 +27,14 @@ func fakeCloneCommand(command string, args ...string) (cmd *exec.Cmd) {
 	return cmd
 }
 
+func fakeRemoteUpdateCommand(command string, args ...string) (cmd *exec.Cmd) {
+	cs := []string{"-test.run=TestHelperRemoteUpdateProcess", "--", command}
+	cs = append(cs, args...)
+	cmd = exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+	return cmd
+}
+
 func TestBackup(t *testing.T) {
 	var wg sync.WaitGroup
 	repo := Repository{Name: "testrepo", CloneURL: "git://foo.com/foo"}
@@ -44,7 +52,7 @@ func TestBackup(t *testing.T) {
 	// Test clone
 	execCommand = fakeCloneCommand
 	wg.Add(1)
-	stdoutStderr, err := backUp(backupDir, &repo, &wg)
+	stdoutStderr, err := backUp(backupDir, &repo, false, &wg)
 	if err != nil {
 		t.Errorf("%s", stdoutStderr)
 	}
@@ -54,11 +62,43 @@ func TestBackup(t *testing.T) {
 	appFS.MkdirAll(repoDir, 0771)
 	execCommand = fakePullCommand
 	wg.Add(1)
-	stdoutStderr, err = backUp(backupDir, &repo, &wg)
+	stdoutStderr, err = backUp(backupDir, &repo, false, &wg)
+	if err != nil {
+		t.Errorf("%s", stdoutStderr)
+	}
+}
+
+func TestBareBackup(t *testing.T) {
+	var wg sync.WaitGroup
+	repo := Repository{Name: "testrepo", CloneURL: "git://foo.com/foo"}
+	backupDir := "/tmp/backupdir"
+
+	// Memory FS
+	appFS = afero.NewMemMapFs()
+	appFS.MkdirAll(backupDir, 0771)
+
+	defer func() {
+		execCommand = exec.Command
+		wg.Wait()
+	}()
+
+	// Test clone
+	execCommand = fakeCloneCommand
+	wg.Add(1)
+	stdoutStderr, err := backUp(backupDir, &repo, true, &wg)
 	if err != nil {
 		t.Errorf("%s", stdoutStderr)
 	}
 
+	// Test pull
+	repoDir := path.Join(backupDir, repo.Name+".git")
+	appFS.MkdirAll(repoDir, 0771)
+	execCommand = fakeRemoteUpdateCommand
+	wg.Add(1)
+	stdoutStderr, err = backUp(backupDir, &repo, true, &wg)
+	if err != nil {
+		t.Errorf("%s", stdoutStderr)
+	}
 }
 
 func TestHelperPullProcess(t *testing.T) {
@@ -80,6 +120,18 @@ func TestHelperCloneProcess(t *testing.T) {
 	// Check that git command was executed
 	if os.Args[3] != "git" || os.Args[4] != "clone" {
 		fmt.Fprintf(os.Stdout, "Expected git clone to be executed. Got %v", os.Args[3:])
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
+func TestHelperRemoteUpdateProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+	// Check that git command was executed
+	if os.Args[3] != "git" || os.Args[6] != "remote" || os.Args[7] != "update" {
+		fmt.Fprintf(os.Stdout, "Expected git remote update to be executed. Got %v", os.Args[3:])
 		os.Exit(1)
 	}
 	os.Exit(0)

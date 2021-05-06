@@ -67,6 +67,8 @@ Usage of ./bin/gitbackup:
     	Git Hosted Service Name (github/gitlab)
   -use-https-clone
     	Use HTTPS for cloning instead of SSH
+  -bare
+    	Clone bare repositories instead of working directories
 ```
 ### Backing up your GitHub repositories
 
@@ -148,6 +150,17 @@ $ GITHUB_TOKEN=secret$token gitbackup -service github -backupdir /data/
 This will create a ``github.com`` directory in ``/data`` and backup all your repositories there instead.
 Similarly, it will create a ``gitlab.com`` directory, if you are backing up repositories from ``gitlab``.
 If you have specified a Git Host URL, it will create a directory structure ``data/host-url/``.
+
+
+### Cloning bare repositories
+
+To clone bare repositories, we can use the ``bare`` flag:
+
+```lang=bash
+$ GITHUB_TOKEN=secret$token gitbackup -service github -bare
+```
+
+This will create a directory structure like ``github.com/org/repo.git`` containing bare repositories.
 
 
 ## Building
