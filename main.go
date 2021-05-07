@@ -27,12 +27,13 @@ func main() {
 
 	// The services we know of
 	knownServices := map[string]bool{
-		"github": true,
-		"gitlab": true,
+		"github":    true,
+		"gitlab":    true,
+		"bitbucket": true,
 	}
 
 	// Generic flags
-	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab)")
+	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab/bitbucket)")
 	githostURL := flag.String("githost.url", "", "DNS of the custom Git host")
 	backupDir := flag.String("backupdir", "", "Backup directory")
 	ignorePrivate = flag.Bool("ignore-private", false, "Ignore private repositories/projects")
@@ -54,7 +55,7 @@ func main() {
 	flag.Parse()
 
 	if len(*service) == 0 || !knownServices[*service] {
-		log.Fatal("Please specify the git service type: github, gitlab")
+		log.Fatal("Please specify the git service type: github, gitlab, bitbucket")
 	}
 
 	if !validGitlabProjectMembership(*gitlabProjectMembership) {

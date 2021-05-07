@@ -11,19 +11,23 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v34/github"
+	"github.com/ktrysmt/go-bitbucket"
 	gitlab "github.com/xanzy/go-gitlab"
 )
 
 var (
-	GitHubClient *github.Client
-	GitLabClient *gitlab.Client
-	mux          *http.ServeMux
-	server       *httptest.Server
+	GitHubClient    *github.Client
+	GitLabClient    *gitlab.Client
+	BitbucketClient *bitbucket.Client
+	mux             *http.ServeMux
+	server          *httptest.Server
 )
 
 func setup() {
 	os.Setenv("GITHUB_TOKEN", "$$$randome")
 	os.Setenv("GITLAB_TOKEN", "$$$randome")
+	os.Setenv("BITBUCKET_USERNAME", "bbuser")
+	os.Setenv("BITBUCKET_PASSWORD", "$$$randomp")
 
 	// test server
 	mux = http.NewServeMux()
@@ -44,11 +48,16 @@ func setup() {
 	// github client configured to use test server
 	GitLabClient = gitlab.NewClient(nil, "")
 	GitLabClient.SetBaseURL(url.String())
+
+	BitbucketClient = bitbucket.NewBasicAuth(os.Getenv("BITBUCKET_USERNAME"), os.Getenv("BITBUCKET_USERNAME"))
+	BitbucketClient.SetApiBaseURL(url.String())
 }
 
 func teardown() {
 	os.Unsetenv("GITHUB_TOKEN")
 	os.Unsetenv("GITLAB_TOKEN")
+	os.Unsetenv("BITBUCKET_USERNAME")
+	os.Unsetenv("BITBUCKET_PASSWORD")
 	server.Close()
 }
 
@@ -104,6 +113,31 @@ func TestGetGitLabRepositories(t *testing.T) {
 	}
 	var expected []*Repository
 	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://gitlab.com/u/r1", Name: "r1"})
+	if !reflect.DeepEqual(repos, expected) {
+		for i := 0; i < len(repos); i++ {
+			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
+		}
+	}
+}
+
+func TestGetBitbucketRepositories(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/workspaces", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"slug": "abc"}]}`)
+	})
+
+	mux.HandleFunc("/repositories/abc", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"full_name":"abc/def", "slug":"def", "is_private":true, "links":{"clone":[{"name":"https", "href":"https://bbuser@bitbucket.org/abc/def.git"}, {"name":"ssh", "href":"git@bitbucket.org:abc/def.git"}]}}]}`)
+	})
+
+	repos, err := getRepositories(BitbucketClient, "bitbucket", "", "", "", false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	var expected []*Repository
+	expected = append(expected, &Repository{Namespace: "abc", CloneURL: "git@bitbucket.org:abc/def.git", Name: "def", Private: true})
 	if !reflect.DeepEqual(repos, expected) {
 		for i := 0; i < len(repos); i++ {
 			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])

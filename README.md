@@ -1,9 +1,9 @@
-# gitbackup - Backup your GitHub and GitLab repositories
+# gitbackup - Backup your GitHub, GitLab, and Bitbucket repositories
 Code Quality [![Go Report Card](https://goreportcard.com/badge/github.com/amitsaha/gitbackup)](https://goreportcard.com/report/github.com/amitsaha/gitbackup)
 Linux/Mac OS X [![Build Status](https://travis-ci.org/amitsaha/gitbackup.svg?branch=master)](https://travis-ci.org/amitsaha/gitbackup) Windows [![Build status](https://ci.appveyor.com/api/projects/status/fwki40x1havyian2/branch/master?svg=true)](https://ci.appveyor.com/project/amitsaha/gitbackup/branch/master) 
 
-``gitbackup`` is a tool to backup your git repositories from GitHub (including GitHub enterprise) or
-GitLab (including custom GitLab installations).
+``gitbackup`` is a tool to backup your git repositories from GitHub (including GitHub enterprise),
+GitLab (including custom GitLab installations), or Bitbucket.
 
 ``gitbackup`` only creates a backup of the repository and does not currently support issues,
 pull requests or other data associated with a git repository. This may or may not be in the future
@@ -12,7 +12,7 @@ scope of this tool.
 If you are following along my Linux Journal article (published in 2017), please obtain the version of the 
 source tagged with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
 
-## Installling `gitbackup`
+## Installing `gitbackup`
 
 Binary releases are available from the [Releases](https://github.com/amitsaha/gitbackup/releases/) page. Please download the binary corresponding to your OS
 and architecture and copy the binary somewhere in your ``$PATH``. It is recommended to rename the binary to `gitbackup` or `gitbackup.exe` (on Windows).
@@ -20,8 +20,12 @@ and architecture and copy the binary somewhere in your ``$PATH``. It is recommen
 ## Using `gitbackup`
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for
-backing up GitHub repositories and [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens)
-for GitLab. You can supply the token to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment variables respectively.
+backing up GitHub repositories, a [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens)
+for GitLab repositories, and a username and [app password](https://bitbucket.org/account/settings/app-passwords/) for
+Bitbucket repositories.
+
+You can supply the tokens to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment variables
+respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and ``BITBUCKET_PASSWORD``.
 
 ### OAuth Scopes required
 
@@ -64,7 +68,7 @@ Usage of ./bin/gitbackup:
   -ignore-private
     	Ignore private repositories/projects
   -service string
-    	Git Hosted Service Name (github/gitlab)
+    	Git Hosted Service Name (github/gitlab/bitbucket)
   -use-https-clone
     	Use HTTPS for cloning instead of SSH
 ```
@@ -136,6 +140,13 @@ the ``githost.url`` flag, like so
 $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -githost.url https://git.yourhost.com
 ```
 
+### Backing up your Bitbucket repositories
+
+To backup all your Bitbucket repositories to the default backup directory (``$HOME/.gitbackup/``):
+
+```lang=bash
+$ BITBUCKET_USERNAME=username BITBUCKET_PASSWORD=password gitbackup -service bitbucket
+```
 
 ### Specifying a backup location
 
@@ -146,7 +157,8 @@ $ GITHUB_TOKEN=secret$token gitbackup -service github -backupdir /data/
 ```
 
 This will create a ``github.com`` directory in ``/data`` and backup all your repositories there instead.
-Similarly, it will create a ``gitlab.com`` directory, if you are backing up repositories from ``gitlab``.
+Similarly, it will create a ``gitlab.com`` directory, if you are backing up repositories from ``gitlab``, and a
+``bitbucket.com`` directory if you are backing up from Bitbucket.
 If you have specified a Git Host URL, it will create a directory structure ``data/host-url/``.
 
 
