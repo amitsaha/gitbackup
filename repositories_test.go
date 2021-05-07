@@ -99,6 +99,25 @@ func TestGetPrivateGitHubRepositories(t *testing.T) {
 	}
 }
 
+func TestGetStarredGitHubRepositories(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/user/starred", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `[{"repo":{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true, "fork": false}}]`)
+	})
+
+	repos, err := getRepositories(GitHubClient, "github", "starred", "", "", false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	var expected []*Repository
+	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://github.com/u/r1", Name: "r1", Private: true})
+	if !reflect.DeepEqual(repos, expected) {
+		t.Errorf("Expected %+v, Got %+v", expected, repos)
+	}
+}
+
 func TestGetGitLabRepositories(t *testing.T) {
 	setup()
 	defer teardown()

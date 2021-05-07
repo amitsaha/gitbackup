@@ -48,29 +48,57 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 
 	if service == "github" {
 		ctx := context.Background()
-		options := github.RepositoryListOptions{Type: githubRepoType}
-		for {
-			repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
-			if err == nil {
-				for _, repo := range repos {
-					if *repo.Fork && ignoreFork {
-						continue
+
+		if githubRepoType == "starred" {
+			options := github.ActivityListStarredOptions{}
+			for {
+				stars, resp, err := client.(*github.Client).Activity.ListStarred(ctx, "", &options)
+				if err == nil {
+					for _, star := range stars {
+						if *star.Repository.Fork && ignoreFork {
+							continue
+						}
+						namespace := strings.Split(*star.Repository.FullName, "/")[0]
+						if useHTTPSClone != nil && *useHTTPSClone {
+							cloneURL = *star.Repository.CloneURL
+						} else {
+							cloneURL = *star.Repository.SSHURL
+						}
+						repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *star.Repository.Name, Namespace: namespace, Private: *star.Repository.Private})
 					}
-					namespace := strings.Split(*repo.FullName, "/")[0]
-					if useHTTPSClone != nil && *useHTTPSClone {
-						cloneURL = *repo.CloneURL
-					} else {
-						cloneURL = *repo.SSHURL
-					}
-					repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
+				} else {
+					return nil, err
 				}
-			} else {
-				return nil, err
+				if resp.NextPage == 0 {
+					break
+				}
+				options.ListOptions.Page = resp.NextPage
 			}
-			if resp.NextPage == 0 {
-				break
+		} else {
+			options := github.RepositoryListOptions{Type: githubRepoType}
+			for {
+				repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
+				if err == nil {
+					for _, repo := range repos {
+						if *repo.Fork && ignoreFork {
+							continue
+						}
+						namespace := strings.Split(*repo.FullName, "/")[0]
+						if useHTTPSClone != nil && *useHTTPSClone {
+							cloneURL = *repo.CloneURL
+						} else {
+							cloneURL = *repo.SSHURL
+						}
+						repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
+					}
+				} else {
+					return nil, err
+				}
+				if resp.NextPage == 0 {
+					break
+				}
+				options.ListOptions.Page = resp.NextPage
 			}
-			options.ListOptions.Page = resp.NextPage
 		}
 	}
 

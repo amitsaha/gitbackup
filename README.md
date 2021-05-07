@@ -60,7 +60,7 @@ Usage of ./bin/gitbackup:
   -githost.url string
         DNS of the custom Git host
   -github.repoType string
-        Repo types to backup (all, owner, member) (default "all")
+        Repo types to backup (all, owner, member, starred) (default "all")
   -gitlab.projectMembershipType string
         Project type to clone (all, owner, member) (default "all")
   -gitlab.projectVisibility string
@@ -76,7 +76,7 @@ Usage of ./bin/gitbackup:
 ```
 ### Backing up your GitHub repositories
 
-To backup all your GitHub repositories to the default backup directory (``$HOME/.gitbackup/``):
+To backup all your own GitHub repositories to the default backup directory (``$HOME/.gitbackup/``):
 
 ```lang=bash
 $ GITHUB_TOKEN=secret$token gitbackup -service github
@@ -92,6 +92,12 @@ To backup only the GitHub repositories which you are the "member" of:
 
 ```lang=bash
 $ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType member
+```
+
+Separately, to backup GitHub repositories you have starred:
+
+```lang=bash
+$ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType starred
 ```
 
 ### Backing up your GitLab repositories

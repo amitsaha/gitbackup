@@ -42,7 +42,7 @@ func main() {
 	bare := flag.Bool("bare", false, "Clone bare repositories")
 
 	// GitHub specific flags
-	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
+	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member, starred)")
 
 	githubCreateUserMigration := flag.Bool("github.createUserMigration", false, "Download user data")
 
