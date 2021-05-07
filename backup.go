@@ -18,16 +18,28 @@ var gitCommand = "git"
 
 // Check if we have a copy of the repo already, if
 // we do, we update the repo, else we do a fresh clone
-func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, error) {
+func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) ([]byte, error) {
 	defer wg.Done()
 
-	repoDir := path.Join(backupDir, repo.Namespace, repo.Name)
+	var dirName string
+	if bare {
+		dirName = repo.Name+".git"
+	} else {
+		dirName = repo.Name
+	}
+	repoDir := path.Join(backupDir, repo.Namespace, dirName)
+
 	_, err := appFS.Stat(repoDir)
 
 	var stdoutStderr []byte
 	if err == nil {
 		log.Printf("%s exists, updating. \n", repo.Name)
-		cmd := execCommand(gitCommand, "-C", repoDir, "pull")
+		var cmd *exec.Cmd
+		if bare {
+			cmd = execCommand(gitCommand, "-C", repoDir, "remote", "update", "--prune")
+		} else {
+			cmd = execCommand(gitCommand, "-C", repoDir, "pull")
+		}
 		stdoutStderr, err = cmd.CombinedOutput()
 	} else {
 		log.Printf("Cloning %s\n", repo.Name)
@@ -43,7 +55,12 @@ func backUp(backupDir string, repo *Repository, wg *sync.WaitGroup) ([]byte, err
 			repo.CloneURL = u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
 		}
 
-		cmd := execCommand(gitCommand, "clone", repo.CloneURL, repoDir)
+		var cmd *exec.Cmd
+		if bare {
+			cmd = execCommand(gitCommand, "clone", "--mirror", repo.CloneURL, repoDir)
+		} else {
+			cmd = execCommand(gitCommand, "clone", repo.CloneURL, repoDir)
+		}
 		stdoutStderr, err = cmd.CombinedOutput()
 	}
 

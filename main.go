@@ -39,6 +39,7 @@ func main() {
 	ignorePrivate = flag.Bool("ignore-private", false, "Ignore private repositories/projects")
 	ignoreFork := flag.Bool("ignore-fork", false, "Ignore repositories which are forks")
 	useHTTPSClone = flag.Bool("use-https-clone", false, "Use HTTPS for cloning instead of SSH")
+	bare := flag.Bool("bare", false, "Clone bare repositories")
 
 	// GitHub specific flags
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member)")
@@ -145,7 +146,7 @@ func main() {
 				tokens <- true
 				wg.Add(1)
 				go func(repo *Repository) {
-					stdoutStderr, err := backUp(*backupDir, repo, &wg)
+					stdoutStderr, err := backUp(*backupDir, repo, *bare, &wg)
 					if err != nil {
 						log.Printf("Error backing up %s: %s\n", repo.Name, stdoutStderr)
 					}
