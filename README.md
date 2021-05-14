@@ -97,6 +97,7 @@ Usage of ./gitbackup:
   -use-https-clone
     	Use HTTPS for cloning instead of SSH
 ```
+
 #### Backing up your GitHub repositories
 
 To backup all your own GitHub repositories to the default backup directory (``$HOME/.gitbackup/``):
@@ -203,6 +204,34 @@ $ GITHUB_TOKEN=secret$token gitbackup -service github -bare
 
 This will create a directory structure like ``github.com/org/repo.git`` containing bare repositories.
 
+#### GitHub Migrations
+
+`gitbackup` starting from the 0.6 release includes support for downloading your user data/organization data as 
+made available via the [Migrations API](https://docs.github.com/en/rest/reference/migrations). As of this
+release, you can create an user migration (including your owned organizations data) and download the migration
+artefact using the following command:
+
+```
+$ ./gitbackup -service github -github.createUserMigration -ignore-fork -github.repoType owner
+
+2021/05/14 05:05:27 /home/runner/.gitbackup/github.com doesn't exist, creating it
+2021/05/14 05:05:35 Creating a user migration for 129 repos
+2021/05/14 05:05:46 Waiting for migration state to be exported: 0xc0002a6260
+2021/05/14 05:06:48 Waiting for migration state to be exported: 0xc000290070
+..
+2021/05/14 05:33:44 Waiting for migration state to be exported: 0xc0001c2020
+
+2021/05/14 05:34:46 Downloading file to: /home/runner/.gitbackup/github.com/user-migration-571089.tar.gz
+
+2021/05/14 05:35:00 Creating a org migration (FedoraScientific) for 19 repos
+2021/05/14 05:35:03 Waiting for migration state to be exported: 0xc000144050
+..
+2021/05/14 05:39:05 Downloading file to: /home/runner/.gitbackup/github.com/FedoraScientific-migration-571098.tar.gz
+..
+2021/05/14 05:46:16 Downloading file to: /home/runner/.gitbackup/github.com/practicalgo-migration-571103.tar.gz
+```
+You can then integrate this with your own scripting to push the data to S3 for example (See an example
+workflow via scheduled github actions [here](https://github.com/amitsaha/gitbackup/actions/workflows/backup.yml)).
 
 ## Building
 
