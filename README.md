@@ -27,13 +27,35 @@ Bitbucket repositories.
 You can supply the tokens to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment variables
 respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and ``BITBUCKET_PASSWORD``.
 
-### OAuth Scopes required
+### GitHub Specific oAuth App Flow
+
+Starting with the 0.6 release, if you run `gitbackup` without specifying `GITHUB_TOKEN`, it will prompt you to complete
+a oAuth flow to grant the necessary access:
+
+```
+$ ./gitbackup -service github -github.repoType starred
+Copy code: <some code>
+then open: https://github.com/login/device
+```
+Once your authorize the app, `gitbackup` will retrieve the token, and also store it in your operating system's
+keychain/keyring (using the [99designs/keyring](https://github.com/99designs/keyring) package - thanks!). Next
+time you run it, it will ask you for the keyring password and retrieve the token automatically.
+
+
+### OAuth Scopes/Permissions required
+
+#### Bitbucket
+
+For the App password, the following permissions are required:
+
+- `Account:Read`
+- `Repositories:Read`
 
 #### GitHub
 
 - `repo`: Reading repositories, including private repositories
-- `user - read:user`: Reading the authenticated user details. This is only needed for retrieving your username when cloning
-via HTTPS and retrieving private repositories.
+- `user` and `admin:org`: Basically, this gives `gitbackup` a lot of permissions than you may be comfortable with. 
+   However, these are required for the user migration and org migration operations.
 
 #### GitLab
 
@@ -54,27 +76,36 @@ Typing ``-help`` will display the command line options that `gitbackup` recogniz
 
 ```
 $ gitbackup -help
-Usage of ./bin/gitbackup:
+Usage of ./gitbackup:
   -backupdir string
-        Backup directory
+    	Backup directory
+  -bare
+    	Clone bare repositories
   -githost.url string
-        DNS of the custom Git host
+    	DNS of the custom Git host
+  -github.createUserMigration
+    	Download user data
+  -github.listUserMigrations
+    	List available user migrations
   -github.repoType string
-        Repo types to backup (all, owner, member, starred) (default "all")
+    	Repo types to backup (all, owner, member, starred) (default "all")
+  -github.waitForUserMigration
+    	Wait for migration to complete (default true)
   -gitlab.projectMembershipType string
-        Project type to clone (all, owner, member) (default "all")
+    	Project type to clone (all, owner, member) (default "all")
   -gitlab.projectVisibility string
-        Visibility level of Projects to clone (internal, public, private) (default "internal")
+    	Visibility level of Projects to clone (internal, public, private) (default "internal")
+  -ignore-fork
+    	Ignore repositories which are forks
   -ignore-private
     	Ignore private repositories/projects
   -service string
     	Git Hosted Service Name (github/gitlab/bitbucket)
   -use-https-clone
     	Use HTTPS for cloning instead of SSH
-  -bare
-    	Clone bare repositories instead of working directories
 ```
-### Backing up your GitHub repositories
+
+#### Backing up your GitHub repositories
 
 To backup all your own GitHub repositories to the default backup directory (``$HOME/.gitbackup/``):
 
@@ -100,7 +131,7 @@ Separately, to backup GitHub repositories you have starred:
 $ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType starred
 ```
 
-### Backing up your GitLab repositories
+#### Backing up your GitLab repositories
 
 To backup all projects you either own or are a member of which have their [visibility](https://docs.gitlab.com/ce/api/projects.html#project-visibility-level) set to
 "internal" on ``https://gitlab.com`` to the default backup directory (``$HOME/.gitbackup/``):
@@ -139,7 +170,7 @@ $ GITLAB_TOKEN=secret$token gitbackup \
     -gitlab.projectMembershipType member
 ```
 
-### GitHub Enterprise or custom GitLab installation
+#### GitHub Enterprise or custom GitLab installation
 
 To specify a custom GitHub enterprise or GitLab location, specify the ``service`` as well as the
 the ``githost.url`` flag, like so
@@ -148,7 +179,7 @@ the ``githost.url`` flag, like so
 $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -githost.url https://git.yourhost.com
 ```
 
-### Backing up your Bitbucket repositories
+#### Backing up your Bitbucket repositories
 
 To backup all your Bitbucket repositories to the default backup directory (``$HOME/.gitbackup/``):
 
@@ -156,7 +187,7 @@ To backup all your Bitbucket repositories to the default backup directory (``$HO
 $ BITBUCKET_USERNAME=username BITBUCKET_PASSWORD=password gitbackup -service bitbucket
 ```
 
-### Specifying a backup location
+#### Specifying a backup location
 
 To specify a custom backup directory, we can use the ``backupdir`` flag:
 
@@ -170,7 +201,7 @@ Similarly, it will create a ``gitlab.com`` directory, if you are backing up repo
 If you have specified a Git Host URL, it will create a directory structure ``data/host-url/``.
 
 
-### Cloning bare repositories
+#### Cloning bare repositories
 
 To clone bare repositories, we can use the ``bare`` flag:
 
@@ -180,10 +211,38 @@ $ GITHUB_TOKEN=secret$token gitbackup -service github -bare
 
 This will create a directory structure like ``github.com/org/repo.git`` containing bare repositories.
 
+#### GitHub Migrations
+
+`gitbackup` starting from the 0.6 release includes support for downloading your user data/organization data as 
+made available via the [Migrations API](https://docs.github.com/en/rest/reference/migrations). As of this
+release, you can create an user migration (including your owned organizations data) and download the migration
+artefact using the following command:
+
+```
+$ ./gitbackup -service github -github.createUserMigration -ignore-fork -github.repoType owner
+
+2021/05/14 05:05:27 /home/runner/.gitbackup/github.com doesn't exist, creating it
+2021/05/14 05:05:35 Creating a user migration for 129 repos
+2021/05/14 05:05:46 Waiting for migration state to be exported: 0xc0002a6260
+2021/05/14 05:06:48 Waiting for migration state to be exported: 0xc000290070
+..
+2021/05/14 05:33:44 Waiting for migration state to be exported: 0xc0001c2020
+
+2021/05/14 05:34:46 Downloading file to: /home/runner/.gitbackup/github.com/user-migration-571089.tar.gz
+
+2021/05/14 05:35:00 Creating a org migration (FedoraScientific) for 19 repos
+2021/05/14 05:35:03 Waiting for migration state to be exported: 0xc000144050
+..
+2021/05/14 05:39:05 Downloading file to: /home/runner/.gitbackup/github.com/FedoraScientific-migration-571098.tar.gz
+..
+2021/05/14 05:46:16 Downloading file to: /home/runner/.gitbackup/github.com/practicalgo-migration-571103.tar.gz
+```
+You can then integrate this with your own scripting to push the data to S3 for example (See an example
+workflow via scheduled github actions [here](https://github.com/amitsaha/gitbackup/actions/workflows/backup.yml)).
 
 ## Building
 
-If you have Golang 1.16.x+ installed, you can clone the repository and:
+If you have Golang 1.15.x+ installed, you can clone the repository and:
 ```
 $ go build
 ```
