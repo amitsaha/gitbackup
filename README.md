@@ -42,7 +42,14 @@ keychain/keyring (using the [99designs/keyring](https://github.com/99designs/key
 time you run it, it will ask you for the keyring password and retrieve the token automatically.
 
 
-### OAuth Scopes required
+### OAuth Scopes/Permissions required
+
+#### Bitbucket
+
+For the App password, the following permissions are required:
+
+- `Account:Read`
+- `Repositories:Read`
 
 #### GitHub
 

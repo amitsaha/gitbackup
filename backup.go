@@ -23,7 +23,7 @@ func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) (
 
 	var dirName string
 	if bare {
-		dirName = repo.Name+".git"
+		dirName = repo.Name + ".git"
 	} else {
 		dirName = repo.Name
 	}
@@ -67,26 +67,16 @@ func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) (
 	return stdoutStderr, err
 }
 
-func setupBackupDir(backupDir string, service string, githostURL string) string {
+func setupBackupDir(backupDir string, gitHost string) string {
 	if len(backupDir) == 0 {
 		homeDir, err := homedir.Dir()
 		if err == nil {
-			service = service + ".com"
-			backupDir = path.Join(homeDir, ".gitbackup", service)
+			backupDir = path.Join(homeDir, ".gitbackup", gitHost)
 		} else {
 			log.Fatal("Could not determine home directory and backup directory not specified")
 		}
 	} else {
-		if len(githostURL) == 0 {
-			service = service + ".com"
-			backupDir = path.Join(backupDir, service)
-		} else {
-			u, err := url.Parse(githostURL)
-			if err != nil {
-				panic(err)
-			}
-			backupDir = path.Join(backupDir, u.Host)
-		}
+		backupDir = path.Join(backupDir, gitHost)
 	}
 	_, err := appFS.Stat(backupDir)
 	if err != nil {

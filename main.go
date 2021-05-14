@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"sync"
 
 	"github.com/google/go-github/v34/github"
@@ -21,15 +22,18 @@ var gitHostUsername string
 
 func main() {
 
+	// Git host
+	var gitHost string
+
 	// Used for waiting for all the goroutines to finish before exiting
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	// The services we know of
-	knownServices := map[string]bool{
-		"github":    true,
-		"gitlab":    true,
-		"bitbucket": true,
+	// The services we know of and their default public host names
+	knownServices := map[string]string{
+		"github":    "github.com",
+		"gitlab":    "gitlab.com",
+		"bitbucket": "bitbucker.org",
 	}
 
 	// Generic flags
@@ -55,7 +59,7 @@ func main() {
 
 	flag.Parse()
 
-	if len(*service) == 0 || !knownServices[*service] {
+	if _, ok := knownServices[*service]; !ok {
 		log.Fatal("Please specify the git service type: github, gitlab, bitbucket")
 	}
 
@@ -63,7 +67,17 @@ func main() {
 		log.Fatal("Please specify a valid gitlab project membership - all/owner/member")
 	}
 
-	*backupDir = setupBackupDir(*backupDir, *service, *githostURL)
+	if len(*githostURL) != 0 {
+		u, err := url.Parse(*githostURL)
+		if err != nil {
+			panic(err)
+		}
+		gitHost = u.Host
+	} else {
+		gitHost = knownServices[*service]
+	}
+
+	*backupDir = setupBackupDir(*backupDir, gitHost)
 
 	client := newClient(*service, *githostURL)
 
