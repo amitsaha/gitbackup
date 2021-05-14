@@ -97,7 +97,7 @@ Usage of ./gitbackup:
   -use-https-clone
     	Use HTTPS for cloning instead of SSH
 ```
-### Backing up your GitHub repositories
+#### Backing up your GitHub repositories
 
 To backup all your own GitHub repositories to the default backup directory (``$HOME/.gitbackup/``):
 
@@ -123,7 +123,7 @@ Separately, to backup GitHub repositories you have starred:
 $ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType starred
 ```
 
-### Backing up your GitLab repositories
+#### Backing up your GitLab repositories
 
 To backup all projects you either own or are a member of which have their [visibility](https://docs.gitlab.com/ce/api/projects.html#project-visibility-level) set to
 "internal" on ``https://gitlab.com`` to the default backup directory (``$HOME/.gitbackup/``):
@@ -162,7 +162,7 @@ $ GITLAB_TOKEN=secret$token gitbackup \
     -gitlab.projectMembershipType member
 ```
 
-### GitHub Enterprise or custom GitLab installation
+#### GitHub Enterprise or custom GitLab installation
 
 To specify a custom GitHub enterprise or GitLab location, specify the ``service`` as well as the
 the ``githost.url`` flag, like so
@@ -171,7 +171,7 @@ the ``githost.url`` flag, like so
 $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -githost.url https://git.yourhost.com
 ```
 
-### Backing up your Bitbucket repositories
+#### Backing up your Bitbucket repositories
 
 To backup all your Bitbucket repositories to the default backup directory (``$HOME/.gitbackup/``):
 
@@ -179,7 +179,7 @@ To backup all your Bitbucket repositories to the default backup directory (``$HO
 $ BITBUCKET_USERNAME=username BITBUCKET_PASSWORD=password gitbackup -service bitbucket
 ```
 
-### Specifying a backup location
+#### Specifying a backup location
 
 To specify a custom backup directory, we can use the ``backupdir`` flag:
 
@@ -193,7 +193,7 @@ Similarly, it will create a ``gitlab.com`` directory, if you are backing up repo
 If you have specified a Git Host URL, it will create a directory structure ``data/host-url/``.
 
 
-### Cloning bare repositories
+#### Cloning bare repositories
 
 To clone bare repositories, we can use the ``bare`` flag:
 
