@@ -32,17 +32,23 @@ respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and ``BI
 Starting with the 0.6 release, if you run `gitbackup` without specifying `GITHUB_TOKEN`, it will prompt you to complete
 a oAuth flow to grant the necessary access:
 
+```
 $ ./gitbackup -service github -github.repoType starred
-Copy code: 7942-7263
+Copy code: <some code>
 then open: https://github.com/login/device
+```
+Once your authorize the app, `gitbackup` will retrieve the token, and also store it in your operating system's
+keychain/keyring (using the [99designs/keyring](https://github.com/99designs/keyring) package - thanks!). Next
+time you run it, it will ask you for the keyring password and retrieve the token automatically.
+
 
 ### OAuth Scopes required
 
 #### GitHub
 
 - `repo`: Reading repositories, including private repositories
-- `user - read:user`: Reading the authenticated user details. This is only needed for retrieving your username when cloning
-via HTTPS and retrieving private repositories.
+- `user` and `admin:org`: Basically, this gives `gitbackup` a lot of permissions than you may be comfortable with. 
+   However, these are required for the user migration and org migration operations.
 
 #### GitLab
 
@@ -63,25 +69,33 @@ Typing ``-help`` will display the command line options that `gitbackup` recogniz
 
 ```
 $ gitbackup -help
-Usage of ./bin/gitbackup:
+Usage of ./gitbackup:
   -backupdir string
-        Backup directory
+    	Backup directory
+  -bare
+    	Clone bare repositories
   -githost.url string
-        DNS of the custom Git host
+    	DNS of the custom Git host
+  -github.createUserMigration
+    	Download user data
+  -github.listUserMigrations
+    	List available user migrations
   -github.repoType string
-        Repo types to backup (all, owner, member, starred) (default "all")
+    	Repo types to backup (all, owner, member, starred) (default "all")
+  -github.waitForUserMigration
+    	Wait for migration to complete (default true)
   -gitlab.projectMembershipType string
-        Project type to clone (all, owner, member) (default "all")
+    	Project type to clone (all, owner, member) (default "all")
   -gitlab.projectVisibility string
-        Visibility level of Projects to clone (internal, public, private) (default "internal")
+    	Visibility level of Projects to clone (internal, public, private) (default "internal")
+  -ignore-fork
+    	Ignore repositories which are forks
   -ignore-private
     	Ignore private repositories/projects
   -service string
     	Git Hosted Service Name (github/gitlab/bitbucket)
   -use-https-clone
     	Use HTTPS for cloning instead of SSH
-  -bare
-    	Clone bare repositories instead of working directories
 ```
 ### Backing up your GitHub repositories
 
@@ -192,7 +206,7 @@ This will create a directory structure like ``github.com/org/repo.git`` containi
 
 ## Building
 
-If you have Golang 1.16.x+ installed, you can clone the repository and:
+If you have Golang 1.15.x+ installed, you can clone the repository and:
 ```
 $ go build
 ```
