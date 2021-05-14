@@ -27,6 +27,15 @@ Bitbucket repositories.
 You can supply the tokens to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment variables
 respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and ``BITBUCKET_PASSWORD``.
 
+### GitHub Specific oAuth App Flow
+
+Starting with the 0.6 release, if you run `gitbackup` without specifying `GITHUB_TOKEN`, it will prompt you to complete
+a oAuth flow to grant the necessary access:
+
+$ ./gitbackup -service github -github.repoType starred
+Copy code: 7942-7263
+then open: https://github.com/login/device
+
 ### OAuth Scopes required
 
 #### GitHub
