@@ -5,10 +5,12 @@ Linux/Mac OS X [![Build Status](https://travis-ci.org/amitsaha/gitbackup.svg?bra
 ``gitbackup`` is a tool to backup your git repositories from GitHub (including GitHub enterprise),
 GitLab (including custom GitLab installations), or Bitbucket.
 
-``gitbackup`` only creates a backup of the repository and does not currently support issues,
-pull requests or other data associated with a git repository. This may or may not be in the future
-scope of this tool.
+``gitbackup`` currently has two operation modes:
 
+- The first and original operating mode is to create clones of only your git repository. This is supported for Bitbucket, GitHub and Gitlab.
+- The second operating mode is only available for GitHub where you can create a user migration (including orgs) which you get back as a .tar.gz
+  file containing all the artefacts that GitHub supports via their Migration API.
+  
 If you are following along my Linux Journal article (published in 2017), please obtain the version of the 
 source tagged with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
 
