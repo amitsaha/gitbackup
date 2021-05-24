@@ -19,6 +19,8 @@ source tagged with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/l
 Binary releases are available from the [Releases](https://github.com/amitsaha/gitbackup/releases/) page. Please download the binary corresponding to your OS
 and architecture and copy the binary somewhere in your ``$PATH``. It is recommended to rename the binary to `gitbackup` or `gitbackup.exe` (on Windows).
 
+If you are on MacOS, a community member has created a [Homebrew formula](https://formulae.brew.sh/formula/gitbackup).
+
 ## Using `gitbackup`
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for
