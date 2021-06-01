@@ -11,7 +11,7 @@ GitLab (including custom GitLab installations), or Bitbucket.
 - The second operating mode is only available for GitHub where you can create a user migration (including orgs) which you get back as a .tar.gz
   file containing all the artefacts that GitHub supports via their Migration API.
   
-If you are following along my Linux Journal article (published in 2017), please obtain the version of the 
+If you are following along my [Linux Journal article](https://www.linuxjournal.com/content/back-github-and-gitlab-repositories-using-golang) (published in 2017), please obtain the version of the 
 source tagged with [lj-0.1](https://github.com/amitsaha/gitbackup/releases/tag/lj-0.1).
 
 ## Installing `gitbackup`
