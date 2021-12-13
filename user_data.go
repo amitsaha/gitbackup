@@ -64,11 +64,10 @@ func downloadGithubUserMigrationData(client interface{}, backupDir string, id *i
 	}
 
 	for {
-
-		if *ms.State == "failed" {
+		switch *ms.State {
+		case "failed":
 			log.Fatal("Migration failed.")
-		}
-		if *ms.State == "exported" {
+		case "exported":
 			archiveURL, err := client.(*github.Client).Migrations.UserMigrationArchiveURL(ctx, *ms.ID)
 			if err != nil {
 				panic(err)
@@ -93,9 +92,9 @@ func downloadGithubUserMigrationData(client interface{}, backupDir string, id *i
 			if err != nil {
 				log.Fatal(err)
 			}
-			break
-		} else {
-			log.Printf("Waiting for migration state to be exported: %v\n", ms.State)
+			return
+		default:
+			log.Printf("Waiting for migration state to be exported: %v\n", *ms.State)
 			time.Sleep(60 * time.Second)
 
 			ms, _, err = client.(*github.Client).Migrations.UserMigrationStatus(ctx, *ms.ID)
@@ -117,11 +116,10 @@ func downloadGithubOrgMigrationData(client interface{}, org string, backupDir st
 	}
 
 	for {
-
-		if *ms.State == "failed" {
+		switch *ms.State {
+		case "failed":
 			log.Fatal("Migration failed.")
-		}
-		if *ms.State == "exported" {
+		case "exported":
 			archiveURL, err := client.(*github.Client).Migrations.MigrationArchiveURL(ctx, org, *ms.ID)
 			if err != nil {
 				panic(err)
@@ -146,9 +144,9 @@ func downloadGithubOrgMigrationData(client interface{}, org string, backupDir st
 			if err != nil {
 				log.Fatal(err)
 			}
-			break
-		} else {
-			log.Printf("Waiting for migration state to be exported: %v\n", ms.State)
+			return
+		default:
+			log.Printf("Waiting for migration state to be exported: %v\n", *ms.State)
 			time.Sleep(60 * time.Second)
 
 			ms, _, err = client.(*github.Client).Migrations.MigrationStatus(ctx, org, *ms.ID)
