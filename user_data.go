@@ -15,7 +15,11 @@ import (
 	"github.com/google/go-github/v34/github"
 )
 
-func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository) (*github.UserMigration, error) {
+func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository, retry bool, maxNumRetries int) (*github.UserMigration, error) {
+	var m *github.UserMigration
+	var err error
+	var resp *github.Response
+
 	migrationOpts := github.UserMigrationOptions{
 		LockRepositories:   false,
 		ExcludeAttachments: false,
@@ -25,11 +29,22 @@ func createGithubUserMigration(ctx context.Context, client interface{}, repos []
 		repoPaths = append(repoPaths, fmt.Sprintf("%s/%s", repo.Namespace, repo.Name))
 	}
 
-	m, resp, err := client.(*github.Client).Migrations.StartUserMigration(ctx, repoPaths, &migrationOpts)
-	if err != nil {
-		defer resp.Body.Close()
-		data, _ := ioutil.ReadAll(resp.Body)
-		log.Printf("%v", string(data))
+	numAttempts := 1
+	if retry {
+		numAttempts += maxNumRetries
+	}
+
+	var errResponse []byte
+	for i := 1; i <= numAttempts; i++ {
+		m, resp, err = client.(*github.Client).Migrations.StartUserMigration(ctx, repoPaths, &migrationOpts)
+		if err == nil {
+			return m, nil
+		}
+		if resp != nil {
+			errResponse, _ = ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+		}
+		log.Printf("Attempt #%d: Error creating user migration: %v", i, string(errResponse))
 	}
 	return m, err
 }

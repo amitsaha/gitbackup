@@ -7,14 +7,15 @@ import (
 	"log"
 	"net/url"
 	"sync"
-	"time"
 
 	"github.com/google/go-github/v34/github"
 )
 
 // MaxConcurrentClones is the upper limit of the maximum number of
 // concurrent git clones
-var MaxConcurrentClones = 20
+const MaxConcurrentClones = 20
+
+const defaultMaxUserMigrationRetry = 5
 
 var gitHostToken string
 var useHTTPSClone *bool
@@ -50,7 +51,8 @@ func main() {
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member, starred)")
 
 	githubCreateUserMigration := flag.Bool("github.createUserMigration", false, "Download user data")
-	githubCreateUserMigrationRetry := flag.Bool("github.createUserMigrationRetry", true, "Retry creating the user migration if we get an error")
+	githubCreateUserMigrationRetry := flag.Bool("github.createUserMigrationRetry", true, "Retry creating the GitHub user migration if we get an error")
+	githubCreateUserMigrationRetryMax := flag.Int("github.createUserMigrationRetryMax", defaultMaxUserMigrationRetry, "Number of retries to attempt for creating GitHub user migration")
 	githubListUserMigrations := flag.Bool("github.listUserMigrations", false, "List available user migrations")
 	githubWaitForMigrationComplete := flag.Bool("github.waitForUserMigration", true, "Wait for migration to complete")
 
@@ -114,18 +116,11 @@ func main() {
 		}
 
 		log.Printf("Creating a user migration for %d repos", len(repos))
-		m, err := createGithubUserMigration(context.Background(), client, repos)
+		m, err := createGithubUserMigration(context.Background(), client, repos, *githubCreateUserMigrationRetry, *githubCreateUserMigrationRetryMax)
 		if err != nil {
-			if !*githubCreateUserMigrationRetry {
-				log.Fatalf("Error creating migration: %v", err)
-			}
-			log.Printf("Got error when creating migration: %v. Retrying after sleeping for 300 seconds.", err)
-			time.Sleep(300 * time.Second)
-			m, err = createGithubUserMigration(context.Background(), client, repos)
-			if err != nil {
-				log.Fatalf("Error creating migration: %v", err)
-			}
+			log.Fatalf("Error creating migration: %v", err)
 		}
+
 		if *githubWaitForMigrationComplete {
 			downloadGithubUserMigrationData(client, *backupDir, m.ID)
 		}
