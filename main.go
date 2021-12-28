@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/google/go-github/v34/github"
 )
