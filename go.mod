@@ -7,6 +7,7 @@ require (
 	github.com/cli/oauth v0.8.0
 	github.com/google/go-github/v34 v34.0.0
 	github.com/ktrysmt/go-bitbucket v0.9.1
+	github.com/migueleliasweb/go-github-mock v0.0.5 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/afero v1.2.2
 	github.com/xanzy/go-gitlab v0.16.1
