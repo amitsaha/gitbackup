@@ -122,7 +122,11 @@ func main() {
 		}
 
 		if *githubWaitForMigrationComplete {
-			downloadGithubUserMigrationData(client, *backupDir, m.ID)
+			migrationStatePollingDuration := 60 * time.Second
+			err = downloadGithubUserMigrationData(context.Background(), client, *backupDir, m.ID, migrationStatePollingDuration)
+			if err != nil {
+				log.Fatalf("Error querying/downloading migration: %v", err)
+			}
 		}
 
 		orgs, err := getUserOwnedOrgs(client)

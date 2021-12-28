@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,6 +14,14 @@ import (
 	"time"
 
 	"github.com/google/go-github/v34/github"
+)
+
+// Using var insted of const, since we cannot take & of a const
+var (
+	migrationStatePending   = "pending"
+	migrationStateExporting = "exporting"
+	migrationStateExported  = "exported"
+	migrationStateFailed    = "failed"
 )
 
 func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository, retry bool, maxNumRetries int) (*github.UserMigration, error) {
@@ -68,25 +77,25 @@ func createGithubOrgMigration(ctx context.Context, client interface{}, org strin
 	return m, err
 }
 
-func downloadGithubUserMigrationData(client interface{}, backupDir string, id *int64) {
+func downloadGithubUserMigrationData(
+	ctx context.Context, client interface{}, backupDir string, id *int64, migrationStatePollingDuration time.Duration,
+) error {
 
 	var ms *github.UserMigration
-	ctx := context.Background()
 
 	ms, _, err := client.(*github.Client).Migrations.UserMigrationStatus(ctx, *id)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for {
-
-		if *ms.State == "failed" {
-			log.Fatal("Migration failed.")
-		}
-		if *ms.State == "exported" {
+		switch *ms.State {
+		case migrationStateFailed:
+			return errors.New("migration failed")
+		case migrationStateExported:
 			archiveURL, err := client.(*github.Client).Migrations.UserMigrationArchiveURL(ctx, *ms.ID)
 			if err != nil {
-				panic(err)
+				return err
 			}
 
 			archiveFilepath := path.Join(backupDir, fmt.Sprintf("user-migration-%d.tar.gz", *ms.ID))
@@ -94,28 +103,28 @@ func downloadGithubUserMigrationData(client interface{}, backupDir string, id *i
 
 			resp, err := http.Get(archiveURL)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			defer resp.Body.Close()
 
 			out, err := os.Create(archiveFilepath)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			defer out.Close()
 
 			_, err = io.Copy(out, resp.Body)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
-			break
-		} else {
-			log.Printf("Waiting for migration state to be exported: %v\n", ms.State)
-			time.Sleep(60 * time.Second)
+			return nil
+		default:
+			log.Printf("Waiting for migration state to be exported: %v\n", *ms.State)
+			time.Sleep(migrationStatePollingDuration)
 
 			ms, _, err = client.(*github.Client).Migrations.UserMigrationStatus(ctx, *ms.ID)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 	}

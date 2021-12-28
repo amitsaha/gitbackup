@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v34/github"
 	githubmock "github.com/migueleliasweb/go-github-mock/src/mock"
@@ -94,5 +96,62 @@ func TestCreateGitHubUserMigrationFailOnceThenSucceed(t *testing.T) {
 	}
 	if requestCounter.cnt != expectedNumAttempts {
 		t.Fatalf("Expected to send %d requests, sent: %d\n", defaultMaxUserMigrationRetry+1, requestCounter.cnt)
+	}
+}
+
+func TestDownloadGithubUserMigrationDataFailed(t *testing.T) {
+	var mockMigrationID int64 = 10021
+	backUpDir := t.TempDir()
+
+	mockedHTTPClient := githubmock.NewMockedHTTPClient(
+		githubmock.WithRequestMatch(
+			githubmock.GetUserMigrationsByMigrationId,
+			github.UserMigration{
+				ID:    &mockMigrationID,
+				State: &migrationStatePending,
+			},
+			github.UserMigration{
+				ID:    &mockMigrationID,
+				State: &migrationStateFailed,
+			},
+		),
+	)
+
+	c := github.NewClient(mockedHTTPClient)
+	ctx := context.Background()
+	err := downloadGithubUserMigrationData(ctx, c, backUpDir, &mockMigrationID, 10*time.Millisecond)
+	if err == nil {
+		t.Fatalf("Expected migration download to fail.")
+	}
+}
+
+func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
+	var mockMigrationID int64 = 10021
+	backUpDir := t.TempDir()
+
+	mockedHTTPClient := githubmock.NewMockedHTTPClient(
+		githubmock.WithRequestMatch(
+			githubmock.GetUserMigrationsByMigrationId,
+			github.UserMigration{
+				ID:    &mockMigrationID,
+				State: &migrationStatePending,
+			},
+			github.UserMigration{
+				ID:    &mockMigrationID,
+				State: &migrationStateExported,
+			},
+		),
+		githubmock.WithRequestMatch(
+			githubmock.GetUserMigrationsArchiveByMigrationId,
+			"http://127.0.0.1:8080/foo.tar.gz",
+		),
+	)
+
+	c := github.NewClient(mockedHTTPClient)
+	ctx := context.Background()
+	err := downloadGithubUserMigrationData(ctx, c, backUpDir, &mockMigrationID, 10*time.Millisecond)
+	log.Printf(err.Error())
+	if err == nil {
+		t.Fatalf("Expected migration download to fail.")
 	}
 }
