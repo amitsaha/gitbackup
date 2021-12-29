@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"log"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -127,7 +131,7 @@ func TestDownloadGithubUserMigrationDataFailed(t *testing.T) {
 
 func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
 	var mockMigrationID int64 = 10021
-	backUpDir := t.TempDir()
+	backupDir := t.TempDir()
 
 	mockedHTTPClient := githubmock.NewMockedHTTPClient(
 		githubmock.WithRequestMatch(
@@ -141,17 +145,68 @@ func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
 				State: &migrationStateExported,
 			},
 		),
-		githubmock.WithRequestMatch(
+		githubmock.WithRequestMatchHandler(
 			githubmock.GetUserMigrationsArchiveByMigrationId,
-			"http://127.0.0.1:8080/foo.tar.gz",
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, "http://127.0.0.1:8080/testarchive.tar.gz", http.StatusTemporaryRedirect)
+			}),
 		),
 	)
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubUserMigrationData(ctx, c, backUpDir, &mockMigrationID, 10*time.Millisecond)
-	log.Printf(err.Error())
+	err := downloadGithubUserMigrationData(ctx, c, backupDir, &mockMigrationID, 10*time.Millisecond)
 	if err == nil {
-		t.Fatalf("Expected migration download to fail.")
+		t.Fatalf("Expected migration archive download to fail.")
+	}
+	if !strings.HasPrefix(err.Error(), "error downloading archive") {
+		t.Fatalf("Expected error message to start with: error downloading archive, got: %v", err)
+	}
+}
+
+func TestDownloadGithubUserMigrationDataArchiveDownload(t *testing.T) {
+	var mockMigrationID int64 = 10021
+	backupDir := t.TempDir()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/testarchive.tar.gz", func(w http.ResponseWriter, r *http.Request) {
+		b := bytes.NewBuffer([]byte("testdata"))
+		r.Header.Set("Content-Type", "application/gzip")
+		io.Copy(w, b)
+	})
+
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
+
+	mockedHTTPClient := githubmock.NewMockedHTTPClient(
+		githubmock.WithRequestMatch(
+			githubmock.GetUserMigrationsByMigrationId,
+			github.UserMigration{
+				ID:    &mockMigrationID,
+				State: &migrationStatePending,
+			},
+			github.UserMigration{
+				ID:    &mockMigrationID,
+				State: &migrationStateExported,
+			},
+		),
+		githubmock.WithRequestMatchHandler(
+			githubmock.GetUserMigrationsArchiveByMigrationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, ts.URL+"/testarchive.tar.gz", http.StatusTemporaryRedirect)
+			}),
+		),
+	)
+
+	c := github.NewClient(mockedHTTPClient)
+	ctx := context.Background()
+	err := downloadGithubUserMigrationData(ctx, c, backupDir, &mockMigrationID, 10*time.Millisecond)
+	if err != nil {
+		t.Fatalf("Expected migration archive download to succeed.")
+	}
+	archiveFilepath := getLocalMigrationFilepath(backupDir, mockMigrationID)
+	_, err = os.Stat(archiveFilepath)
+	if err != nil {
+		t.Fatalf("Expected %s to exist", archiveFilepath)
 	}
 }

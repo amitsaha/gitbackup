@@ -24,6 +24,10 @@ var (
 	migrationStateFailed    = "failed"
 )
 
+func getLocalMigrationFilepath(backupDir string, migrationID int64) string {
+	return path.Join(backupDir, fmt.Sprintf("user-migration-%d.tar.gz", migrationID))
+}
+
 func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository, retry bool, maxNumRetries int) (*github.UserMigration, error) {
 	var m *github.UserMigration
 	var err error
@@ -97,13 +101,11 @@ func downloadGithubUserMigrationData(
 			if err != nil {
 				return err
 			}
-
-			archiveFilepath := path.Join(backupDir, fmt.Sprintf("user-migration-%d.tar.gz", *ms.ID))
+			archiveFilepath := getLocalMigrationFilepath(backupDir, *ms.ID)
 			log.Printf("Downloading file to: %s\n", archiveFilepath)
-
 			resp, err := http.Get(archiveURL)
 			if err != nil {
-				return err
+				return fmt.Errorf("error downloading archive:%v", err)
 			}
 			defer resp.Body.Close()
 
