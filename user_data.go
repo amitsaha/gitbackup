@@ -28,6 +28,10 @@ func getLocalMigrationFilepath(backupDir string, migrationID int64) string {
 	return path.Join(backupDir, fmt.Sprintf("user-migration-%d.tar.gz", migrationID))
 }
 
+func getLocalOrgMigrationFilepath(backupDir, org string, migrationID int64) string {
+	return path.Join(backupDir, fmt.Sprintf("%s-migration-%d.tar.gz", org, migrationID))
+}
+
 func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository, retry bool, maxNumRetries int) (*github.UserMigration, error) {
 	var m *github.UserMigration
 	var err error
@@ -151,7 +155,7 @@ func downloadGithubOrgMigrationData(
 				return err
 			}
 
-			archiveFilepath := path.Join(backupDir, fmt.Sprintf("%s-migration-%d.tar.gz", org, *ms.ID))
+			archiveFilepath := getLocalOrgMigrationFilepath(backupDir, org, *ms.ID)
 			log.Printf("Downloading file to: %s\n", archiveFilepath)
 
 			resp, err := http.Get(archiveURL)

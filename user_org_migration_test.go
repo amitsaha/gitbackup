@@ -46,7 +46,7 @@ func TestCreateGithubUserOrgMigration(t *testing.T) {
 }
 
 func TestDownloadGithubUserOrgMigrationDataFailed(t *testing.T) {
-	var mockMigrationID int64 = 10021
+	var testMigrationID int64 = 10021
 	backupDir := t.TempDir()
 	testOrg := "TestOrg"
 
@@ -54,11 +54,11 @@ func TestDownloadGithubUserOrgMigrationDataFailed(t *testing.T) {
 		githubmock.WithRequestMatch(
 			githubmock.GetOrgsMigrationsByOrgByMigrationId,
 			github.Migration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStatePending,
 			},
 			github.Migration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStateFailed,
 			},
 		),
@@ -66,14 +66,14 @@ func TestDownloadGithubUserOrgMigrationDataFailed(t *testing.T) {
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubOrgMigrationData(ctx, c, testOrg, backupDir, &mockMigrationID, 10*time.Millisecond)
+	err := downloadGithubOrgMigrationData(ctx, c, testOrg, backupDir, &testMigrationID, 10*time.Millisecond)
 	if err == nil {
 		t.Fatalf("Expected migration download to fail.")
 	}
 }
 
 func TestDownloadGithubUserOrgMigrationDataArchiveDownloadFail(t *testing.T) {
-	var mockMigrationID int64 = 10021
+	var testMigrationID int64 = 10021
 	backupDir := t.TempDir()
 	testOrg := "TestOrg"
 
@@ -81,11 +81,11 @@ func TestDownloadGithubUserOrgMigrationDataArchiveDownloadFail(t *testing.T) {
 		githubmock.WithRequestMatch(
 			githubmock.GetOrgsMigrationsByOrgByMigrationId,
 			github.Migration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStatePending,
 			},
 			github.Migration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStateExported,
 			},
 		),
@@ -99,7 +99,7 @@ func TestDownloadGithubUserOrgMigrationDataArchiveDownloadFail(t *testing.T) {
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubOrgMigrationData(ctx, c, testOrg, backupDir, &mockMigrationID, 10*time.Millisecond)
+	err := downloadGithubOrgMigrationData(ctx, c, testOrg, backupDir, &testMigrationID, 10*time.Millisecond)
 	if err == nil {
 		t.Fatalf("Expected migration archive download to fail.")
 	}
@@ -109,7 +109,8 @@ func TestDownloadGithubUserOrgMigrationDataArchiveDownloadFail(t *testing.T) {
 }
 
 func TestDownloadGithubUserOrgMigrationDataArchiveDownload(t *testing.T) {
-	var mockMigrationID int64 = 10021
+	var testMigrationID int64 = 10021
+	testOrg := "TestOrg"
 	backupDir := t.TempDir()
 
 	mux := http.NewServeMux()
@@ -124,18 +125,18 @@ func TestDownloadGithubUserOrgMigrationDataArchiveDownload(t *testing.T) {
 
 	mockedHTTPClient := githubmock.NewMockedHTTPClient(
 		githubmock.WithRequestMatch(
-			githubmock.GetUserMigrationsByMigrationId,
-			github.UserMigration{
-				ID:    &mockMigrationID,
+			githubmock.GetOrgsMigrationsByOrgByMigrationId,
+			github.Migration{
+				ID:    &testMigrationID,
 				State: &migrationStatePending,
 			},
-			github.UserMigration{
-				ID:    &mockMigrationID,
+			github.Migration{
+				ID:    &testMigrationID,
 				State: &migrationStateExported,
 			},
 		),
 		githubmock.WithRequestMatchHandler(
-			githubmock.GetUserMigrationsArchiveByMigrationId,
+			githubmock.GetOrgsMigrationsArchiveByOrgByMigrationId,
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, ts.URL+"/testarchive.tar.gz", http.StatusTemporaryRedirect)
 			}),
@@ -144,11 +145,11 @@ func TestDownloadGithubUserOrgMigrationDataArchiveDownload(t *testing.T) {
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubUserMigrationData(ctx, c, backupDir, &mockMigrationID, 10*time.Millisecond)
+	err := downloadGithubOrgMigrationData(ctx, c, testOrg, backupDir, &testMigrationID, 10*time.Millisecond)
 	if err != nil {
-		t.Fatalf("Expected migration archive download to succeed.")
+		t.Fatalf("Expected migration archive download to succeed. Got %v", err)
 	}
-	archiveFilepath := getLocalMigrationFilepath(backupDir, mockMigrationID)
+	archiveFilepath := getLocalOrgMigrationFilepath(backupDir, testOrg, testMigrationID)
 	_, err = os.Stat(archiveFilepath)
 	if err != nil {
 		t.Fatalf("Expected %s to exist", archiveFilepath)

@@ -104,18 +104,18 @@ func TestCreateGitHubUserMigrationFailOnceThenSucceed(t *testing.T) {
 }
 
 func TestDownloadGithubUserMigrationDataFailed(t *testing.T) {
-	var mockMigrationID int64 = 10021
+	var testMigrationID int64 = 10021
 	backupDir := t.TempDir()
 
 	mockedHTTPClient := githubmock.NewMockedHTTPClient(
 		githubmock.WithRequestMatch(
 			githubmock.GetUserMigrationsByMigrationId,
 			github.UserMigration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStatePending,
 			},
 			github.UserMigration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStateFailed,
 			},
 		),
@@ -123,25 +123,25 @@ func TestDownloadGithubUserMigrationDataFailed(t *testing.T) {
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubUserMigrationData(ctx, c, backupDir, &mockMigrationID, 10*time.Millisecond)
+	err := downloadGithubUserMigrationData(ctx, c, backupDir, &testMigrationID, 10*time.Millisecond)
 	if err == nil {
 		t.Fatalf("Expected migration download to fail.")
 	}
 }
 
 func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
-	var mockMigrationID int64 = 10021
+	var testMigrationID int64 = 10021
 	backupDir := t.TempDir()
 
 	mockedHTTPClient := githubmock.NewMockedHTTPClient(
 		githubmock.WithRequestMatch(
 			githubmock.GetUserMigrationsByMigrationId,
 			github.UserMigration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStatePending,
 			},
 			github.UserMigration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStateExported,
 			},
 		),
@@ -155,7 +155,7 @@ func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubUserMigrationData(ctx, c, backupDir, &mockMigrationID, 10*time.Millisecond)
+	err := downloadGithubUserMigrationData(ctx, c, backupDir, &testMigrationID, 10*time.Millisecond)
 	if err == nil {
 		t.Fatalf("Expected migration archive download to fail.")
 	}
@@ -165,7 +165,7 @@ func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
 }
 
 func TestDownloadGithubUserMigrationDataArchiveDownload(t *testing.T) {
-	var mockMigrationID int64 = 10021
+	var testMigrationID int64 = 10021
 	backupDir := t.TempDir()
 
 	mux := http.NewServeMux()
@@ -182,11 +182,11 @@ func TestDownloadGithubUserMigrationDataArchiveDownload(t *testing.T) {
 		githubmock.WithRequestMatch(
 			githubmock.GetUserMigrationsByMigrationId,
 			github.UserMigration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStatePending,
 			},
 			github.UserMigration{
-				ID:    &mockMigrationID,
+				ID:    &testMigrationID,
 				State: &migrationStateExported,
 			},
 		),
@@ -200,11 +200,11 @@ func TestDownloadGithubUserMigrationDataArchiveDownload(t *testing.T) {
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubUserMigrationData(ctx, c, backupDir, &mockMigrationID, 10*time.Millisecond)
+	err := downloadGithubUserMigrationData(ctx, c, backupDir, &testMigrationID, 10*time.Millisecond)
 	if err != nil {
 		t.Fatalf("Expected migration archive download to succeed.")
 	}
-	archiveFilepath := getLocalMigrationFilepath(backupDir, mockMigrationID)
+	archiveFilepath := getLocalMigrationFilepath(backupDir, testMigrationID)
 	_, err = os.Stat(archiveFilepath)
 	if err != nil {
 		t.Fatalf("Expected %s to exist", archiveFilepath)
