@@ -125,7 +125,7 @@ func downloadGithubUserMigrationData(
 			}
 			return nil
 		default:
-			log.Printf("Waiting for migration state to be exported: %v\n", *ms.State)
+			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
 			time.Sleep(migrationStatePollingDuration)
 
 			ms, _, err = client.(*github.Client).Migrations.UserMigrationStatus(ctx, *ms.ID)
@@ -172,7 +172,7 @@ func downloadGithubOrgMigrationData(
 			_, err = io.Copy(out, resp.Body)
 			return err
 		default:
-			log.Printf("Waiting for migration state to be exported: %v\n", ms.State)
+			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
 			time.Sleep(migrationStatePollingDuration)
 			ms, _, err = client.(*github.Client).Migrations.MigrationStatus(ctx, org, *ms.ID)
 			if err != nil {
