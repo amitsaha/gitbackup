@@ -132,25 +132,23 @@ func downloadGithubUserMigrationData(
 	}
 }
 
-func downloadGithubOrgMigrationData(client interface{}, org string, backupDir string, id *int64) {
-
+func downloadGithubOrgMigrationData(
+	ctx context.Context, client interface{}, org string, backupDir string, id *int64, migrationStatePollingDuration time.Duration,
+) error {
 	var ms *github.Migration
-	ctx := context.Background()
-
 	ms, _, err := client.(*github.Client).Migrations.MigrationStatus(ctx, org, *id)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for {
-
-		if *ms.State == "failed" {
-			log.Fatal("Migration failed.")
-		}
-		if *ms.State == "exported" {
+		switch *ms.State {
+		case migrationStateFailed:
+			return errors.New("org migration failed")
+		case migrationStateExported:
 			archiveURL, err := client.(*github.Client).Migrations.MigrationArchiveURL(ctx, org, *ms.ID)
 			if err != nil {
-				panic(err)
+				return err
 			}
 
 			archiveFilepath := path.Join(backupDir, fmt.Sprintf("%s-migration-%d.tar.gz", org, *ms.ID))
@@ -158,28 +156,23 @@ func downloadGithubOrgMigrationData(client interface{}, org string, backupDir st
 
 			resp, err := http.Get(archiveURL)
 			if err != nil {
-				log.Fatal(err)
+				return fmt.Errorf("error downloading archive:%v", err)
 			}
 			defer resp.Body.Close()
-
 			out, err := os.Create(archiveFilepath)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			defer out.Close()
 
 			_, err = io.Copy(out, resp.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			break
-		} else {
+			return err
+		default:
 			log.Printf("Waiting for migration state to be exported: %v\n", ms.State)
-			time.Sleep(60 * time.Second)
-
+			time.Sleep(migrationStatePollingDuration)
 			ms, _, err = client.(*github.Client).Migrations.MigrationStatus(ctx, org, *ms.ID)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 	}

@@ -149,7 +149,8 @@ func main() {
 				log.Fatalf("Error creating migration: %v", err)
 			}
 			if *githubWaitForMigrationComplete {
-				downloadGithubOrgMigrationData(client, *o.Login, *backupDir, oMigration.ID)
+				migrationStatePollingDuration := 60 * time.Second
+				downloadGithubOrgMigrationData(context.Background(), client, *o.Login, *backupDir, oMigration.ID, migrationStatePollingDuration)
 			}
 		}
 

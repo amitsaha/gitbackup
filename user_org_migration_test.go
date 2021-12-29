@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -16,105 +15,49 @@ import (
 	githubmock "github.com/migueleliasweb/go-github-mock/src/mock"
 )
 
-type requestCounter struct {
-	mutex             sync.Mutex
-	cnt               int
-	originalTransport http.RoundTripper
-}
-
-func (c *requestCounter) RoundTrip(r *http.Request) (*http.Response, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.cnt += 1
-	resp, err := c.originalTransport.RoundTrip(r)
-	return resp, err
-}
-
-func TestCreateGitHubUserMigrationRetryMax(t *testing.T) {
-	expectedNumAttempts := defaultMaxUserMigrationRetry + 1
-
-	mockedHTTPClient := githubmock.NewMockedHTTPClient(
-		githubmock.WithRequestMatchHandler(
-			githubmock.PostUserMigrations,
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				githubmock.WriteError(
-					w,
-					http.StatusBadGateway,
-					"github 502",
-				)
-			}),
-		),
-	)
-	requestCounter := requestCounter{}
-	requestCounter.originalTransport = mockedHTTPClient.Transport
-	mockedHTTPClient.Transport = &requestCounter
-
-	c := github.NewClient(mockedHTTPClient)
-
-	ctx := context.Background()
-
-	_, _ = createGithubUserMigration(ctx, c, nil, true, defaultMaxUserMigrationRetry)
-	if requestCounter.cnt != expectedNumAttempts {
-		t.Fatalf("Expected:%d attempts, got: %d\n", expectedNumAttempts, requestCounter.cnt)
+func TestCreateGithubUserOrgMigration(t *testing.T) {
+	testOrg := "TestOrg"
+	testRepoName := "test-repo-1"
+	orgRepos := []*Repository{
+		{
+			Name: testRepoName,
+		},
 	}
-}
-
-func TestCreateGitHubUserMigrationFailOnceThenSucceed(t *testing.T) {
-	expectedNumAttempts := 2
-	mockRepoName := "mock-repo-1"
 
 	mockedHTTPClient := githubmock.NewMockedHTTPClient(
 		githubmock.WithRequestMatch(
-			githubmock.PostUserMigrations,
-			"rubbish_1",
-			github.UserMigration{
+			githubmock.PostOrgsMigrationsByOrg,
+			github.Migration{
 				Repositories: []*github.Repository{
 					{
-						Name: &mockRepoName,
+						Name: &testRepoName,
 					},
 				},
 			},
 		),
 	)
-	requestCounter := requestCounter{}
-	requestCounter.originalTransport = mockedHTTPClient.Transport
-	mockedHTTPClient.Transport = &requestCounter
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-
-	reposToMigrate := []*Repository{
-		{
-			Name:      "mock-repo-1",
-			Namespace: "test-user-1",
-		},
-	}
-
-	m, err := createGithubUserMigration(ctx, c, reposToMigrate, true, defaultMaxUserMigrationRetry)
+	_, err := createGithubOrgMigration(ctx, c, testOrg, orgRepos)
 	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(m.Repositories) != len(reposToMigrate) {
-		t.Fatalf("Expected %d repos in the migration. Got: %d", len(reposToMigrate), len(m.Repositories))
-	}
-	if requestCounter.cnt != expectedNumAttempts {
-		t.Fatalf("Expected to send %d requests, sent: %d\n", defaultMaxUserMigrationRetry+1, requestCounter.cnt)
+		t.Fatalf("Expected org migration to be successfully created, got: %v", err)
 	}
 }
 
-func TestDownloadGithubUserMigrationDataFailed(t *testing.T) {
+func TestDownloadGithubUserOrgMigrationDataFailed(t *testing.T) {
 	var mockMigrationID int64 = 10021
 	backupDir := t.TempDir()
+	testOrg := "TestOrg"
 
 	mockedHTTPClient := githubmock.NewMockedHTTPClient(
 		githubmock.WithRequestMatch(
-			githubmock.GetUserMigrationsByMigrationId,
-			github.UserMigration{
+			githubmock.GetOrgsMigrationsByOrgByMigrationId,
+			github.Migration{
 				ID:    &mockMigrationID,
 				State: &migrationStatePending,
 			},
-			github.UserMigration{
+			github.Migration{
 				ID:    &mockMigrationID,
 				State: &migrationStateFailed,
 			},
@@ -123,30 +66,31 @@ func TestDownloadGithubUserMigrationDataFailed(t *testing.T) {
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubUserMigrationData(ctx, c, backupDir, &mockMigrationID, 10*time.Millisecond)
+	err := downloadGithubOrgMigrationData(ctx, c, testOrg, backupDir, &mockMigrationID, 10*time.Millisecond)
 	if err == nil {
 		t.Fatalf("Expected migration download to fail.")
 	}
 }
 
-func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
+func TestDownloadGithubUserOrgMigrationDataArchiveDownloadFail(t *testing.T) {
 	var mockMigrationID int64 = 10021
 	backupDir := t.TempDir()
+	testOrg := "TestOrg"
 
 	mockedHTTPClient := githubmock.NewMockedHTTPClient(
 		githubmock.WithRequestMatch(
-			githubmock.GetUserMigrationsByMigrationId,
-			github.UserMigration{
+			githubmock.GetOrgsMigrationsByOrgByMigrationId,
+			github.Migration{
 				ID:    &mockMigrationID,
 				State: &migrationStatePending,
 			},
-			github.UserMigration{
+			github.Migration{
 				ID:    &mockMigrationID,
 				State: &migrationStateExported,
 			},
 		),
 		githubmock.WithRequestMatchHandler(
-			githubmock.GetUserMigrationsArchiveByMigrationId,
+			githubmock.GetOrgsMigrationsArchiveByOrgByMigrationId,
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, "http://127.0.0.1:8080/testarchive.tar.gz", http.StatusTemporaryRedirect)
 			}),
@@ -155,7 +99,7 @@ func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
 
 	c := github.NewClient(mockedHTTPClient)
 	ctx := context.Background()
-	err := downloadGithubUserMigrationData(ctx, c, backupDir, &mockMigrationID, 10*time.Millisecond)
+	err := downloadGithubOrgMigrationData(ctx, c, testOrg, backupDir, &mockMigrationID, 10*time.Millisecond)
 	if err == nil {
 		t.Fatalf("Expected migration archive download to fail.")
 	}
@@ -164,7 +108,7 @@ func TestDownloadGithubUserMigrationDataArchiveDownloadFail(t *testing.T) {
 	}
 }
 
-func TestDownloadGithubUserMigrationDataArchiveDownload(t *testing.T) {
+func TestDownloadGithubUserOrgMigrationDataArchiveDownload(t *testing.T) {
 	var mockMigrationID int64 = 10021
 	backupDir := t.TempDir()
 
