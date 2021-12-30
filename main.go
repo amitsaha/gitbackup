@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/google/go-github/v34/github"
 )
@@ -122,15 +123,19 @@ func main() {
 		}
 
 		if *githubWaitForMigrationComplete {
-			downloadGithubUserMigrationData(client, *backupDir, m.ID)
+			migrationStatePollingDuration := 60 * time.Second
+			err = downloadGithubUserMigrationData(context.Background(), client, *backupDir, m.ID, migrationStatePollingDuration)
+			if err != nil {
+				log.Fatalf("Error querying/downloading migration: %v", err)
+			}
 		}
 
-		orgs, err := getUserOwnedOrgs(client)
+		orgs, err := getGithubUserOwnedOrgs(context.Background(), client)
 		if err != nil {
 			log.Fatal("Error getting user organizations", err)
 		}
 		for _, o := range orgs {
-			orgRepos, err := getGithubOrgRepositories(client, o)
+			orgRepos, err := getGithubOrgRepositories(context.Background(), client, o)
 			if err != nil {
 				log.Fatal("Error getting org repos", err)
 			}
@@ -144,7 +149,8 @@ func main() {
 				log.Fatalf("Error creating migration: %v", err)
 			}
 			if *githubWaitForMigrationComplete {
-				downloadGithubOrgMigrationData(client, *o.Login, *backupDir, oMigration.ID)
+				migrationStatePollingDuration := 60 * time.Second
+				downloadGithubOrgMigrationData(context.Background(), client, *o.Login, *backupDir, oMigration.ID, migrationStatePollingDuration)
 			}
 		}
 

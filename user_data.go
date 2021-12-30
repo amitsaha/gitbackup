@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,6 +15,27 @@ import (
 
 	"github.com/google/go-github/v34/github"
 )
+
+// Using vars insted of const, since we cannot take & of a const
+// For now, these are all specific to github
+var (
+	migrationStatePending = "pending"
+	//migrationStateExporting = "exporting"
+	migrationStateExported = "exported"
+	migrationStateFailed   = "failed"
+
+	orgRoleMember     = "member"
+	orgRoleMaintainer = "maintainer"
+	orgRoleAdmin      = "admin"
+)
+
+func getLocalMigrationFilepath(backupDir string, migrationID int64) string {
+	return path.Join(backupDir, fmt.Sprintf("user-migration-%d.tar.gz", migrationID))
+}
+
+func getLocalOrgMigrationFilepath(backupDir, org string, migrationID int64) string {
+	return path.Join(backupDir, fmt.Sprintf("%s-migration-%d.tar.gz", org, migrationID))
+}
 
 func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository, retry bool, maxNumRetries int) (*github.UserMigration, error) {
 	var m *github.UserMigration
@@ -68,107 +90,98 @@ func createGithubOrgMigration(ctx context.Context, client interface{}, org strin
 	return m, err
 }
 
-func downloadGithubUserMigrationData(client interface{}, backupDir string, id *int64) {
+func downloadGithubUserMigrationData(
+	ctx context.Context, client interface{}, backupDir string, id *int64, migrationStatePollingDuration time.Duration,
+) error {
 
 	var ms *github.UserMigration
-	ctx := context.Background()
 
 	ms, _, err := client.(*github.Client).Migrations.UserMigrationStatus(ctx, *id)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for {
-
-		if *ms.State == "failed" {
-			log.Fatal("Migration failed.")
-		}
-		if *ms.State == "exported" {
+		switch *ms.State {
+		case migrationStateFailed:
+			return errors.New("migration failed")
+		case migrationStateExported:
 			archiveURL, err := client.(*github.Client).Migrations.UserMigrationArchiveURL(ctx, *ms.ID)
 			if err != nil {
-				panic(err)
+				return err
 			}
-
-			archiveFilepath := path.Join(backupDir, fmt.Sprintf("user-migration-%d.tar.gz", *ms.ID))
+			archiveFilepath := getLocalMigrationFilepath(backupDir, *ms.ID)
 			log.Printf("Downloading file to: %s\n", archiveFilepath)
-
 			resp, err := http.Get(archiveURL)
 			if err != nil {
-				log.Fatal(err)
+				return fmt.Errorf("error downloading archive:%v", err)
 			}
 			defer resp.Body.Close()
 
 			out, err := os.Create(archiveFilepath)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			defer out.Close()
 
 			_, err = io.Copy(out, resp.Body)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
-			break
-		} else {
-			log.Printf("Waiting for migration state to be exported: %v\n", ms.State)
-			time.Sleep(60 * time.Second)
+			return nil
+		default:
+			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
+			time.Sleep(migrationStatePollingDuration)
 
 			ms, _, err = client.(*github.Client).Migrations.UserMigrationStatus(ctx, *ms.ID)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 	}
 }
 
-func downloadGithubOrgMigrationData(client interface{}, org string, backupDir string, id *int64) {
-
+func downloadGithubOrgMigrationData(
+	ctx context.Context, client interface{}, org string, backupDir string, id *int64, migrationStatePollingDuration time.Duration,
+) error {
 	var ms *github.Migration
-	ctx := context.Background()
-
 	ms, _, err := client.(*github.Client).Migrations.MigrationStatus(ctx, org, *id)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for {
-
-		if *ms.State == "failed" {
-			log.Fatal("Migration failed.")
-		}
-		if *ms.State == "exported" {
+		switch *ms.State {
+		case migrationStateFailed:
+			return errors.New("org migration failed")
+		case migrationStateExported:
 			archiveURL, err := client.(*github.Client).Migrations.MigrationArchiveURL(ctx, org, *ms.ID)
 			if err != nil {
-				panic(err)
+				return err
 			}
 
-			archiveFilepath := path.Join(backupDir, fmt.Sprintf("%s-migration-%d.tar.gz", org, *ms.ID))
+			archiveFilepath := getLocalOrgMigrationFilepath(backupDir, org, *ms.ID)
 			log.Printf("Downloading file to: %s\n", archiveFilepath)
 
 			resp, err := http.Get(archiveURL)
 			if err != nil {
-				log.Fatal(err)
+				return fmt.Errorf("error downloading archive:%v", err)
 			}
 			defer resp.Body.Close()
-
 			out, err := os.Create(archiveFilepath)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			defer out.Close()
 
 			_, err = io.Copy(out, resp.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			break
-		} else {
-			log.Printf("Waiting for migration state to be exported: %v\n", ms.State)
-			time.Sleep(60 * time.Second)
-
+			return err
+		default:
+			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
+			time.Sleep(migrationStatePollingDuration)
 			ms, _, err = client.(*github.Client).Migrations.MigrationStatus(ctx, org, *ms.ID)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 	}
@@ -226,69 +239,62 @@ func DeleteGithubUserMigration(id *int64) GithubUserMigrationDeleteResult {
 
 	result := GithubUserMigrationDeleteResult{}
 	result.GhStatusCode = response.StatusCode
-
 	if err != nil {
 		result.GhResponseBody = err.Error()
-	} else {
-
-		data, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			panic(err)
-		}
-		result.GhResponseBody = string(data)
+		return result
 	}
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		panic(err)
+	}
+	result.GhResponseBody = string(data)
 	return result
 }
 
-func getUserOwnedOrgs(client interface{}) ([]*github.Organization, error) {
+func getGithubUserOwnedOrgs(ctx context.Context, client interface{}) ([]*github.Organization, error) {
 
 	var ownedOrgs []*github.Organization
 
-	ctx := context.Background()
 	opts := github.ListOrgMembershipsOptions{State: "active"}
 	mShips, _, err := client.(*github.Client).Organizations.ListOrgMemberships(ctx, &opts)
-	//TODO - if the user doesn't belong to any org, what happens?
 	if err != nil {
 		return nil, err
 	}
 	for _, m := range mShips {
-		if *m.Role == "admin" {
+		if *m.Role == orgRoleAdmin {
 			ownedOrgs = append(ownedOrgs, m.Organization)
 		}
 	}
 	return ownedOrgs, nil
 }
 
-func getGithubOrgRepositories(client interface{}, o *github.Organization) ([]*Repository, error) {
+func getGithubOrgRepositories(ctx context.Context, client interface{}, o *github.Organization) ([]*Repository, error) {
 
 	var repositories []*Repository
 	var cloneURL string
 
-	ctx := context.Background()
 	// TODO: Allow customization for org repo types
 	options := github.RepositoryListByOrgOptions{}
 
 	for {
 		// Login seems to be the safer attribute to use than organization Name
 		repos, resp, err := client.(*github.Client).Repositories.ListByOrg(ctx, *o.Login, &options)
-		if err == nil {
-			for _, repo := range repos {
-				namespace := strings.Split(*repo.FullName, "/")[0]
-				if useHTTPSClone != nil && *useHTTPSClone {
-					cloneURL = *repo.CloneURL
-				} else {
-					cloneURL = *repo.SSHURL
-				}
-				repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
-			}
-		} else {
+		if err != nil {
 			return nil, err
+		}
+		for _, repo := range repos {
+			namespace := strings.Split(*repo.FullName, "/")[0]
+			if useHTTPSClone != nil && *useHTTPSClone {
+				cloneURL = *repo.CloneURL
+			} else {
+				cloneURL = *repo.SSHURL
+			}
+			repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
 		}
 		if resp.NextPage == 0 {
 			break
 		}
 		options.ListOptions.Page = resp.NextPage
-
 	}
 	return repositories, nil
 }

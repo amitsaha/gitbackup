@@ -1,0 +1,48 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ master ]
+
+jobs:
+  linux_tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ '1.16', '1.17' ]
+    name: Go ${{ matrix.go }} tests - Linux
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - run: go test
+  
+  macos_tests:
+    runs-on: macOS-latest
+    strategy:
+      matrix:
+        go: [ '1.16', '1.17' ]
+    name: Go ${{ matrix.go }} tests - MacOS
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - run: go test
+  
+  windows_tests:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        go: [ '1.16', '1.17' ]
+    name: Go ${{ matrix.go }} tests - Windows
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - run: go test
+    

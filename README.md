@@ -1,6 +1,28 @@
 # gitbackup - Backup your GitHub, GitLab, and Bitbucket repositories
 Code Quality [![Go Report Card](https://goreportcard.com/badge/github.com/amitsaha/gitbackup)](https://goreportcard.com/report/github.com/amitsaha/gitbackup)
-Linux/Mac OS X [![Build Status](https://travis-ci.org/amitsaha/gitbackup.svg?branch=master)](https://travis-ci.org/amitsaha/gitbackup) Windows [![Build status](https://ci.appveyor.com/api/projects/status/fwki40x1havyian2/branch/master?svg=true)](https://ci.appveyor.com/project/amitsaha/gitbackup/branch/master) 
+[![.github/workflows/ci.yml](https://github.com/amitsaha/gitbackup/actions/workflows/ci.yml/badge.svg)](https://github.com/amitsaha/gitbackup/actions/workflows/ci.yml)
+
+- [gitbackup - Backup your GitHub, GitLab, and Bitbucket repositories](#gitbackup---backup-your-github-gitlab-and-bitbucket-repositories)
+  - [Introduction](#introduction)
+  - [Installing `gitbackup`](#installing-gitbackup)
+  - [Using `gitbackup`](#using-gitbackup)
+    - [GitHub Specific oAuth App Flow](#github-specific-oauth-app-flow)
+    - [OAuth Scopes/Permissions required](#oauth-scopespermissions-required)
+      - [Bitbucket](#bitbucket)
+      - [GitHub](#github)
+      - [GitLab](#gitlab)
+    - [Security and credentials](#security-and-credentials)
+    - [Examples](#examples)
+      - [Backing up your GitHub repositories](#backing-up-your-github-repositories)
+      - [Backing up your GitLab repositories](#backing-up-your-gitlab-repositories)
+      - [GitHub Enterprise or custom GitLab installation](#github-enterprise-or-custom-gitlab-installation)
+      - [Backing up your Bitbucket repositories](#backing-up-your-bitbucket-repositories)
+      - [Specifying a backup location](#specifying-a-backup-location)
+      - [Cloning bare repositories](#cloning-bare-repositories)
+      - [GitHub Migrations](#github-migrations)
+  - [Building](#building)
+  
+## Introduction
 
 ``gitbackup`` is a tool to backup your git repositories from GitHub (including GitHub enterprise),
 GitLab (including custom GitLab installations), or Bitbucket.
