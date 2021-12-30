@@ -38,7 +38,7 @@ jobs:
     strategy:
       matrix:
         go: [ '1.16', '1.17' ]
-    name: Go ${{ matrix.go }} tests - Linux
+    name: Go ${{ matrix.go }} tests - Windows
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
