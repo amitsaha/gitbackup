@@ -16,8 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go }}
+        with:
+          go-version: ${{ matrix.go }}
       - run: go test
   
   macos_tests:
@@ -29,8 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go }}
+        with:
+          go-version: ${{ matrix.go }}
       - run: go test
   
   windows_tests:
@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go }}
+        with:
+          go-version: ${{ matrix.go }}
       - run: go test
     
