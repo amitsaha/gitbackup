@@ -130,12 +130,12 @@ func main() {
 			}
 		}
 
-		orgs, err := getUserOwnedOrgs(client)
+		orgs, err := getGithubUserOwnedOrgs(context.Background(), client)
 		if err != nil {
 			log.Fatal("Error getting user organizations", err)
 		}
 		for _, o := range orgs {
-			orgRepos, err := getGithubOrgRepositories(client, o)
+			orgRepos, err := getGithubOrgRepositories(context.Background(), client, o)
 			if err != nil {
 				log.Fatal("Error getting org repos", err)
 			}

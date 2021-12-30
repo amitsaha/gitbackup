@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,120 @@ import (
 	githubmock "github.com/migueleliasweb/go-github-mock/src/mock"
 )
 
+func TestGetUserOwnedOrganizationsNone(t *testing.T) {
+
+	mockedHTTPClient := githubmock.NewMockedHTTPClient(
+		githubmock.WithRequestMatch(
+			githubmock.GetUserMembershipsOrgs,
+			[]github.Membership{},
+		),
+	)
+
+	c := github.NewClient(mockedHTTPClient)
+	ctx := context.Background()
+	orgs, err := getGithubUserOwnedOrgs(ctx, c)
+	if err != nil {
+		t.Fatalf("Expected to query user organizations successfully, got: %v", err)
+	}
+	if len(orgs) != 0 {
+		t.Fatalf("Expected slice of length 0, got %v", orgs)
+	}
+}
+
+func TestGetUserOwnedOrganizations(t *testing.T) {
+
+	testOrgNames := []string{
+		"test-org-1",
+		"test-org-2",
+		"test-org-3",
+	}
+
+	mockedHTTPClient := githubmock.NewMockedHTTPClient(
+		githubmock.WithRequestMatch(
+			githubmock.GetUserMembershipsOrgs,
+			[]github.Membership{
+				{
+					Organization: &github.Organization{
+						Name: &testOrgNames[0],
+					},
+					Role: &orgRoleAdmin,
+				},
+				{
+					Organization: &github.Organization{
+						Name: &testOrgNames[1],
+					},
+					Role: &orgRoleMember,
+				},
+				{
+					Organization: &github.Organization{
+						Name: &testOrgNames[2],
+					},
+					Role: &orgRoleMaintainer,
+				},
+			},
+		),
+	)
+
+	c := github.NewClient(mockedHTTPClient)
+	ctx := context.Background()
+	orgs, err := getGithubUserOwnedOrgs(ctx, c)
+	if err != nil {
+		t.Fatalf("Expected to query user organizations successfully, got: %v", err)
+	}
+	if len(orgs) != 1 {
+		t.Fatalf("Expected slice of length 0, got %#v", orgs)
+	}
+	if *orgs[0].Name != testOrgNames[0] {
+		t.Fatalf("Expected owned organization returned to be %s, got %s", testOrgNames[0], *orgs[0].Name)
+	}
+}
+
+func TestGetGithubOrganizationRepositories(t *testing.T) {
+
+	testOrgName := "test org 1"
+	testOrgLogin := "test-org-1"
+	testRepoName := "test-repo-1"
+	testRepoFullname := fmt.Sprintf("%s/%s", testOrgLogin, testRepoName)
+	testRepoHTTPSCloneURL := "https://github.com/test-org-1/test-repo-1.git"
+	testRepoSSHCloneURL := "git@github.com:test-org-1/test-repo-1.git"
+	testRepoTypePrivate := false
+
+	testOrg := github.Organization{
+		Name:  &testOrgName,
+		Login: &testOrgLogin,
+	}
+
+	mockedHTTPClient := githubmock.NewMockedHTTPClient(
+		githubmock.WithRequestMatch(
+			githubmock.GetOrgsReposByOrg,
+			[]github.Repository{
+				{
+					Name:     &testRepoName,
+					FullName: &testRepoFullname,
+					CloneURL: &testRepoHTTPSCloneURL,
+					SSHURL:   &testRepoSSHCloneURL,
+					Private:  &testRepoTypePrivate,
+				},
+			},
+		),
+	)
+
+	c := github.NewClient(mockedHTTPClient)
+	ctx := context.Background()
+	repos, err := getGithubOrgRepositories(ctx, c, &testOrg)
+	if err != nil {
+		t.Fatalf("Expected to query user organization repositories successfully, got: %v", err)
+	}
+	if len(repos) != 1 {
+		t.Fatalf("Expected slice of length 0, got %#v", repos)
+	}
+	if repos[0].Name != testRepoName {
+		t.Fatalf("Expected returned repo name to be %s, got %s", testRepoName, repos[0].Name)
+	}
+	if repos[0].Private != testRepoTypePrivate {
+		t.Fatalf("Expected %v, got %v", testRepoTypePrivate, repos[0].Private)
+	}
+}
 func TestCreateGithubUserOrgMigration(t *testing.T) {
 	testOrg := "TestOrg"
 	testRepoName := "test-repo-1"

@@ -16,12 +16,17 @@ import (
 	"github.com/google/go-github/v34/github"
 )
 
-// Using var insted of const, since we cannot take & of a const
+// Using vars insted of const, since we cannot take & of a const
+// For now, these are all specific to github
 var (
-	migrationStatePending   = "pending"
-	migrationStateExporting = "exporting"
-	migrationStateExported  = "exported"
-	migrationStateFailed    = "failed"
+	migrationStatePending = "pending"
+	//migrationStateExporting = "exporting"
+	migrationStateExported = "exported"
+	migrationStateFailed   = "failed"
+
+	orgRoleMember     = "member"
+	orgRoleMaintainer = "maintainer"
+	orgRoleAdmin      = "admin"
 )
 
 func getLocalMigrationFilepath(backupDir string, migrationID int64) string {
@@ -234,69 +239,62 @@ func DeleteGithubUserMigration(id *int64) GithubUserMigrationDeleteResult {
 
 	result := GithubUserMigrationDeleteResult{}
 	result.GhStatusCode = response.StatusCode
-
 	if err != nil {
 		result.GhResponseBody = err.Error()
-	} else {
-
-		data, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			panic(err)
-		}
-		result.GhResponseBody = string(data)
+		return result
 	}
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		panic(err)
+	}
+	result.GhResponseBody = string(data)
 	return result
 }
 
-func getUserOwnedOrgs(client interface{}) ([]*github.Organization, error) {
+func getGithubUserOwnedOrgs(ctx context.Context, client interface{}) ([]*github.Organization, error) {
 
 	var ownedOrgs []*github.Organization
 
-	ctx := context.Background()
 	opts := github.ListOrgMembershipsOptions{State: "active"}
 	mShips, _, err := client.(*github.Client).Organizations.ListOrgMemberships(ctx, &opts)
-	//TODO - if the user doesn't belong to any org, what happens?
 	if err != nil {
 		return nil, err
 	}
 	for _, m := range mShips {
-		if *m.Role == "admin" {
+		if *m.Role == orgRoleAdmin {
 			ownedOrgs = append(ownedOrgs, m.Organization)
 		}
 	}
 	return ownedOrgs, nil
 }
 
-func getGithubOrgRepositories(client interface{}, o *github.Organization) ([]*Repository, error) {
+func getGithubOrgRepositories(ctx context.Context, client interface{}, o *github.Organization) ([]*Repository, error) {
 
 	var repositories []*Repository
 	var cloneURL string
 
-	ctx := context.Background()
 	// TODO: Allow customization for org repo types
 	options := github.RepositoryListByOrgOptions{}
 
 	for {
 		// Login seems to be the safer attribute to use than organization Name
 		repos, resp, err := client.(*github.Client).Repositories.ListByOrg(ctx, *o.Login, &options)
-		if err == nil {
-			for _, repo := range repos {
-				namespace := strings.Split(*repo.FullName, "/")[0]
-				if useHTTPSClone != nil && *useHTTPSClone {
-					cloneURL = *repo.CloneURL
-				} else {
-					cloneURL = *repo.SSHURL
-				}
-				repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
-			}
-		} else {
+		if err != nil {
 			return nil, err
+		}
+		for _, repo := range repos {
+			namespace := strings.Split(*repo.FullName, "/")[0]
+			if useHTTPSClone != nil && *useHTTPSClone {
+				cloneURL = *repo.CloneURL
+			} else {
+				cloneURL = *repo.SSHURL
+			}
+			repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
 		}
 		if resp.NextPage == 0 {
 			break
 		}
 		options.ListOptions.Page = resp.NextPage
-
 	}
 	return repositories, nil
 }
