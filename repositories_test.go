@@ -46,8 +46,7 @@ func setup() {
 	GitHubClient.BaseURL = url
 
 	// github client configured to use test server
-	GitLabClient = gitlab.NewClient(nil, "")
-	GitLabClient.SetBaseURL(url.String())
+	GitLabClient, err = gitlab.NewClient("", gitlab.WithBaseURL(url.String()))
 
 	BitbucketClient = bitbucket.NewBasicAuth(os.Getenv("BITBUCKET_USERNAME"), os.Getenv("BITBUCKET_USERNAME"))
 	BitbucketClient.SetApiBaseURL(url.String())
