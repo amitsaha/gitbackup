@@ -41,3 +41,6 @@ require (
 
 // https://github.com/99designs/keyring/pull/101/files
 replace golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f => golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
+
+// https://github.com/xanzy/go-gitlab/pull/1332
+replace github.com/xanzy/go-gitlab v0.52.2 => github.com/amitsaha/go-gitlab v0.52.2-issue-1331

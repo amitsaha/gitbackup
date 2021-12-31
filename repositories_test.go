@@ -138,6 +138,27 @@ func TestGetGitLabRepositories(t *testing.T) {
 	}
 }
 
+func TestGetStarredGitLabRepositories(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v4/users/1/starred_projects", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "r1"}]`)
+	})
+
+	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "starred", "", false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	var expected []*Repository
+	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://gitlab.com/u/r1", Name: "r1"})
+	if !reflect.DeepEqual(repos, expected) {
+		for i := 0; i < len(repos); i++ {
+			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
+		}
+	}
+}
+
 func TestGetBitbucketRepositories(t *testing.T) {
 	setup()
 	defer teardown()

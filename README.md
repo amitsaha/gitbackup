@@ -104,31 +104,35 @@ Typing ``-help`` will display the command line options that `gitbackup` recogniz
 $ gitbackup -help
 Usage of ./gitbackup:
   -backupdir string
-    	Backup directory
+        Backup directory
   -bare
-    	Clone bare repositories
+        Clone bare repositories
   -githost.url string
-    	DNS of the custom Git host
+        DNS of the custom Git host
   -github.createUserMigration
-    	Download user data
+        Download user data
+  -github.createUserMigrationRetry
+        Retry creating the GitHub user migration if we get an error (default true)
+  -github.createUserMigrationRetryMax int
+        Number of retries to attempt for creating GitHub user migration (default 5)
   -github.listUserMigrations
-    	List available user migrations
+        List available user migrations
   -github.repoType string
-    	Repo types to backup (all, owner, member, starred) (default "all")
+        Repo types to backup (all, owner, member, starred) (default "all")
   -github.waitForUserMigration
-    	Wait for migration to complete (default true)
+        Wait for migration to complete (default true)
   -gitlab.projectMembershipType string
-    	Project type to clone (all, owner, member) (default "all")
+        Project type to clone (all, owner, member) (default "all")
   -gitlab.projectVisibility string
-    	Visibility level of Projects to clone (internal, public, private) (default "internal")
+        Visibility level of Projects to clone (internal, public, private) (default "internal")
   -ignore-fork
-    	Ignore repositories which are forks
+        Ignore repositories which are forks
   -ignore-private
-    	Ignore private repositories/projects
+        Ignore private repositories/projects
   -service string
-    	Git Hosted Service Name (github/gitlab/bitbucket)
+        Git Hosted Service Name (github/gitlab/bitbucket)
   -use-https-clone
-    	Use HTTPS for cloning instead of SSH
+        Use HTTPS for cloning instead of SSH
 ```
 
 #### Backing up your GitHub repositories
