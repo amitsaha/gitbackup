@@ -37,7 +37,11 @@ type Repository struct {
 	Private   bool
 }
 
-func getRepositories(client interface{}, service string, githubRepoType string, gitlabRepoVisibility string, gitlabProjectType string, ignoreFork bool) ([]*Repository, error) {
+func getRepositories(client interface{},
+	service string, githubRepoType string,
+	gitlabProjectVisibility string, gitlabProjectMembershipType string,
+	ignoreFork bool,
+) ([]*Repository, error) {
 
 	if client == nil {
 		log.Fatalf("Couldn't acquire a client to talk to %s", service)
@@ -104,25 +108,26 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 
 	if service == "gitlab" {
 		var visibility gitlab.VisibilityValue
-		var options gitlab.ListProjectsOptions
+		var boolTrue bool = true
 
-		var owned bool
-		var memberOf bool
+		gitlabListOptions := gitlab.ListProjectsOptions{}
 
-		if gitlabProjectType == "owner" {
-			owned = true
+		switch gitlabProjectMembershipType {
+
+		case "owner":
+			gitlabListOptions.Owned = &boolTrue
+		case "member":
+			gitlabListOptions.Membership = &boolTrue
+		case "starred":
+			gitlabListOptions.Starred = &boolTrue
+		case "all":
+			gitlabListOptions.Owned = &boolTrue
+			gitlabListOptions.Membership = &boolTrue
+			gitlabListOptions.Starred = &boolTrue
 		}
-		if gitlabProjectType == "member" {
-			memberOf = true
-		}
 
-		if gitlabProjectType == "all" {
-			owned = true
-			memberOf = true
-		}
-
-		if gitlabRepoVisibility != "all" {
-			switch gitlabRepoVisibility {
+		if gitlabProjectVisibility != "all" {
+			switch gitlabProjectVisibility {
 			case "public":
 				visibility = gitlab.PublicVisibility
 			case "private":
@@ -132,30 +137,27 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			case "default":
 				visibility = gitlab.InternalVisibility
 			}
-			options = gitlab.ListProjectsOptions{Visibility: &visibility, Membership: &memberOf, Owned: &owned}
-		} else {
-			options = gitlab.ListProjectsOptions{Membership: &memberOf, Owned: &owned}
+			gitlabListOptions.Visibility = &visibility
 		}
 
 		for {
-			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&options)
-			if err == nil {
-				for _, repo := range repos {
-					namespace := strings.Split(repo.PathWithNamespace, "/")[0]
-					if useHTTPSClone != nil && *useHTTPSClone {
-						cloneURL = repo.WebURL
-					} else {
-						cloneURL = repo.SSHURLToRepo
-					}
-					repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: repo.Name, Namespace: namespace, Private: repo.Public})
-				}
-			} else {
+			repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&gitlabListOptions)
+			if err != nil {
 				return nil, err
+			}
+			for _, repo := range repos {
+				namespace := strings.Split(repo.PathWithNamespace, "/")[0]
+				if useHTTPSClone != nil && *useHTTPSClone {
+					cloneURL = repo.WebURL
+				} else {
+					cloneURL = repo.SSHURLToRepo
+				}
+				repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: repo.Name, Namespace: namespace, Private: repo.Public})
 			}
 			if resp.NextPage == 0 {
 				break
 			}
-			options.ListOptions.Page = resp.NextPage
+			gitlabListOptions.ListOptions.Page = resp.NextPage
 		}
 	}
 
@@ -207,6 +209,5 @@ func getRepositories(client interface{}, service string, githubRepoType string, 
 			}
 		}
 	}
-
 	return repositories, nil
 }

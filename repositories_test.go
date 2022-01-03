@@ -142,18 +142,27 @@ func TestGetStarredGitLabRepositories(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v4/users/1/starred_projects", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "r1"}]`)
+	mux.HandleFunc("/api/v4/projects", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%#v\n", r.URL.Query())
+		if len(r.URL.Query().Get("starred")) != 0 {
+			fmt.Fprint(w, `[{"path_with_namespace": "test/starred-repo-r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "starred-repo-r1"}]`)
+			return
+		}
+		fmt.Fprintf(w, `[]`)
 	})
 
-	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "starred", "", false)
+	repos, err := getRepositories(GitLabClient, "gitlab", "", "", "starred", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
-	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://gitlab.com/u/r1", Name: "r1"})
+	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://gitlab.com/u/r1", Name: "starred-repo-r1"})
+
 	if !reflect.DeepEqual(repos, expected) {
-		for i := 0; i < len(repos); i++ {
+		if len(repos) != len(expected) {
+			t.Fatalf("Expected: %#v, Got: %v", expected, repos)
+		}
+		for i := 0; i < len(expected); i++ {
 			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
 		}
 	}

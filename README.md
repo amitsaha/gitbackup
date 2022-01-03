@@ -122,7 +122,7 @@ Usage of ./gitbackup:
   -github.waitForUserMigration
         Wait for migration to complete (default true)
   -gitlab.projectMembershipType string
-        Project type to clone (all, owner, member) (default "all")
+        Project type to clone (all, owner, member, starred) (default "all")
   -gitlab.projectVisibility string
         Visibility level of Projects to clone (internal, public, private) (default "internal")
   -ignore-fork
@@ -198,6 +198,14 @@ $ GITLAB_TOKEN=secret$token gitbackup \
     -service gitlab \
     -gitlab.projectVisibility public \
     -gitlab.projectMembershipType member
+```
+
+To backup GitLub repositories you have starred:
+
+```lang=bash
+$ GITLAB_TOKEN=secret$token gitbackup -service gitlab \
+  -gitlab.projectMembershipType starred \
+  -gitlab.projectVisibility public
 ```
 
 #### GitHub Enterprise or custom GitLab installation
