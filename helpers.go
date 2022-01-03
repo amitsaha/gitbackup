@@ -44,7 +44,7 @@ func getUsername(client interface{}, service string) string {
 }
 
 func validGitlabProjectMembership(membership string) bool {
-	validMemberships := []string{"all", "owner", "member"}
+	validMemberships := []string{"all", "owner", "member", "starred"}
 	for _, m := range validMemberships {
 		if membership == m {
 			return true

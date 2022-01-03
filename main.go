@@ -58,8 +58,8 @@ func main() {
 	githubWaitForMigrationComplete := flag.Bool("github.waitForUserMigration", true, "Wait for migration to complete")
 
 	// Gitlab specific flags
-	gitlabRepoVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone (internal, public, private)")
-	gitlabProjectMembership := flag.String("gitlab.projectMembershipType", "all", "Project type to clone (all, owner, member)")
+	gitlabProjectVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone (internal, public, private)")
+	gitlabProjectMembershipType := flag.String("gitlab.projectMembershipType", "all", "Project type to clone (all, owner, member, starred)")
 
 	flag.Parse()
 
@@ -67,7 +67,7 @@ func main() {
 		log.Fatal("Please specify the git service type: github, gitlab, bitbucket")
 	}
 
-	if !validGitlabProjectMembership(*gitlabProjectMembership) {
+	if !validGitlabProjectMembership(*gitlabProjectMembershipType) {
 		log.Fatal("Please specify a valid gitlab project membership - all/owner/member")
 	}
 
@@ -111,7 +111,7 @@ func main() {
 
 	} else if *githubCreateUserMigration {
 
-		repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership, *ignoreFork)
+		repos, err := getRepositories(client, *service, *githubRepoType, *gitlabProjectVisibility, *gitlabProjectMembershipType, *ignoreFork)
 		if err != nil {
 			log.Fatalf("Error getting list of repositories: %v", err)
 		}
@@ -161,7 +161,10 @@ func main() {
 		if len(gitHostUsername) == 0 && !*ignorePrivate && *useHTTPSClone {
 			log.Fatal("Your Git host's username is needed for backing up private repositories via HTTPS")
 		}
-		repos, err := getRepositories(client, *service, *githubRepoType, *gitlabRepoVisibility, *gitlabProjectMembership, *ignoreFork)
+		repos, err := getRepositories(
+			client, *service, *githubRepoType,
+			*gitlabProjectVisibility, *gitlabProjectMembershipType, *ignoreFork,
+		)
 		if err != nil {
 			log.Fatal(err)
 		} else {
