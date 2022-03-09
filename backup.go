@@ -45,7 +45,7 @@ func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) (
 		log.Printf("Cloning %s\n", repo.Name)
 		log.Printf("%#v\n", repo)
 
-		if repo.Private && useHTTPSClone != nil && *useHTTPSClone && ignorePrivate != nil && !*ignorePrivate {
+		if useHTTPSClone != nil && *useHTTPSClone && ignorePrivate != nil && !*ignorePrivate {
 			// Add username and token to the clone URL
 			// https://gitlab.com/amitsaha/testproject1 => https://amitsaha:token@gitlab.com/amitsaha/testproject1
 			u, err := url.Parse(repo.CloneURL)
