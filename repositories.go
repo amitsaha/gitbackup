@@ -152,7 +152,7 @@ func getRepositories(client interface{},
 				} else {
 					cloneURL = repo.SSHURLToRepo
 				}
-				repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: repo.Name, Namespace: namespace, Private: repo.Public})
+				repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: repo.Name, Namespace: namespace, Private: repo.Visibility == "private"})
 			}
 			if resp.NextPage == 0 {
 				break
