@@ -45,7 +45,7 @@ func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) (
 		log.Printf("Cloning %s\n", repo.Name)
 		log.Printf("%#v\n", repo)
 
-		if repo.Private && ignorePrivate != nil && !*ignorePrivate {
+		if repo.Private && ignorePrivate != nil && *ignorePrivate {
 			log.Printf("Skipping %s as it is a private repo.\n", repo.Name)
 			return stdoutStderr, nil
 		}
