@@ -36,7 +36,7 @@ func main() {
 	knownServices := map[string]string{
 		"github":    "github.com",
 		"gitlab":    "gitlab.com",
-		"bitbucket": "bitbucker.org",
+		"bitbucket": "bitbucket.org",
 	}
 
 	// Generic flags
