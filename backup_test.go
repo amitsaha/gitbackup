@@ -148,6 +148,8 @@ func TestSetupBackupDir(t *testing.T) {
 	serviceGitlab := "gitlab"
 	serviceGitlabUrl := "https://gitlab.com"
 
+	serviceBitbucket := "bitbucket"
+
 	backupdir := setupBackupDir(&tmpDir, &serviceGithub, &serviceGithubUrl)
 	if backupdir != "/tmp/github.com" {
 		t.Errorf("Expected /tmp/github.com, Got %v", backupdir)
@@ -161,5 +163,10 @@ func TestSetupBackupDir(t *testing.T) {
 	backupdir = setupBackupDir(&tmpDir, &serviceGitlab, &serviceGitlabUrl)
 	if backupdir != "/tmp/gitlab.com" {
 		t.Errorf("Expected /tmp/gitlab.com, Got %v", backupdir)
+	}
+
+	backupdir = setupBackupDir(&tmpDir, &serviceBitbucket, nil)
+	if backupdir != "/tmp/bitbucket.org" {
+		t.Errorf("Expected /tmp/bitbucket.org, Got %v", backupdir)
 	}
 }
