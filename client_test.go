@@ -10,8 +10,8 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	setup()
-	defer teardown()
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
 
 	customGitHost, _ := url.Parse("https://git.mycompany.com")
 	// http://stackoverflow.com/questions/23051339/how-to-avoid-end-of-url-slash-being-removed-when-resolvereference-in-go

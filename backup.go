@@ -71,24 +71,37 @@ func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) (
 	return stdoutStderr, err
 }
 
-func setupBackupDir(backupDir string, gitHost string) string {
-	if len(backupDir) == 0 {
+func setupBackupDir(backupDir, service, githostURL *string) string {
+	var gitHost, backupPath string
+	var err error
+
+	if githostURL != nil {
+		u, err := url.Parse(*githostURL)
+		if err != nil {
+			panic(err)
+		}
+		gitHost = u.Host
+	} else {
+		gitHost = knownServices[*service]
+	}
+
+	if backupDir == nil {
 		homeDir, err := homedir.Dir()
 		if err == nil {
-			backupDir = path.Join(homeDir, ".gitbackup", gitHost)
+			backupPath = path.Join(homeDir, ".gitbackup", gitHost)
 		} else {
 			log.Fatal("Could not determine home directory and backup directory not specified")
 		}
 	} else {
-		backupDir = path.Join(backupDir, gitHost)
+		backupPath = path.Join(*backupDir, gitHost)
 	}
-	_, err := appFS.Stat(backupDir)
+	err = createBackupRootDirIfRequired(backupPath)
 	if err != nil {
-		log.Printf("%s doesn't exist, creating it\n", backupDir)
-		err := appFS.MkdirAll(backupDir, 0771)
-		if err != nil {
-			log.Fatal(err)
-		}
+		log.Fatal(err)
 	}
-	return backupDir
+	return backupPath
+}
+
+func createBackupRootDirIfRequired(backupPath string) error {
+	return appFS.MkdirAll(backupPath, 0771)
 }

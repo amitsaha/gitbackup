@@ -11,6 +11,17 @@ import (
 	"github.com/spf13/afero"
 )
 
+func setupBackupDirTests() {
+	os.Setenv("HOME", "/home/fakeuser")
+	os.Setenv("home", "/home/fakeuser")
+	appFS = afero.NewMemMapFs()
+}
+
+func teardownBackupDirTests() {
+	os.Unsetenv("HOME")
+	os.Unsetenv("home")
+}
+
 func fakePullCommand(command string, args ...string) (cmd *exec.Cmd) {
 	cs := []string{"-test.run=TestHelperPullProcess", "--", command}
 	cs = append(cs, args...)
@@ -138,19 +149,79 @@ func TestHelperRemoteUpdateProcess(t *testing.T) {
 }
 
 func TestSetupBackupDir(t *testing.T) {
-	appFS = afero.NewMemMapFs()
-	backupdir := setupBackupDir("/tmp", "github.com")
-	if backupdir != "/tmp/github.com" {
-		t.Errorf("Expected /tmp/github.com, Got %v", backupdir)
+	setupBackupDirTests()
+	defer teardownBackupDirTests()
+
+	backupRoot := "/my/backup/root"
+
+	serviceGithubCustomUrl := "https://company.github.com"
+	serviceGitlabCustomUrl := "https://company.gitlab.com"
+
+	var testConfigs = []struct {
+		backupRootDir  *string
+		gitService     string
+		gitServiceUrl  *string
+		wantBackupPath string
+	}{
+		{
+			nil,
+			"github",
+			nil,
+			"/home/fakeuser/.gitbackup/github.com",
+		},
+		{
+			&backupRoot,
+			"github",
+			nil,
+			"/my/backup/root/github.com",
+		},
+		{
+			&backupRoot,
+			"github",
+			&serviceGithubCustomUrl,
+			"/my/backup/root/company.github.com",
+		},
+		{
+			nil,
+			"gitlab",
+			nil,
+			"/home/fakeuser/.gitbackup/gitlab.com",
+		},
+
+		{
+			&backupRoot,
+			"gitlab",
+			nil,
+			"/my/backup/root/gitlab.com",
+		},
+		{
+			&backupRoot,
+			"gitlab",
+			&serviceGitlabCustomUrl,
+			"/my/backup/root/company.gitlab.com",
+		},
+		{
+			&backupRoot,
+			"bitbucket",
+			nil,
+			"/my/backup/root/bitbucket.org",
+		},
+		{
+			nil,
+			"bitbucket",
+			nil,
+			"/home/fakeuser/.gitbackup/bitbucket.org",
+		},
 	}
 
-	backupdir = setupBackupDir("/tmp", "company.github.com")
-	if backupdir != "/tmp/company.github.com" {
-		t.Errorf("Expected /tmp/company.github.com, Got %v", backupdir)
-	}
-
-	backupdir = setupBackupDir("/tmp", "gitlab.com")
-	if backupdir != "/tmp/gitlab.com" {
-		t.Errorf("Expected /tmp/gitlab.com, Got %v", backupdir)
+	for _, tc := range testConfigs {
+		backupdir := setupBackupDir(tc.backupRootDir, &tc.gitService, tc.gitServiceUrl)
+		if backupdir != tc.wantBackupPath {
+			t.Errorf("Expected %s, Got %s", tc.wantBackupPath, backupdir)
+		}
+		_, err := appFS.Stat(backupdir)
+		if err != nil {
+			t.Error(err)
+		}
 	}
 }
