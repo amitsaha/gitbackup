@@ -164,6 +164,12 @@ func TestSetupBackupDir(t *testing.T) {
 		wantBackupPath string
 	}{
 		{
+			nil,
+			"github",
+			nil,
+			"/home/fakeuser/.gitbackup/github.com",
+		},
+		{
 			&backupRoot,
 			"github",
 			nil,
@@ -175,6 +181,13 @@ func TestSetupBackupDir(t *testing.T) {
 			&serviceGithubCustomUrl,
 			"/my/backup/root/company.github.com",
 		},
+		{
+			nil,
+			"gitlab",
+			nil,
+			"/home/fakeuser/.gitbackup/gitlab.com",
+		},
+
 		{
 			&backupRoot,
 			"gitlab",
