@@ -11,6 +11,17 @@ import (
 	"github.com/spf13/afero"
 )
 
+func setupBackupDirTests() {
+	os.Setenv("HOME", "/home/fakeuser")
+	os.Setenv("home", "/home/fakeuser")
+	appFS = afero.NewMemMapFs()
+}
+
+func teardownBackupDirTests() {
+	os.Unsetenv("HOME")
+	os.Unsetenv("home")
+}
+
 func fakePullCommand(command string, args ...string) (cmd *exec.Cmd) {
 	cs := []string{"-test.run=TestHelperPullProcess", "--", command}
 	cs = append(cs, args...)
@@ -138,7 +149,9 @@ func TestHelperRemoteUpdateProcess(t *testing.T) {
 }
 
 func TestSetupBackupDir(t *testing.T) {
-	appFS = afero.NewMemMapFs()
+	setupBackupDirTests()
+	defer teardownBackupDirTests()
+
 	tmpDir := "/tmp"
 
 	serviceGithub := "github"
@@ -188,6 +201,16 @@ func TestSetupBackupDir(t *testing.T) {
 	backupdir = setupBackupDir(&tmpDir, &serviceBitbucket, nil)
 	if backupdir != "/tmp/bitbucket.org" {
 		t.Errorf("Expected /tmp/bitbucket.org, Got %v", backupdir)
+	}
+	_, err = appFS.Stat(backupdir)
+	if err != nil {
+		t.Error(err)
+	}
+
+	wantBackupDir := "/home/fakeuser/.gitbackup/bitbucket.org"
+	backupdir = setupBackupDir(nil, &serviceBitbucket, nil)
+	if backupdir != wantBackupDir {
+		t.Errorf("Expected %s, Got %s", wantBackupDir, backupdir)
 	}
 	_, err = appFS.Stat(backupdir)
 	if err != nil {

@@ -23,12 +23,11 @@ var (
 	server          *httptest.Server
 )
 
-func setup() {
+func setupRepositoryTests() {
 	os.Setenv("GITHUB_TOKEN", "$$$randome")
 	os.Setenv("GITLAB_TOKEN", "$$$randome")
 	os.Setenv("BITBUCKET_USERNAME", "bbuser")
 	os.Setenv("BITBUCKET_PASSWORD", "$$$randomp")
-
 	// test server
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
@@ -52,7 +51,7 @@ func setup() {
 	BitbucketClient.SetApiBaseURL(url.String())
 }
 
-func teardown() {
+func teardownRepositoryTests() {
 	os.Unsetenv("GITHUB_TOKEN")
 	os.Unsetenv("GITLAB_TOKEN")
 	os.Unsetenv("BITBUCKET_USERNAME")
@@ -61,8 +60,8 @@ func teardown() {
 }
 
 func TestGetPublicGitHubRepositories(t *testing.T) {
-	setup()
-	defer teardown()
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
 
 	mux.HandleFunc("/user/repos", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false, "fork": false}]`)
@@ -80,8 +79,8 @@ func TestGetPublicGitHubRepositories(t *testing.T) {
 }
 
 func TestGetPrivateGitHubRepositories(t *testing.T) {
-	setup()
-	defer teardown()
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
 
 	mux.HandleFunc("/user/repos", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true, "fork": false}]`)
@@ -99,8 +98,8 @@ func TestGetPrivateGitHubRepositories(t *testing.T) {
 }
 
 func TestGetStarredGitHubRepositories(t *testing.T) {
-	setup()
-	defer teardown()
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
 
 	mux.HandleFunc("/user/starred", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `[{"repo":{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true, "fork": false}}]`)
@@ -118,8 +117,8 @@ func TestGetStarredGitHubRepositories(t *testing.T) {
 }
 
 func TestGetGitLabRepositories(t *testing.T) {
-	setup()
-	defer teardown()
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
 
 	mux.HandleFunc("/api/v4/projects", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "r1"}]`)
@@ -139,8 +138,8 @@ func TestGetGitLabRepositories(t *testing.T) {
 }
 
 func TestGetGitLabPrivateRepositories(t *testing.T) {
-	setup()
-	defer teardown()
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
 
 	mux.HandleFunc("/api/v4/projects", func(w http.ResponseWriter,
 		r *http.Request) {
@@ -165,8 +164,8 @@ func TestGetGitLabPrivateRepositories(t *testing.T) {
 }
 
 func TestGetStarredGitLabRepositories(t *testing.T) {
-	setup()
-	defer teardown()
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
 
 	mux.HandleFunc("/api/v4/projects", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%#v\n", r.URL.Query())
@@ -195,8 +194,8 @@ func TestGetStarredGitLabRepositories(t *testing.T) {
 }
 
 func TestGetBitbucketRepositories(t *testing.T) {
-	setup()
-	defer teardown()
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
 
 	mux.HandleFunc("/workspaces", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"slug": "abc"}]}`)
