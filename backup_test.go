@@ -153,24 +153,44 @@ func TestSetupBackupDir(t *testing.T) {
 	if backupdir != "/tmp/github.com" {
 		t.Errorf("Expected /tmp/github.com, Got %v", backupdir)
 	}
+	_, err := appFS.Stat(backupdir)
+	if err != nil {
+		t.Error(err)
+	}
 
 	backupdir = setupBackupDir(&tmpDir, &serviceGithub, &serviceGithubCustomUrl)
 	if backupdir != "/tmp/company.github.com" {
 		t.Errorf("Expected /tmp/company.github.com, Got %v", backupdir)
+	}
+	_, err = appFS.Stat(backupdir)
+	if err != nil {
+		t.Error(err)
 	}
 
 	backupdir = setupBackupDir(&tmpDir, &serviceGitlab, nil)
 	if backupdir != "/tmp/gitlab.com" {
 		t.Errorf("Expected /tmp/gitlab.com, Got %v", backupdir)
 	}
+	_, err = appFS.Stat(backupdir)
+	if err != nil {
+		t.Error(err)
+	}
 
 	backupdir = setupBackupDir(&tmpDir, &serviceGitlab, &serviceGitlabCustomUrl)
 	if backupdir != "/tmp/company.gitlab.com" {
 		t.Errorf("Expected /tmp/company.gitlab.com, Got %v", backupdir)
 	}
+	_, err = appFS.Stat(backupdir)
+	if err != nil {
+		t.Error(err)
+	}
 
 	backupdir = setupBackupDir(&tmpDir, &serviceBitbucket, nil)
 	if backupdir != "/tmp/bitbucket.org" {
 		t.Errorf("Expected /tmp/bitbucket.org, Got %v", backupdir)
+	}
+	_, err = appFS.Stat(backupdir)
+	if err != nil {
+		t.Error(err)
 	}
 }
