@@ -139,17 +139,26 @@ func TestHelperRemoteUpdateProcess(t *testing.T) {
 
 func TestSetupBackupDir(t *testing.T) {
 	appFS = afero.NewMemMapFs()
-	backupdir := setupBackupDir("/tmp", "github.com")
+	tmpDir := "/tmp"
+
+	serviceGithub := "github"
+	serviceGithubUrl := "https://github.com"
+	serviceGithubCustomUrl := "https://company.github.com"
+
+	serviceGitlab := "gitlab"
+	serviceGitlabUrl := "https://gitlab.com"
+
+	backupdir := setupBackupDir(&tmpDir, &serviceGithub, &serviceGithubUrl)
 	if backupdir != "/tmp/github.com" {
 		t.Errorf("Expected /tmp/github.com, Got %v", backupdir)
 	}
 
-	backupdir = setupBackupDir("/tmp", "company.github.com")
+	backupdir = setupBackupDir(&tmpDir, &serviceGithub, &serviceGithubCustomUrl)
 	if backupdir != "/tmp/company.github.com" {
 		t.Errorf("Expected /tmp/company.github.com, Got %v", backupdir)
 	}
 
-	backupdir = setupBackupDir("/tmp", "gitlab.com")
+	backupdir = setupBackupDir(&tmpDir, &serviceGitlab, &serviceGitlabUrl)
 	if backupdir != "/tmp/gitlab.com" {
 		t.Errorf("Expected /tmp/gitlab.com, Got %v", backupdir)
 	}

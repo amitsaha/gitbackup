@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/url"
 	"sync"
 	"time"
 
@@ -23,21 +22,18 @@ var useHTTPSClone *bool
 var ignorePrivate *bool
 var gitHostUsername string
 
-func main() {
+// The services we know of and their default public host names
+var knownServices = map[string]string{
+	"github":    "github.com",
+	"gitlab":    "gitlab.com",
+	"bitbucket": "bitbucket.org",
+}
 
-	// Git host
-	var gitHost string
+func main() {
 
 	// Used for waiting for all the goroutines to finish before exiting
 	var wg sync.WaitGroup
 	defer wg.Wait()
-
-	// The services we know of and their default public host names
-	knownServices := map[string]string{
-		"github":    "github.com",
-		"gitlab":    "gitlab.com",
-		"bitbucket": "bitbucket.org",
-	}
 
 	// Generic flags
 	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab/bitbucket)")
@@ -71,18 +67,7 @@ func main() {
 		log.Fatal("Please specify a valid gitlab project membership - all/owner/member")
 	}
 
-	if len(*githostURL) != 0 {
-		u, err := url.Parse(*githostURL)
-		if err != nil {
-			panic(err)
-		}
-		gitHost = u.Host
-	} else {
-		gitHost = knownServices[*service]
-	}
-
-	*backupDir = setupBackupDir(*backupDir, gitHost)
-
+	*backupDir = setupBackupDir(backupDir, service, githostURL)
 	client := newClient(*service, *githostURL)
 
 	if *githubListUserMigrations {
