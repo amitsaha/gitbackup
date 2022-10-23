@@ -73,6 +73,7 @@ func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) (
 
 func setupBackupDir(backupDir, service, githostURL *string) string {
 	var gitHost, backupPath string
+	var err error
 
 	if githostURL != nil {
 		u, err := url.Parse(*githostURL)
@@ -94,15 +95,19 @@ func setupBackupDir(backupDir, service, githostURL *string) string {
 	} else {
 		backupPath = path.Join(*backupDir, gitHost)
 	}
-	// TODO refactor this to separate backup dir creation and
-	// path construction
-	_, err := appFS.Stat(backupPath)
+	err = createBackupRootDirIfRequired(backupPath)
 	if err != nil {
-		log.Printf("%s doesn't exist, creating it\n", backupPath)
-		err := appFS.MkdirAll(backupPath, 0771)
-		if err != nil {
-			log.Fatal(err)
-		}
+		log.Fatal(err)
 	}
 	return backupPath
+}
+
+func createBackupRootDirIfRequired(backupPath string) error {
+	var err error
+	_, err = appFS.Stat(backupPath)
+	if err != nil {
+		log.Printf("%s doesn't exist, creating it\n", backupPath)
+		err = appFS.MkdirAll(backupPath, 0771)
+	}
+	return err
 }
