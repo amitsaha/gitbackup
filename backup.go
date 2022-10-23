@@ -83,7 +83,6 @@ func setupBackupDir(backupDir, service, githostURL *string) string {
 		gitHost = u.Host
 	} else {
 		gitHost = knownServices[*service]
-		log.Println("knownservices", gitHost)
 	}
 
 	if len(*backupDir) == 0 {
