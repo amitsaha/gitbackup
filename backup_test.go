@@ -158,64 +158,64 @@ func TestSetupBackupDir(t *testing.T) {
 	serviceGitlabCustomUrl := "https://company.gitlab.com"
 
 	var testConfigs = []struct {
-		backupRootDir  *string
+		backupRootDir  string
 		gitService     string
-		gitServiceUrl  *string
+		gitServiceUrl  string
 		wantBackupPath string
 	}{
 		{
-			nil,
+			"",
 			"github",
-			nil,
+			"",
 			"/home/fakeuser/.gitbackup/github.com",
 		},
 		{
-			&backupRoot,
+			backupRoot,
 			"github",
-			nil,
+			"",
 			"/my/backup/root/github.com",
 		},
 		{
-			&backupRoot,
+			backupRoot,
 			"github",
-			&serviceGithubCustomUrl,
+			serviceGithubCustomUrl,
 			"/my/backup/root/company.github.com",
 		},
 		{
-			nil,
+			"",
 			"gitlab",
-			nil,
+			"",
 			"/home/fakeuser/.gitbackup/gitlab.com",
 		},
 
 		{
-			&backupRoot,
+			backupRoot,
 			"gitlab",
-			nil,
+			"",
 			"/my/backup/root/gitlab.com",
 		},
 		{
-			&backupRoot,
+			backupRoot,
 			"gitlab",
-			&serviceGitlabCustomUrl,
+			serviceGitlabCustomUrl,
 			"/my/backup/root/company.gitlab.com",
 		},
 		{
-			&backupRoot,
+			backupRoot,
 			"bitbucket",
-			nil,
+			"",
 			"/my/backup/root/bitbucket.org",
 		},
 		{
-			nil,
+			"",
 			"bitbucket",
-			nil,
+			"",
 			"/home/fakeuser/.gitbackup/bitbucket.org",
 		},
 	}
 
 	for _, tc := range testConfigs {
-		backupdir := setupBackupDir(tc.backupRootDir, &tc.gitService, tc.gitServiceUrl)
+		backupdir := setupBackupDir(&tc.backupRootDir, &tc.gitService, &tc.gitServiceUrl)
 		if backupdir != tc.wantBackupPath {
 			t.Errorf("Expected %s, Got %s", tc.wantBackupPath, backupdir)
 		}

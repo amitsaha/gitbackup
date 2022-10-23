@@ -75,7 +75,7 @@ func setupBackupDir(backupDir, service, githostURL *string) string {
 	var gitHost, backupPath string
 	var err error
 
-	if githostURL != nil {
+	if len(*githostURL) != 0 {
 		u, err := url.Parse(*githostURL)
 		if err != nil {
 			panic(err)
@@ -83,9 +83,10 @@ func setupBackupDir(backupDir, service, githostURL *string) string {
 		gitHost = u.Host
 	} else {
 		gitHost = knownServices[*service]
+		log.Println("knownservices", gitHost)
 	}
 
-	if backupDir == nil {
+	if len(*backupDir) == 0 {
 		homeDir, err := homedir.Dir()
 		if err == nil {
 			backupPath = path.Join(homeDir, ".gitbackup", gitHost)
@@ -95,9 +96,10 @@ func setupBackupDir(backupDir, service, githostURL *string) string {
 	} else {
 		backupPath = path.Join(*backupDir, gitHost)
 	}
+
 	err = createBackupRootDirIfRequired(backupPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error creating backup directory: %s %v", backupPath, err)
 	}
 	return backupPath
 }
