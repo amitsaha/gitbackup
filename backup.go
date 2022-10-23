@@ -103,11 +103,5 @@ func setupBackupDir(backupDir, service, githostURL *string) string {
 }
 
 func createBackupRootDirIfRequired(backupPath string) error {
-	var err error
-	_, err = appFS.Stat(backupPath)
-	if err != nil {
-		log.Printf("%s doesn't exist, creating it\n", backupPath)
-		err = appFS.MkdirAll(backupPath, 0771)
-	}
-	return err
+	return appFS.MkdirAll(backupPath, 0771)
 }
