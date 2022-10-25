@@ -280,7 +280,8 @@ workflow via scheduled github actions [here](https://github.com/amitsaha/gitback
 
 ## Building
 
-If you have Golang 1.17.x installed, you can clone the repository and:
+If you have Go 1.19.x installed, you can clone the repository and:
+
 ```
 $ go build
 ```
