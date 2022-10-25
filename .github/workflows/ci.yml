@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.16', '1.17' ]
+        go: [ '1.19']
     name: Go ${{ matrix.go }} tests - Linux
     steps:
       - uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
     runs-on: macOS-latest
     strategy:
       matrix:
-        go: [ '1.16', '1.17' ]
+        go: [ '1.19']
     name: Go ${{ matrix.go }} tests - MacOS
     steps:
       - uses: actions/checkout@v2
@@ -37,12 +37,11 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        go: [ '1.16', '1.17' ]
+        go: [ '1.19' ]
     name: Go ${{ matrix.go }} tests - Windows
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-      - run: go test
-    
+      - run: go test  
