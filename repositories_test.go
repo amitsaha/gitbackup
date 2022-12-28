@@ -67,7 +67,7 @@ func TestGetPublicGitHubRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false, "fork": false}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "all", "", "", false)
+	repos, err := getRepositories(GitHubClient, "github", "all", []string{}, "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -86,7 +86,7 @@ func TestGetPrivateGitHubRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true, "fork": false}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "all", "", "", false)
+	repos, err := getRepositories(GitHubClient, "github", "all", []string{}, "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -105,12 +105,37 @@ func TestGetStarredGitHubRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"repo":{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true, "fork": false}}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "starred", "", "", false)
+	repos, err := getRepositories(GitHubClient, "github", "starred", []string{}, "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
 	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://github.com/u/r1", Name: "r1", Private: true})
+	if !reflect.DeepEqual(repos, expected) {
+		t.Errorf("Expected %+v, Got %+v", expected, repos)
+	}
+}
+
+func TestGetWhitelistGitHubRepositories(t *testing.T) {
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
+
+	mux.HandleFunc("/user/repos", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `[
+			{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false, "fork": false},
+			{"full_name": "user1/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false, "fork": false},
+			{"full_name": "org1/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false, "fork": false}
+		]`)
+	})
+
+	repos, err := getRepositories(GitHubClient, "github", "all", []string{"test", "user1"}, "", "", false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	var expected []*Repository
+	expected = append(expected, &Repository{Namespace: "test", CloneURL: "https://github.com/u/r1", Name: "r1", Private: false})
+	expected = append(expected, &Repository{Namespace: "user1", CloneURL: "https://github.com/u/r1", Name: "r1", Private: false})
+
 	if !reflect.DeepEqual(repos, expected) {
 		t.Errorf("Expected %+v, Got %+v", expected, repos)
 	}
@@ -124,7 +149,7 @@ func TestGetGitLabRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
-	repos, err := getRepositories(GitLabClient, "gitlab", "internal", "", "", false)
+	repos, err := getRepositories(GitLabClient, "gitlab", "internal", []string{}, "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -149,7 +174,7 @@ func TestGetGitLabPrivateRepositories(t *testing.T) {
 	})
 
 	repos, err := getRepositories(GitLabClient, "gitlab",
-		"private", "", "", false)
+		"private", []string{}, "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -176,7 +201,7 @@ func TestGetStarredGitLabRepositories(t *testing.T) {
 		fmt.Fprintf(w, `[]`)
 	})
 
-	repos, err := getRepositories(GitLabClient, "gitlab", "", "", "starred", false)
+	repos, err := getRepositories(GitLabClient, "gitlab", "", []string{}, "", "starred", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -205,7 +230,7 @@ func TestGetBitbucketRepositories(t *testing.T) {
 		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"full_name":"abc/def", "slug":"def", "is_private":true, "links":{"clone":[{"name":"https", "href":"https://bbuser@bitbucket.org/abc/def.git"}, {"name":"ssh", "href":"git@bitbucket.org:abc/def.git"}]}}]}`)
 	})
 
-	repos, err := getRepositories(BitbucketClient, "bitbucket", "", "", "", false)
+	repos, err := getRepositories(BitbucketClient, "bitbucket", "", []string{}, "", "", false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

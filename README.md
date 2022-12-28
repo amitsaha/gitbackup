@@ -117,6 +117,8 @@ Usage of ./gitbackup:
         Number of retries to attempt for creating GitHub user migration (default 5)
   -github.listUserMigrations
         List available user migrations
+  -github.namespaceWhitelist string
+        Organizations/Users from where we should clone (separate each value by a comma: 'user1,org2')
   -github.repoType string
         Repo types to backup (all, owner, member, starred) (default "all")
   -github.waitForUserMigration
@@ -159,6 +161,12 @@ Separately, to backup GitHub repositories you have starred:
 
 ```lang=bash
 $ GITHUB_TOKEN=secret$token gitbackup -service github -github.repoType starred
+```
+
+Additionally, to backup only the GitHub repositories under 'user1' and 'org3':
+
+```lang=bash
+$ GITHUB_TOKEN=secret$token gitbackup -service github -github.namespaceWhitelist "user1,org3"
 ```
 
 #### Backing up your GitLab repositories
