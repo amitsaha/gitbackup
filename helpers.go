@@ -52,3 +52,12 @@ func validGitlabProjectMembership(membership string) bool {
 	}
 	return false
 }
+
+func contains(list []string, x string) bool {
+	for _, item := range list {
+		if item == x {
+			return true
+		}
+	}
+	return false
+}

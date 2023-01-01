@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/v34/github"
@@ -46,6 +47,7 @@ func main() {
 
 	// GitHub specific flags
 	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member, starred)")
+	githubNamespaceWhitelistString := flag.String("github.namespaceWhitelist", "", "Organizations/Users from where we should clone (separate each value by a comma: 'user1,org2')")
 
 	githubCreateUserMigration := flag.Bool("github.createUserMigration", false, "Download user data")
 	githubCreateUserMigrationRetry := flag.Bool("github.createUserMigrationRetry", true, "Retry creating the GitHub user migration if we get an error")
@@ -58,6 +60,13 @@ func main() {
 	gitlabProjectMembershipType := flag.String("gitlab.projectMembershipType", "all", "Project type to clone (all, owner, member, starred)")
 
 	flag.Parse()
+
+	// Split namespaces
+	githubNamespaceWhitelist := []string{}
+
+	if len(*githubNamespaceWhitelistString) > 0 {
+		githubNamespaceWhitelist = strings.Split(*githubNamespaceWhitelistString, ",")
+	}
 
 	if _, ok := knownServices[*service]; !ok {
 		log.Fatal("Please specify the git service type: github, gitlab, bitbucket")
@@ -96,7 +105,7 @@ func main() {
 
 	} else if *githubCreateUserMigration {
 
-		repos, err := getRepositories(client, *service, *githubRepoType, *gitlabProjectVisibility, *gitlabProjectMembershipType, *ignoreFork)
+		repos, err := getRepositories(client, *service, *githubRepoType, githubNamespaceWhitelist, *gitlabProjectVisibility, *gitlabProjectMembershipType, *ignoreFork)
 		if err != nil {
 			log.Fatalf("Error getting list of repositories: %v", err)
 		}
@@ -147,7 +156,7 @@ func main() {
 			log.Fatal("Your Git host's username is needed for backing up private repositories via HTTPS")
 		}
 		repos, err := getRepositories(
-			client, *service, *githubRepoType,
+			client, *service, *githubRepoType, githubNamespaceWhitelist,
 			*gitlabProjectVisibility, *gitlabProjectMembershipType, *ignoreFork,
 		)
 		if err != nil {

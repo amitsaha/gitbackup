@@ -38,7 +38,7 @@ type Repository struct {
 }
 
 func getRepositories(client interface{},
-	service string, githubRepoType string,
+	service string, githubRepoType string, githubNamespaceWhitelist []string,
 	gitlabProjectVisibility string, gitlabProjectMembershipType string,
 	ignoreFork bool,
 ) ([]*Repository, error) {
@@ -80,6 +80,8 @@ func getRepositories(client interface{},
 			}
 		} else {
 			options := github.RepositoryListOptions{Type: githubRepoType}
+			githubNamespaceWhitelistLength := len(githubNamespaceWhitelist)
+
 			for {
 				repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
 				if err == nil {
@@ -88,6 +90,11 @@ func getRepositories(client interface{},
 							continue
 						}
 						namespace := strings.Split(*repo.FullName, "/")[0]
+
+						if githubNamespaceWhitelistLength > 0 && !contains(githubNamespaceWhitelist, namespace) {
+							continue
+						}
+
 						if useHTTPSClone != nil && *useHTTPSClone {
 							cloneURL = *repo.CloneURL
 						} else {
