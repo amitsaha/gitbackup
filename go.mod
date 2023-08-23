@@ -3,7 +3,7 @@ module github.com/amitsaha/gitbackup
 go 1.19
 
 require (
-	github.com/99designs/keyring v1.2.1
+	github.com/99designs/keyring v1.2.2
 	github.com/cli/oauth v0.8.0
 	github.com/google/go-github/v34 v34.0.0
 	github.com/ktrysmt/go-bitbucket v0.9.1
