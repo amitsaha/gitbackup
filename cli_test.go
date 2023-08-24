@@ -11,13 +11,8 @@ import (
 )
 
 func TestCliUsage(t *testing.T) {
-	cmd := exec.Command("go", "env")
+	cmd := exec.Command("go", "build", "-o", "gitbackup_test_bin")
 	stdoutStderr, err := cmd.CombinedOutput()
-	t.Log(cmd.Environ())
-	t.Fatalf(string(stdoutStderr))
-
-	cmd = exec.Command("go", "build", "-v", "-o", "gitbackup_test_bin")
-	stdoutStderr, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error building test binary: %v - %v", err, string(stdoutStderr))
 	}
