@@ -31,4 +31,3 @@ Usage of ./gitbackup_test_bin.exe:
     	Git Hosted Service Name (github/gitlab/bitbucket)
   -use-https-clone
     	Use HTTPS for cloning instead of SSH
-
