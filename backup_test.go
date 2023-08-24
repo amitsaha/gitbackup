@@ -11,17 +11,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-func setupBackupDirTests() {
-	os.Setenv("HOME", "/home/fakeuser")
-	os.Setenv("home", "/home/fakeuser")
-	appFS = afero.NewMemMapFs()
-}
-
-func teardownBackupDirTests() {
-	os.Unsetenv("HOME")
-	os.Unsetenv("home")
-}
-
 func fakePullCommand(command string, args ...string) (cmd *exec.Cmd) {
 	cs := []string{"-test.run=TestHelperPullProcess", "--", command}
 	cs = append(cs, args...)
@@ -149,8 +138,12 @@ func TestHelperRemoteUpdateProcess(t *testing.T) {
 }
 
 func TestSetupBackupDir(t *testing.T) {
-	setupBackupDirTests()
-	defer teardownBackupDirTests()
+
+	// test implementation of homedir.Dir()
+	gethomeDir = func() (string, error) {
+		return "/home/fakeuser", nil
+	}
+	appFS = afero.NewMemMapFs()
 
 	backupRoot := "/my/backup/root"
 

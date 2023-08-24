@@ -7,7 +7,7 @@ import (
 	"path"
 	"sync"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 )
 
@@ -15,6 +15,7 @@ import (
 var execCommand = exec.Command
 var appFS = afero.NewOsFs()
 var gitCommand = "git"
+var gethomeDir = homedir.Dir
 
 // Check if we have a copy of the repo already, if
 // we do, we update the repo, else we do a fresh clone
@@ -86,7 +87,7 @@ func setupBackupDir(backupDir, service, githostURL *string) string {
 	}
 
 	if len(*backupDir) == 0 {
-		homeDir, err := homedir.Dir()
+		homeDir, err := gethomeDir()
 		if err == nil {
 			backupPath = path.Join(homeDir, ".gitbackup", gitHost)
 		} else {
