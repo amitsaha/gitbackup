@@ -1,4 +1,4 @@
-Usage of ./gitbackup_test_bin:
+Usage of gitbackup:
   -backupdir string
     	Backup directory
   -bare

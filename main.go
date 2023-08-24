@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
+	"os"
 	"sync"
-	"strings"
 	"time"
 
 	"github.com/google/go-github/v34/github"
@@ -30,56 +29,45 @@ var knownServices = map[string]string{
 	"bitbucket": "bitbucket.org",
 }
 
+type appConfig struct {
+	service       string
+	gitHostURL    string
+	backupDir     string
+	ignorePrivate bool
+	ignoreFork    bool
+	useHTTPSClone bool
+	bare          bool
+
+	githubRepoType                    string
+	githubNamespaceWhitelist          []string
+	githubCreateUserMigration         bool
+	githubCreateUserMigrationRetry    bool
+	githubCreateUserMigrationRetryMax int
+	githubListUserMigrations          bool
+	githubWaitForMigrationComplete    bool
+
+	gitlabProjectVisibility     string
+	gitlabProjectMembershipType string
+}
+
 func main() {
 
 	// Used for waiting for all the goroutines to finish before exiting
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	// Generic flags
-	service := flag.String("service", "", "Git Hosted Service Name (github/gitlab/bitbucket)")
-	githostURL := flag.String("githost.url", "", "DNS of the custom Git host")
-	backupDir := flag.String("backupdir", "", "Backup directory")
-	ignorePrivate = flag.Bool("ignore-private", false, "Ignore private repositories/projects")
-	ignoreFork := flag.Bool("ignore-fork", false, "Ignore repositories which are forks")
-	useHTTPSClone = flag.Bool("use-https-clone", false, "Use HTTPS for cloning instead of SSH")
-	bare := flag.Bool("bare", false, "Clone bare repositories")
-
-	// GitHub specific flags
-	githubRepoType := flag.String("github.repoType", "all", "Repo types to backup (all, owner, member, starred)")
-	githubNamespaceWhitelistString := flag.String("github.namespaceWhitelist", "", "Organizations/Users from where we should clone (separate each value by a comma: 'user1,org2')")
-
-	githubCreateUserMigration := flag.Bool("github.createUserMigration", false, "Download user data")
-	githubCreateUserMigrationRetry := flag.Bool("github.createUserMigrationRetry", true, "Retry creating the GitHub user migration if we get an error")
-	githubCreateUserMigrationRetryMax := flag.Int("github.createUserMigrationRetryMax", defaultMaxUserMigrationRetry, "Number of retries to attempt for creating GitHub user migration")
-	githubListUserMigrations := flag.Bool("github.listUserMigrations", false, "List available user migrations")
-	githubWaitForMigrationComplete := flag.Bool("github.waitForUserMigration", true, "Wait for migration to complete")
-
-	// Gitlab specific flags
-	gitlabProjectVisibility := flag.String("gitlab.projectVisibility", "internal", "Visibility level of Projects to clone (internal, public, private)")
-	gitlabProjectMembershipType := flag.String("gitlab.projectMembershipType", "all", "Project type to clone (all, owner, member, starred)")
-
-	flag.Parse()
-
-	// Split namespaces
-	githubNamespaceWhitelist := []string{}
-
-	if len(*githubNamespaceWhitelistString) > 0 {
-		githubNamespaceWhitelist = strings.Split(*githubNamespaceWhitelistString, ",")
+	c, err := initConfig(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = validateConfig(c)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	if _, ok := knownServices[*service]; !ok {
-		log.Fatal("Please specify the git service type: github, gitlab, bitbucket")
-	}
+	client := newClient(c.service, c.gitHostURL)
 
-	if !validGitlabProjectMembership(*gitlabProjectMembershipType) {
-		log.Fatal("Please specify a valid gitlab project membership - all/owner/member")
-	}
-
-	*backupDir = setupBackupDir(backupDir, service, githostURL)
-	client := newClient(*service, *githostURL)
-
-	if *githubListUserMigrations {
+	if c.githubListUserMigrations {
 		mList, err := getGithubUserMigrations(client)
 		if err != nil {
 			log.Fatal(err)
@@ -103,22 +91,40 @@ func main() {
 			fmt.Printf("%v - %v - %v - %v\n", *mData.ID, *mData.CreatedAt, *mData.State, archiveURL)
 		}
 
-	} else if *githubCreateUserMigration {
+	} else if c.githubCreateUserMigration {
 
-		repos, err := getRepositories(client, *service, *githubRepoType, githubNamespaceWhitelist, *gitlabProjectVisibility, *gitlabProjectMembershipType, *ignoreFork)
+		repos, err := getRepositories(
+			client,
+			c.service,
+			c.githubRepoType,
+			c.githubNamespaceWhitelist,
+			c.gitlabProjectVisibility,
+			c.gitlabProjectMembershipType,
+			c.ignoreFork,
+		)
 		if err != nil {
 			log.Fatalf("Error getting list of repositories: %v", err)
 		}
 
 		log.Printf("Creating a user migration for %d repos", len(repos))
-		m, err := createGithubUserMigration(context.Background(), client, repos, *githubCreateUserMigrationRetry, *githubCreateUserMigrationRetryMax)
+		m, err := createGithubUserMigration(
+			context.Background(),
+			client, repos,
+			c.githubCreateUserMigrationRetry,
+			c.githubCreateUserMigrationRetryMax,
+		)
 		if err != nil {
 			log.Fatalf("Error creating migration: %v", err)
 		}
 
-		if *githubWaitForMigrationComplete {
+		if c.githubWaitForMigrationComplete {
 			migrationStatePollingDuration := 60 * time.Second
-			err = downloadGithubUserMigrationData(context.Background(), client, *backupDir, m.ID, migrationStatePollingDuration)
+			err = downloadGithubUserMigrationData(
+				context.Background(),
+				client, c.backupDir,
+				m.ID,
+				migrationStatePollingDuration,
+			)
 			if err != nil {
 				log.Fatalf("Error querying/downloading migration: %v", err)
 			}
@@ -142,22 +148,34 @@ func main() {
 			if err != nil {
 				log.Fatalf("Error creating migration: %v", err)
 			}
-			if *githubWaitForMigrationComplete {
+			if c.githubWaitForMigrationComplete {
 				migrationStatePollingDuration := 60 * time.Second
-				downloadGithubOrgMigrationData(context.Background(), client, *o.Login, *backupDir, oMigration.ID, migrationStatePollingDuration)
+				downloadGithubOrgMigrationData(
+					context.Background(),
+					client,
+					*o.Login,
+					c.backupDir,
+					oMigration.ID,
+					migrationStatePollingDuration,
+				)
 			}
 		}
 
 	} else {
 		tokens := make(chan bool, MaxConcurrentClones)
-		gitHostUsername = getUsername(client, *service)
+		gitHostUsername = getUsername(client, c.service)
 
 		if len(gitHostUsername) == 0 && !*ignorePrivate && *useHTTPSClone {
 			log.Fatal("Your Git host's username is needed for backing up private repositories via HTTPS")
 		}
 		repos, err := getRepositories(
-			client, *service, *githubRepoType, githubNamespaceWhitelist,
-			*gitlabProjectVisibility, *gitlabProjectMembershipType, *ignoreFork,
+			client,
+			c.service,
+			c.githubRepoType,
+			c.githubNamespaceWhitelist,
+			c.gitlabProjectVisibility,
+			c.gitlabProjectMembershipType,
+			c.ignoreFork,
 		)
 		if err != nil {
 			log.Fatal(err)
@@ -167,7 +185,7 @@ func main() {
 				tokens <- true
 				wg.Add(1)
 				go func(repo *Repository) {
-					stdoutStderr, err := backUp(*backupDir, repo, *bare, &wg)
+					stdoutStderr, err := backUp(c.backupDir, repo, c.bare, &wg)
 					if err != nil {
 						log.Printf("Error backing up %s: %s\n", repo.Name, stdoutStderr)
 					}
