@@ -20,9 +20,10 @@ jobs:
           go-version: ${{ matrix.go }}
       - run: go test
       - name: Archive testdata for diagnosis
+        if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
-          name: testdata
+          name: testdata-linux
           path: testdata
   
   macos_tests:
@@ -38,9 +39,10 @@ jobs:
           go-version: ${{ matrix.go }}
       - run: go test
       - name: Archive testdata for diagnosis
+        if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
-          name: testdata
+          name: testdata-macos
           path: testdata
   
   windows_tests:
@@ -56,7 +58,8 @@ jobs:
           go-version: ${{ matrix.go }}
       - run: go test
       - name: Archive testdata for diagnosis
+        if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
-          name: testdata
+          name: testdata-windows
           path: testdata

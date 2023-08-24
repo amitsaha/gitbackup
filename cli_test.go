@@ -13,8 +13,10 @@ import (
 
 func TestCliUsage(t *testing.T) {
 	binaryFilename := "gitbackup_test_bin"
+	goldenFilepath := path.Join("testdata", t.Name()+".golden")
 	if runtime.GOOS == "windows" {
 		binaryFilename = "gitbackup_test_bin.exe"
+		goldenFilepath = goldenFilepath + ".windows"
 	}
 
 	cmd := exec.Command("go", "build", "-o", binaryFilename)
@@ -30,7 +32,6 @@ func TestCliUsage(t *testing.T) {
 	}()
 
 	var stdout, stderr bytes.Buffer
-	goldenFilepath := path.Join("testdata", t.Name()+".golden")
 	goldenFilepathNew := goldenFilepath + ".expected"
 
 	cmd = exec.Command("./"+binaryFilename, "-h")
