@@ -19,6 +19,11 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - run: go test
+      - name: Archive testdata for diagnosis
+        uses: actions/upload-artifact@v3
+        with:
+          name: testdata
+          path: testdata
   
   macos_tests:
     runs-on: macOS-latest
@@ -32,6 +37,11 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - run: go test
+      - name: Archive testdata for diagnosis
+        uses: actions/upload-artifact@v3
+        with:
+          name: testdata
+          path: testdata
   
   windows_tests:
     runs-on: windows-latest
@@ -44,4 +54,9 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-      - run: go test  
+      - run: go test
+      - name: Archive testdata for diagnosis
+        uses: actions/upload-artifact@v3
+        with:
+          name: testdata
+          path: testdata
