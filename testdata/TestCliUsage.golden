@@ -1,0 +1,33 @@
+Usage of ./gitbackup_test_bin:
+  -backupdir string
+    	Backup directory
+  -bare
+    	Clone bare repositories
+  -githost.url string
+    	DNS of the custom Git host
+  -github.createUserMigration
+    	Download user data
+  -github.createUserMigrationRetry
+    	Retry creating the GitHub user migration if we get an error (default true)
+  -github.createUserMigrationRetryMax int
+    	Number of retries to attempt for creating GitHub user migration (default 5)
+  -github.listUserMigrations
+    	List available user migrations
+  -github.namespaceWhitelist string
+    	Organizations/Users from where we should clone (separate each value by a comma: 'user1,org2')
+  -github.repoType string
+    	Repo types to backup (all, owner, member, starred) (default "all")
+  -github.waitForUserMigration
+    	Wait for migration to complete (default true)
+  -gitlab.projectMembershipType string
+    	Project type to clone (all, owner, member, starred) (default "all")
+  -gitlab.projectVisibility string
+    	Visibility level of Projects to clone (internal, public, private) (default "internal")
+  -ignore-fork
+    	Ignore repositories which are forks
+  -ignore-private
+    	Ignore private repositories/projects
+  -service string
+    	Git Hosted Service Name (github/gitlab/bitbucket)
+  -use-https-clone
+    	Use HTTPS for cloning instead of SSH
