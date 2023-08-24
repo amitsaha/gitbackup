@@ -8,6 +8,7 @@ import (
 	"path"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -54,6 +55,10 @@ func TestCliUsage(t *testing.T) {
 		}
 		t.FailNow()
 	}
+	expectedUsageString := string(expectedUsage)
+	// For windows
+	expectedUsage = []byte(strings.ReplaceAll(expectedUsageString, "\r\n", "\n"))
+
 	if !reflect.DeepEqual(expectedUsage, gotUsage) {
 		t.Errorf("expected and got data mismatch. ..writing expected output to %[1]s", goldenFilepathNew)
 		if err := writeExpectedGoldenFile(goldenFilepathNew, gotUsage); err != nil {
