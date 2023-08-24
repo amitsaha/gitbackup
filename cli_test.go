@@ -7,17 +7,23 @@ import (
 	"os/exec"
 	"path"
 	"reflect"
+	"runtime"
 	"testing"
 )
 
 func TestCliUsage(t *testing.T) {
-	cmd := exec.Command("go", "build", "-o", "gitbackup_test_bin")
+	binaryFilename := "gitbackup_test_bin"
+	if runtime.GOOS == "windows" {
+		binaryFilename = "gitbackup_test_bin.exe"
+	}
+
+	cmd := exec.Command("go", "build", "-o", binaryFilename)
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error building test binary: %v - %v", err, string(stdoutStderr))
 	}
 	defer func() {
-		err := os.Remove("gitbackup_test_bin")
+		err := os.Remove(binaryFilename)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -27,7 +33,8 @@ func TestCliUsage(t *testing.T) {
 	goldenFilepath := path.Join("testdata", t.Name()+".golden")
 	goldenFilepathNew := goldenFilepath + ".expected"
 
-	cmd = exec.Command("./gitbackup_test_bin", "-h")
+	cmd = exec.Command("./"+binaryFilename, "-h")
+	t.Log(cmd.String())
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
