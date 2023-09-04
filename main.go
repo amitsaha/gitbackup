@@ -35,6 +35,7 @@ func main() {
 	}
 
 	client := newClient(c.service, c.gitHostURL)
+	var executionErr error
 
 	// TODO implement validation of options so that we don't
 	// allow multiple operations at one go
@@ -43,6 +44,9 @@ func main() {
 	} else if c.githubCreateUserMigration {
 		handleGithubCreateUserMigration(client, c)
 	} else {
-		handleGitRepositoryClone(client, c)
+		executionErr = handleGitRepositoryClone(client, c)
+	}
+	if executionErr != nil {
+		log.Fatal(executionErr)
 	}
 }
