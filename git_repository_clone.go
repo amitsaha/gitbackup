@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"sync"
 )
 
-func handleGitRepositoryClone(client interface{}, c *appConfig) {
+func handleGitRepositoryClone(client interface{}, c *appConfig) error {
 
 	// Used for waiting for all the goroutines to finish before exiting
 	var wg sync.WaitGroup
@@ -17,7 +18,8 @@ func handleGitRepositoryClone(client interface{}, c *appConfig) {
 	if len(gitHostUsername) == 0 && !*ignorePrivate && *useHTTPSClone {
 		log.Fatal("Your Git host's username is needed for backing up private repositories via HTTPS")
 	}
-	repos, err := getRepositories(
+
+	repositories, err := getRepositories(
 		client,
 		c.service,
 		c.githubRepoType,
@@ -27,19 +29,23 @@ func handleGitRepositoryClone(client interface{}, c *appConfig) {
 		c.ignoreFork,
 	)
 	if err != nil {
-		log.Fatal(err)
-	} else {
-		log.Printf("Backing up %v repositories now..\n", len(repos))
-		for _, repo := range repos {
-			tokens <- true
-			wg.Add(1)
-			go func(repo *Repository) {
-				stdoutStderr, err := backUp(c.backupDir, repo, c.bare, &wg)
-				if err != nil {
-					log.Printf("Error backing up %s: %s\n", repo.Name, stdoutStderr)
-				}
-				<-tokens
-			}(repo)
-		}
+		return err
 	}
+	if len(repositories) == 0 {
+		return fmt.Errorf("no repositories retrieved")
+	}
+
+	log.Printf("Backing up %v repositories now..\n", len(repositories))
+	for _, repo := range repositories {
+		tokens <- true
+		wg.Add(1)
+		go func(repo *Repository) {
+			stdoutStderr, err := backUp(c.backupDir, repo, c.bare, &wg)
+			if err != nil {
+				log.Printf("Error backing up %s: %s\n", repo.Name, stdoutStderr)
+			}
+			<-tokens
+		}(repo)
+	}
+	return nil
 }
