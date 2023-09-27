@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"strings"
 
 	bitbucket "github.com/ktrysmt/go-bitbucket"
@@ -13,10 +12,6 @@ func getBitbucketRepositories(
 	gitlabProjectVisibility string, gitlabProjectMembershipType string,
 	ignoreFork bool,
 ) ([]*Repository, error) {
-
-	if client == nil {
-		log.Fatalf("Couldn't acquire a client to talk to %s", service)
-	}
 
 	var repositories []*Repository
 	var cloneURL string
