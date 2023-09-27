@@ -19,33 +19,33 @@ func TestNewClient(t *testing.T) {
 	expectedGitHostBaseURL := customGitHost.ResolveReference(api)
 
 	// Client for github.com
-	client := newClient("github", "")
+	client := newClient("github", nil)
 	client = client.(*github.Client)
 
 	// Client for Enterprise Github
-	client = newClient("github", customGitHost.String())
+	client = newClient("github", customGitHost)
 	gotBaseURL := client.(*github.Client).BaseURL
 	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
 	// Client for gitlab.com
-	client = newClient("gitlab", "")
+	client = newClient("gitlab", nil)
 	client = client.(*gitlab.Client)
 
 	// Client for custom gitlab installation
-	client = newClient("gitlab", customGitHost.String())
+	client = newClient("gitlab", customGitHost)
 	gotBaseURL = client.(*gitlab.Client).BaseURL()
 	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
 	// Client for bitbucket.com
-	client = newClient("bitbucket", "")
+	client = newClient("bitbucket", nil)
 	client = client.(*bitbucket.Client)
 
 	// Not yet supported
-	client = newClient("notyetsupported", "")
+	client = newClient("notyetsupported", nil)
 	if client != nil {
 		t.Errorf("Expected nil")
 	}

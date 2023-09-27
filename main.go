@@ -34,7 +34,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client := newClient(c.service, c.gitHostURL)
+	client := newClient(c.service, c.gitHostURLParsed)
 	var executionErr error
 
 	// TODO implement validation of options so that we don't

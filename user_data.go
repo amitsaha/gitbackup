@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -233,7 +234,12 @@ type GithubUserMigrationDeleteResult struct {
 
 // DeleteGithubUserMigration deletes an existing migration
 func DeleteGithubUserMigration(id *int64) GithubUserMigrationDeleteResult {
-	client := newClient("github", "https://github.com")
+	u, err := url.Parse("https://github.com")
+	if err != nil {
+		panic(err)
+	}
+
+	client := newClient("github", u)
 	ctx := context.Background()
 	response, err := client.(*github.Client).Migrations.DeleteUserMigration(ctx, *id)
 

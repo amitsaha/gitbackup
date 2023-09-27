@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"net/url"
 	"strings"
 )
 
@@ -85,5 +86,16 @@ func validateConfig(c *appConfig) error {
 	if !validGitlabProjectMembership(c.gitlabProjectMembershipType) {
 		return errors.New("Please specify a valid gitlab project membership - all/owner/member")
 	}
+
+	if len(c.gitHostURL) != 0 {
+		gitHostURLParsed, err := url.Parse(c.gitHostURL)
+		if err != nil {
+			return err
+		}
+		api, _ := url.Parse("api/v4/")
+		gitHostURLParsed = gitHostURLParsed.ResolveReference(api)
+		c.gitHostURLParsed = gitHostURLParsed
+	}
+
 	return nil
 }

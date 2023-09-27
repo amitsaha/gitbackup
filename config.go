@@ -1,13 +1,16 @@
 package main
 
+import "net/url"
+
 type appConfig struct {
-	service       string
-	gitHostURL    string
-	backupDir     string
-	ignorePrivate bool
-	ignoreFork    bool
-	useHTTPSClone bool
-	bare          bool
+	service          string
+	gitHostURL       string
+	gitHostURLParsed *url.URL
+	backupDir        string
+	ignorePrivate    bool
+	ignoreFork       bool
+	useHTTPSClone    bool
+	bare             bool
 
 	githubRepoType                    string
 	githubNamespaceWhitelist          []string

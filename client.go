@@ -71,22 +71,11 @@ func getToken(service string) (string, error) {
 	return string(i.Data), nil
 }
 
-func newClient(service string, gitHostURL string) interface{} {
-	var gitHostURLParsed *url.URL
+func newClient(service string, gitHostURLParsed *url.URL) interface{} {
 	var err error
 
-	// If a git host URL has been passed in, we assume it's
-	// a gitlab installation
-	if len(gitHostURL) != 0 {
-		gitHostURLParsed, err = url.Parse(gitHostURL)
-		if err != nil {
-			log.Fatalf("Invalid gitlab URL: %s", gitHostURL)
-		}
-		api, _ := url.Parse("api/v4/")
-		gitHostURLParsed = gitHostURLParsed.ResolveReference(api)
-	}
-
-	if service == "github" {
+	switch service {
+	case "github":
 		githubToken := os.Getenv("GITHUB_TOKEN")
 		if githubToken == "" {
 			githubToken, err = getToken("GITHUB")
@@ -95,11 +84,10 @@ func newClient(service string, gitHostURL string) interface{} {
 			}
 			if githubToken == "" {
 				log.Fatal("GitHub token not available")
-			} else {
-				err := saveToken("GITHUB", githubToken)
-				if err != nil {
-					log.Fatal("Error saving token")
-				}
+			}
+			err := saveToken("GITHUB", githubToken)
+			if err != nil {
+				log.Fatal("Error saving token")
 			}
 		}
 		gitHostToken = githubToken
@@ -112,9 +100,8 @@ func newClient(service string, gitHostURL string) interface{} {
 			client.BaseURL = gitHostURLParsed
 		}
 		return client
-	}
 
-	if service == "gitlab" {
+	case "gitlab":
 		gitlabToken := os.Getenv("GITLAB_TOKEN")
 		if gitlabToken == "" {
 			log.Fatal("GITLAB_TOKEN environment variable not set")
@@ -130,27 +117,20 @@ func newClient(service string, gitHostURL string) interface{} {
 			log.Fatalf("Error creating gitlab client: %v", err)
 		}
 		return client
-	}
 
-	if service == "bitbucket" {
+	case "bitbucket":
 		bitbucketUsername := os.Getenv("BITBUCKET_USERNAME")
-		if bitbucketUsername == "" {
-			log.Fatal("BITBUCKET_USERNAME environment variable not set")
-		}
-
 		bitbucketPassword := os.Getenv("BITBUCKET_PASSWORD")
-		if bitbucketPassword == "" {
-			log.Fatal("BITBUCKET_PASSWORD environment variable not set")
+		if bitbucketUsername == "" || bitbucketPassword == "" {
+			log.Fatal("BITBUCKET_USERNAME and BITBUCKET_PASSWORD environment variables must be set")
 		}
-
 		gitHostToken = bitbucketPassword
-
 		client := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPassword)
 		if gitHostURLParsed != nil {
 			client.SetApiBaseURL(gitHostURLParsed.String())
 		}
 		return client
+	default:
+		return nil
 	}
-
-	return nil
 }
