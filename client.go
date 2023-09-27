@@ -71,8 +71,17 @@ func getToken(service string) (string, error) {
 	return string(i.Data), nil
 }
 
-func newClient(service string, gitHostURLParsed *url.URL) interface{} {
+func newClient(service string, c *appConfig) interface{} {
 	var err error
+	var gitHostURLParsed *url.URL
+
+	if len(c.gitHostURL) != 0 {
+		gitHostURLParsed, err = url.Parse(c.gitHostURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		gitHostURLParsed = gitHostURLParsed
+	}
 
 	switch service {
 	case "github":
@@ -102,6 +111,11 @@ func newClient(service string, gitHostURLParsed *url.URL) interface{} {
 		return client
 
 	case "gitlab":
+
+		if gitHostURLParsed != nil {
+			api, _ := url.Parse("api/v4/")
+			gitHostURLParsed = gitHostURLParsed.ResolveReference(api)
+		}
 		gitlabToken := os.Getenv("GITLAB_TOKEN")
 		if gitlabToken == "" {
 			log.Fatal("GITLAB_TOKEN environment variable not set")

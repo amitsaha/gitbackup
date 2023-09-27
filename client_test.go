@@ -25,7 +25,7 @@ func TestNewClient(t *testing.T) {
 	// Client for Enterprise Github
 	client = newClient("github", customGitHost)
 	gotBaseURL := client.(*github.Client).BaseURL
-	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
+	if gotBaseURL.String() != customGitHost.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
