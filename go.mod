@@ -9,7 +9,7 @@ require (
 	github.com/ktrysmt/go-bitbucket v0.9.1
 	github.com/migueleliasweb/go-github-mock v0.0.5
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/spf13/afero v1.2.2
+	github.com/spf13/afero v1.10.0
 	github.com/xanzy/go-gitlab v0.92.1
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/text v0.8.0 // indirect
@@ -33,7 +33,7 @@ require (
 	github.com/mitchellh/mapstructure v0.0.0-20180220230111-00c29f56e238 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
+	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
