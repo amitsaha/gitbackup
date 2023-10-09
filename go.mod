@@ -10,7 +10,7 @@ require (
 	github.com/migueleliasweb/go-github-mock v0.0.5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/afero v1.2.2
-	github.com/xanzy/go-gitlab v0.92.1
+	github.com/xanzy/go-gitlab v0.93.0
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/text v0.8.0 // indirect
 )
