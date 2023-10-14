@@ -42,7 +42,7 @@ func startOAuthFlow() (*string, error) {
 	return &accessToken.Token, nil
 }
 
-func saveToken(service string, token *string) error {
+func saveTokenToKeyring(service string, token *string) error {
 	ring, err := keyring.Open(keyring.Config{
 		ServiceName: keyringServiceName,
 	})
@@ -57,7 +57,7 @@ func saveToken(service string, token *string) error {
 	return err
 }
 
-func getToken(service string) (string, error) {
+func getTokenFromKeyring(service string) (string, error) {
 	ring, err := keyring.Open(keyring.Config{
 		ServiceName: keyringServiceName,
 	})
@@ -86,16 +86,13 @@ func newClient(c *appConfig) (interface{}, error) {
 	case "github":
 		githubToken := os.Getenv("GITHUB_TOKEN")
 		if githubToken == "" {
-			githubToken, err = getToken("GITHUB")
+			githubToken, err = getTokenFromKeyring("GITHUB")
 			if err != nil {
 				githubToken, err := startOAuthFlow()
-				if err != nil {
-					return nil, err
+				if githubToken == nil || err != nil {
+					return nil, fmt.Errorf("GitHub token not available %w", err)
 				}
-				if githubToken == nil {
-					return nil, fmt.Errorf("GitHub token not available")
-				}
-				err = saveToken("GITHUB", githubToken)
+				err = saveTokenToKeyring("GITHUB", githubToken)
 				if err != nil {
 					return nil, fmt.Errorf("Error saving token")
 				}
