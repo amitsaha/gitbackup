@@ -4,6 +4,8 @@ import (
 	"net/url"
 	"testing"
 
+	"strings"
+
 	"github.com/google/go-github/v34/github"
 	"github.com/ktrysmt/go-bitbucket"
 	gitlab "github.com/xanzy/go-gitlab"
@@ -37,18 +39,29 @@ func TestNewClient(t *testing.T) {
 	}
 
 	// Client for github.com
-	client := newClient(&defaultGithubConfig)
+	client, err := newClient(&defaultGithubConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
 	client = client.(*github.Client)
 
 	// Client for Enterprise Github
-	client = newClient(&customGithubConfig)
+	client, err = newClient(&customGithubConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	gotBaseURL := client.(*github.Client).BaseURL
 	if gotBaseURL.String() != customGithubConfig.gitHostURL {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", customGithubConfig.gitHostURL, gotBaseURL)
 	}
 
 	// Client for gitlab.com
-	client = newClient(&defaultGitlabConfig)
+	client, err = newClient(&defaultGitlabConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	client = client.(*gitlab.Client)
 
 	// http://stackoverflow.com/questions/23051339/how-to-avoid-end-of-url-slash-being-removed-when-resolvereference-in-go
@@ -57,23 +70,30 @@ func TestNewClient(t *testing.T) {
 	expectedGitHostBaseURL := customGitHostParsed.ResolveReference(api)
 
 	// Client for custom gitlab installation
-	client = newClient(&customGitlabConfig)
+	client, err = newClient(&customGitlabConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	gotBaseURL = client.(*gitlab.Client).BaseURL()
 	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
-	// Client for bitbucket.com
-	client = newClient(&defaultBitbucketConfig)
+	// Client for bitbucket.org
+	client, err = newClient(&defaultBitbucketConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	client = client.(*bitbucket.Client)
 
 	// Not yet supported
 	unsupportedServiceConfig := appConfig{
 		service: "notyetsupported",
 	}
-	client = newClient(&unsupportedServiceConfig)
-	if client != nil {
-		t.Errorf("Expected nil")
+	client, err = newClient(&unsupportedServiceConfig)
+	if !strings.Contains(err.Error(), "invalid service") {
+		t.Fatal(err)
 	}
-
 }

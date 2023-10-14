@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,14 +21,14 @@ import (
 var keyringServiceName = "gitbackup-cli"
 var gitbackupClientID = "7b56a77c7dfba0800524"
 
-func startOAuthFlow() string {
+func startOAuthFlow() (*string, error) {
 	clientID := gitbackupClientID
 	scopes := []string{"repo", "user", "admin:org"}
 	httpClient := http.DefaultClient
 
 	code, err := device.RequestCode(httpClient, "https://github.com/login/device/code", clientID, scopes)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	fmt.Printf("Copy code: %s\n", code.UserCode)
@@ -36,13 +36,13 @@ func startOAuthFlow() string {
 
 	accessToken, err := device.PollToken(httpClient, "https://github.com/login/oauth/access_token", clientID, code)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return accessToken.Token
+	return &accessToken.Token, nil
 }
 
-func saveToken(service string, token string) error {
+func saveToken(service string, token *string) error {
 	ring, err := keyring.Open(keyring.Config{
 		ServiceName: keyringServiceName,
 	})
@@ -52,7 +52,7 @@ func saveToken(service string, token string) error {
 
 	err = ring.Set(keyring.Item{
 		Key:  service + "_TOKEN",
-		Data: []byte(token),
+		Data: []byte(*token),
 	})
 	return err
 }
@@ -71,14 +71,14 @@ func getToken(service string) (string, error) {
 	return string(i.Data), nil
 }
 
-func newClient(c *appConfig) interface{} {
+func newClient(c *appConfig) (interface{}, error) {
 	var err error
 	var gitHostURLParsed *url.URL
 
 	if c != nil && len(c.gitHostURL) != 0 {
 		gitHostURLParsed, err = url.Parse(c.gitHostURL)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 	}
 
@@ -88,14 +88,17 @@ func newClient(c *appConfig) interface{} {
 		if githubToken == "" {
 			githubToken, err = getToken("GITHUB")
 			if err != nil {
-				githubToken = startOAuthFlow()
-			}
-			if githubToken == "" {
-				log.Fatal("GitHub token not available")
-			}
-			err := saveToken("GITHUB", githubToken)
-			if err != nil {
-				log.Fatal("Error saving token")
+				githubToken, err := startOAuthFlow()
+				if err != nil {
+					return nil, err
+				}
+				if githubToken == nil {
+					return nil, fmt.Errorf("GitHub token not available")
+				}
+				err = saveToken("GITHUB", githubToken)
+				if err != nil {
+					return nil, fmt.Errorf("Error saving token")
+				}
 			}
 		}
 		gitHostToken = githubToken
@@ -107,7 +110,7 @@ func newClient(c *appConfig) interface{} {
 		if gitHostURLParsed != nil {
 			client.BaseURL = gitHostURLParsed
 		}
-		return client
+		return client, nil
 
 	case "gitlab":
 
@@ -117,7 +120,7 @@ func newClient(c *appConfig) interface{} {
 		}
 		gitlabToken := os.Getenv("GITLAB_TOKEN")
 		if gitlabToken == "" {
-			log.Fatal("GITLAB_TOKEN environment variable not set")
+			return nil, fmt.Errorf("GITLAB_TOKEN environment variable not set")
 		}
 		gitHostToken = gitlabToken
 
@@ -127,23 +130,23 @@ func newClient(c *appConfig) interface{} {
 		}
 		client, err := gitlab.NewClient(gitlabToken, baseUrlOption)
 		if err != nil {
-			log.Fatalf("Error creating gitlab client: %v", err)
+			return nil, fmt.Errorf("Error creating gitlab client: %v", err)
 		}
-		return client
+		return client, nil
 
 	case "bitbucket":
 		bitbucketUsername := os.Getenv("BITBUCKET_USERNAME")
 		bitbucketPassword := os.Getenv("BITBUCKET_PASSWORD")
 		if bitbucketUsername == "" || bitbucketPassword == "" {
-			log.Fatal("BITBUCKET_USERNAME and BITBUCKET_PASSWORD environment variables must be set")
+			return nil, fmt.Errorf("BITBUCKET_USERNAME and BITBUCKET_PASSWORD environment variables must be set")
 		}
 		gitHostToken = bitbucketPassword
 		client := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPassword)
 		if gitHostURLParsed != nil {
 			client.SetApiBaseURL(gitHostURLParsed.String())
 		}
-		return client
+		return client, nil
 	default:
-		return nil
+		return nil, errors.New("invalid service")
 	}
 }

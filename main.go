@@ -34,7 +34,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client := newClient(c)
+	client, err := newClient(c)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var executionErr error
 
 	// TODO implement validation of options so that we don't
