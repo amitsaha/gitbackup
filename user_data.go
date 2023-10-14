@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -230,31 +229,6 @@ func GetGithubUserMigration(client interface{}, id *int64) (*github.UserMigratio
 type GithubUserMigrationDeleteResult struct {
 	GhStatusCode   int    `json:"status_code"`
 	GhResponseBody string `json:"mesage"`
-}
-
-// DeleteGithubUserMigration deletes an existing migration
-func DeleteGithubUserMigration(id *int64) GithubUserMigrationDeleteResult {
-	u, err := url.Parse("https://github.com")
-	if err != nil {
-		panic(err)
-	}
-
-	client := newClient("github", u)
-	ctx := context.Background()
-	response, err := client.(*github.Client).Migrations.DeleteUserMigration(ctx, *id)
-
-	result := GithubUserMigrationDeleteResult{}
-	result.GhStatusCode = response.StatusCode
-	if err != nil {
-		result.GhResponseBody = err.Error()
-		return result
-	}
-	data, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		panic(err)
-	}
-	result.GhResponseBody = string(data)
-	return result
 }
 
 func getGithubUserOwnedOrgs(ctx context.Context, client interface{}) ([]*github.Organization, error) {

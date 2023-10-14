@@ -75,12 +75,11 @@ func newClient(service string, c *appConfig) interface{} {
 	var err error
 	var gitHostURLParsed *url.URL
 
-	if len(c.gitHostURL) != 0 {
+	if c != nil && len(c.gitHostURL) != 0 {
 		gitHostURLParsed, err = url.Parse(c.gitHostURL)
 		if err != nil {
 			log.Fatal(err)
 		}
-		gitHostURLParsed = gitHostURLParsed
 	}
 
 	switch service {

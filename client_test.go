@@ -13,35 +13,48 @@ func TestNewClient(t *testing.T) {
 	setupRepositoryTests()
 	defer teardownRepositoryTests()
 
-	customGitHost, _ := url.Parse("https://git.mycompany.com")
+	var defaultGithubConfig appConfig
+	defaultGithubConfig.gitHostURL = "https://github.com"
+
+	var defaultGitlabConfig appConfig
+	defaultGitlabConfig.gitHostURL = "https://gitlab.com"
+
+	var defaultBitbucketConfig appConfig
+	defaultBitbucketConfig.gitHostURL = "https://bitbucket.org"
+
+	var customGithostConfig appConfig
+	customGitHost := "https://git.mycompany.com"
+	customGithostConfig.gitHostURL = customGitHost
+
 	// http://stackoverflow.com/questions/23051339/how-to-avoid-end-of-url-slash-being-removed-when-resolvereference-in-go
 	api, _ := url.Parse("api/v4/")
-	expectedGitHostBaseURL := customGitHost.ResolveReference(api)
+	customGitHostParsed, _ := url.Parse(customGitHost)
+	expectedGitHostBaseURL := customGitHostParsed.ResolveReference(api)
 
 	// Client for github.com
-	client := newClient("github", nil)
+	client := newClient("github", &defaultGithubConfig)
 	client = client.(*github.Client)
 
 	// Client for Enterprise Github
-	client = newClient("github", customGitHost)
+	client = newClient("github", &customGithostConfig)
 	gotBaseURL := client.(*github.Client).BaseURL
-	if gotBaseURL.String() != customGitHost.String() {
+	if gotBaseURL.String() != customGitHostParsed.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
 	// Client for gitlab.com
-	client = newClient("gitlab", nil)
+	client = newClient("gitlab", &defaultGitlabConfig)
 	client = client.(*gitlab.Client)
 
 	// Client for custom gitlab installation
-	client = newClient("gitlab", customGitHost)
+	client = newClient("gitlab", &customGithostConfig)
 	gotBaseURL = client.(*gitlab.Client).BaseURL()
 	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
 	// Client for bitbucket.com
-	client = newClient("bitbucket", nil)
+	client = newClient("bitbucket", &defaultBitbucketConfig)
 	client = client.(*bitbucket.Client)
 
 	// Not yet supported
