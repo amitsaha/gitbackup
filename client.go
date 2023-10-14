@@ -71,7 +71,7 @@ func getToken(service string) (string, error) {
 	return string(i.Data), nil
 }
 
-func newClient(service string, c *appConfig) interface{} {
+func newClient(c *appConfig) interface{} {
 	var err error
 	var gitHostURLParsed *url.URL
 
@@ -82,7 +82,7 @@ func newClient(service string, c *appConfig) interface{} {
 		}
 	}
 
-	switch service {
+	switch c.service {
 	case "github":
 		githubToken := os.Getenv("GITHUB_TOKEN")
 		if githubToken == "" {

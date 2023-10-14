@@ -13,52 +13,65 @@ func TestNewClient(t *testing.T) {
 	setupRepositoryTests()
 	defer teardownRepositoryTests()
 
-	var defaultGithubConfig appConfig
-	defaultGithubConfig.gitHostURL = "https://github.com"
+	defaultGithubConfig := appConfig{
+		service:    "github",
+		gitHostURL: "https://github.com",
+	}
+	customGithubConfig := appConfig{
+		service:    "github",
+		gitHostURL: "https://git.mycompany.com",
+	}
 
-	var defaultGitlabConfig appConfig
-	defaultGitlabConfig.gitHostURL = "https://gitlab.com"
+	defaultGitlabConfig := appConfig{
+		service:    "gitlab",
+		gitHostURL: "https://gitlab.com",
+	}
+	customGitlabConfig := appConfig{
+		service:    "gitlab",
+		gitHostURL: "https://git.mycompany.com",
+	}
 
-	var defaultBitbucketConfig appConfig
-	defaultBitbucketConfig.gitHostURL = "https://bitbucket.org"
-
-	var customGithostConfig appConfig
-	customGitHost := "https://git.mycompany.com"
-	customGithostConfig.gitHostURL = customGitHost
-
-	// http://stackoverflow.com/questions/23051339/how-to-avoid-end-of-url-slash-being-removed-when-resolvereference-in-go
-	api, _ := url.Parse("api/v4/")
-	customGitHostParsed, _ := url.Parse(customGitHost)
-	expectedGitHostBaseURL := customGitHostParsed.ResolveReference(api)
+	defaultBitbucketConfig := appConfig{
+		service:    "bitbucket",
+		gitHostURL: "https://bitbucket.org",
+	}
 
 	// Client for github.com
-	client := newClient("github", &defaultGithubConfig)
+	client := newClient(&defaultGithubConfig)
 	client = client.(*github.Client)
 
 	// Client for Enterprise Github
-	client = newClient("github", &customGithostConfig)
+	client = newClient(&customGithubConfig)
 	gotBaseURL := client.(*github.Client).BaseURL
-	if gotBaseURL.String() != customGitHostParsed.String() {
-		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
+	if gotBaseURL.String() != customGithubConfig.gitHostURL {
+		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", customGithubConfig.gitHostURL, gotBaseURL)
 	}
 
 	// Client for gitlab.com
-	client = newClient("gitlab", &defaultGitlabConfig)
+	client = newClient(&defaultGitlabConfig)
 	client = client.(*gitlab.Client)
 
+	// http://stackoverflow.com/questions/23051339/how-to-avoid-end-of-url-slash-being-removed-when-resolvereference-in-go
+	api, _ := url.Parse("api/v4/")
+	customGitHostParsed, _ := url.Parse(customGitlabConfig.gitHostURL)
+	expectedGitHostBaseURL := customGitHostParsed.ResolveReference(api)
+
 	// Client for custom gitlab installation
-	client = newClient("gitlab", &customGithostConfig)
+	client = newClient(&customGitlabConfig)
 	gotBaseURL = client.(*gitlab.Client).BaseURL()
 	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
 		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
 	}
 
 	// Client for bitbucket.com
-	client = newClient("bitbucket", &defaultBitbucketConfig)
+	client = newClient(&defaultBitbucketConfig)
 	client = client.(*bitbucket.Client)
 
 	// Not yet supported
-	client = newClient("notyetsupported", nil)
+	unsupportedServiceConfig := appConfig{
+		service: "notyetsupported",
+	}
+	client = newClient(&unsupportedServiceConfig)
 	if client != nil {
 		t.Errorf("Expected nil")
 	}
