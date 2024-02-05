@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"strings"
 
 	"github.com/google/go-github/v34/github"
@@ -15,73 +14,71 @@ func getGithubRepositories(
 	ignoreFork bool,
 ) ([]*Repository, error) {
 
-	if client == nil {
-		log.Fatalf("Couldn't acquire a client to talk to %s", service)
-	}
-
 	var repositories []*Repository
 	var cloneURL string
 
-	ctx := context.Background()
+	var ghRepository []*github.Repository
 
-	if githubRepoType == "starred" {
+	ctx := context.TODO()
+
+	switch githubRepoType {
+	case "starred":
 		options := github.ActivityListStarredOptions{}
 		for {
 			stars, resp, err := client.(*github.Client).Activity.ListStarred(ctx, "", &options)
-			if err == nil {
-				for _, star := range stars {
-					if *star.Repository.Fork && ignoreFork {
-						continue
-					}
-					namespace := strings.Split(*star.Repository.FullName, "/")[0]
-					if useHTTPSClone != nil && *useHTTPSClone {
-						cloneURL = *star.Repository.CloneURL
-					} else {
-						cloneURL = *star.Repository.SSHURL
-					}
-					repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *star.Repository.Name, Namespace: namespace, Private: *star.Repository.Private})
-				}
-			} else {
+			if err != nil {
 				return nil, err
+			}
+			for _, star := range stars {
+				ghRepository = append(ghRepository, star.Repository)
 			}
 			if resp.NextPage == 0 {
 				break
 			}
 			options.ListOptions.Page = resp.NextPage
 		}
-		return repositories, nil
+	default:
+		options := github.RepositoryListOptions{Type: githubRepoType}
+
+		for {
+			repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
+			if err != nil {
+				return nil, err
+			}
+			for _, repo := range repos {
+				ghRepository = append(ghRepository, repo)
+			}
+			if resp.NextPage == 0 {
+				break
+			}
+			options.ListOptions.Page = resp.NextPage
+		}
 	}
 
-	options := github.RepositoryListOptions{Type: githubRepoType}
 	githubNamespaceWhitelistLength := len(githubNamespaceWhitelist)
-
-	for {
-		repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
-		if err == nil {
-			for _, repo := range repos {
-				if *repo.Fork && ignoreFork {
-					continue
-				}
-				namespace := strings.Split(*repo.FullName, "/")[0]
-
-				if githubNamespaceWhitelistLength > 0 && !contains(githubNamespaceWhitelist, namespace) {
-					continue
-				}
-
-				if useHTTPSClone != nil && *useHTTPSClone {
-					cloneURL = *repo.CloneURL
-				} else {
-					cloneURL = *repo.SSHURL
-				}
-				repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
-			}
-		} else {
-			return nil, err
+	for _, repo := range ghRepository {
+		if *repo.Fork && ignoreFork {
+			continue
 		}
-		if resp.NextPage == 0 {
-			break
+
+		namespace := strings.Split(*repo.FullName, "/")[0]
+		if githubNamespaceWhitelistLength > 0 && !contains(githubNamespaceWhitelist, namespace) {
+			continue
 		}
-		options.ListOptions.Page = resp.NextPage
+		ghRepository = append(ghRepository, repo)
+		cloneURL = *repo.SSHURL
+		if useHTTPSClone != nil && *useHTTPSClone {
+			cloneURL = *repo.CloneURL
+		}
+		repositories = append(
+			repositories,
+			&Repository{
+				CloneURL:  cloneURL,
+				Name:      *repo.Name,
+				Namespace: namespace,
+				Private:   *repo.Private,
+			},
+		)
 	}
 	return repositories, nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -38,6 +39,10 @@ func getRepositories(
 ) ([]*Repository, error) {
 	var repositories []*Repository
 	var err error
+
+	if client == nil {
+		return nil, fmt.Errorf("Couldn't acquire a client to talk to %s", service)
+	}
 
 	switch service {
 	case "github":

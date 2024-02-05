@@ -231,26 +231,6 @@ type GithubUserMigrationDeleteResult struct {
 	GhResponseBody string `json:"mesage"`
 }
 
-// DeleteGithubUserMigration deletes an existing migration
-func DeleteGithubUserMigration(id *int64) GithubUserMigrationDeleteResult {
-	client := newClient("github", "https://github.com")
-	ctx := context.Background()
-	response, err := client.(*github.Client).Migrations.DeleteUserMigration(ctx, *id)
-
-	result := GithubUserMigrationDeleteResult{}
-	result.GhStatusCode = response.StatusCode
-	if err != nil {
-		result.GhResponseBody = err.Error()
-		return result
-	}
-	data, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		panic(err)
-	}
-	result.GhResponseBody = string(data)
-	return result
-}
-
 func getGithubUserOwnedOrgs(ctx context.Context, client interface{}) ([]*github.Organization, error) {
 
 	var ownedOrgs []*github.Organization

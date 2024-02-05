@@ -76,14 +76,3 @@ func initConfig(args []string) (*appConfig, error) {
 	c.backupDir = setupBackupDir(&c.backupDir, &c.service, &c.gitHostURL)
 	return &c, nil
 }
-
-func validateConfig(c *appConfig) error {
-	if _, ok := knownServices[c.service]; !ok {
-		return errors.New("Please specify the git service type: github, gitlab, bitbucket")
-	}
-
-	if !validGitlabProjectMembership(c.gitlabProjectMembershipType) {
-		return errors.New("Please specify a valid gitlab project membership - all/owner/member")
-	}
-	return nil
-}
