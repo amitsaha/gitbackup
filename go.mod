@@ -1,6 +1,7 @@
 module github.com/amitsaha/gitbackup
 
 go 1.21
+toolchain go1.24.1
 
 require (
 	github.com/99designs/keyring v1.2.2
@@ -11,7 +12,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/afero v1.2.2
 	github.com/xanzy/go-gitlab v0.95.2
-	golang.org/x/oauth2 v0.25.0
+	golang.org/x/oauth2 v0.29.0
 	golang.org/x/text v0.21.0 // indirect
 )
 
