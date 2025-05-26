@@ -1,13 +1,13 @@
 module github.com/amitsaha/gitbackup
 
-go 1.21
+go 1.23.0
 
 require (
 	github.com/99designs/keyring v1.2.2
 	github.com/cli/oauth v1.2.0
 	github.com/google/go-github/v34 v34.0.0
 	github.com/ktrysmt/go-bitbucket v0.9.1
-	github.com/migueleliasweb/go-github-mock v0.0.22
+	github.com/migueleliasweb/go-github-mock v1.3.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/afero v1.2.2
 	github.com/xanzy/go-gitlab v0.115.0
@@ -20,7 +20,7 @@ require (
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
-	github.com/google/go-github/v56 v56.0.0 // indirect
+	github.com/google/go-github/v71 v71.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
