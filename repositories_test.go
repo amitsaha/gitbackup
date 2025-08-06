@@ -48,7 +48,7 @@ func setupRepositoryTests() {
 	GitLabClient, err = gitlab.NewClient("", gitlab.WithBaseURL(url.String()))
 
 	BitbucketClient = bitbucket.NewBasicAuth(os.Getenv("BITBUCKET_USERNAME"), os.Getenv("BITBUCKET_USERNAME"))
-	BitbucketClient.SetApiBaseURL(url.String())
+	BitbucketClient.SetApiBaseURL(*url)
 }
 
 func teardownRepositoryTests() {

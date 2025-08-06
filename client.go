@@ -147,7 +147,7 @@ func newClient(service string, gitHostURL string) interface{} {
 
 		client := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPassword)
 		if gitHostURLParsed != nil {
-			client.SetApiBaseURL(gitHostURLParsed.String())
+			client.SetApiBaseURL(*gitHostURLParsed)
 		}
 		return client
 	}
