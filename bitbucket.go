@@ -19,7 +19,6 @@ func getBitbucketRepositories(
 	}
 
 	var repositories []*Repository
-	var cloneURL string
 
 	resp, err := client.(*bitbucket.Client).Workspaces.List()
 	if err != nil {
@@ -37,35 +36,39 @@ func getBitbucketRepositories(
 		for _, repo := range resp.Items {
 			namespace := strings.Split(repo.Full_name, "/")[0]
 
-			linkmaps, ok := repo.Links["clone"].([]interface{})
+			httpsURL, sshURL := extractBitbucketCloneURLs(repo.Links)
+			cloneURL := getCloneURL(httpsURL, sshURL)
 
-			var httpsURL string
-			var sshURL string
-
-			if ok {
-				for _, linkmaps := range linkmaps {
-					linkmap, ok := linkmaps.(map[string]interface{})
-
-					if ok {
-						if linkmap["name"] == "https" {
-							httpsURL = linkmap["href"].(string)
-						}
-
-						if linkmap["name"] == "ssh" {
-							sshURL = linkmap["href"].(string)
-						}
-					}
-				}
-			}
-
-			if useHTTPSClone != nil && *useHTTPSClone {
-				cloneURL = httpsURL
-			} else {
-				cloneURL = sshURL
-			}
-
-			repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: repo.Slug, Namespace: namespace, Private: repo.Is_private})
+			repositories = append(repositories, &Repository{
+				CloneURL:  cloneURL,
+				Name:      repo.Slug,
+				Namespace: namespace,
+				Private:   repo.Is_private,
+			})
 		}
 	}
 	return repositories, nil
+}
+
+func extractBitbucketCloneURLs(links map[string]interface{}) (httpsURL, sshURL string) {
+	linkmaps, ok := links["clone"].([]interface{})
+	if !ok {
+		return "", ""
+	}
+
+	for _, linkmaps := range linkmaps {
+		linkmap, ok := linkmaps.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		if linkmap["name"] == "https" {
+			httpsURL = linkmap["href"].(string)
+		}
+
+		if linkmap["name"] == "ssh" {
+			sshURL = linkmap["href"].(string)
+		}
+	}
+	return httpsURL, sshURL
 }

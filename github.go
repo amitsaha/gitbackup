@@ -20,63 +20,67 @@ func getGithubRepositories(
 	}
 
 	var repositories []*Repository
-	var cloneURL string
 
 	ctx := context.Background()
 
 	if githubRepoType == "starred" {
-		options := github.ActivityListStarredOptions{}
-		for {
-			stars, resp, err := client.(*github.Client).Activity.ListStarred(ctx, "", &options)
-			if err == nil {
-				for _, star := range stars {
-					if *star.Repository.Fork && ignoreFork {
-						continue
-					}
-					namespace := strings.Split(*star.Repository.FullName, "/")[0]
-					if useHTTPSClone != nil && *useHTTPSClone {
-						cloneURL = *star.Repository.CloneURL
-					} else {
-						cloneURL = *star.Repository.SSHURL
-					}
-					repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *star.Repository.Name, Namespace: namespace, Private: *star.Repository.Private})
-				}
-			} else {
-				return nil, err
-			}
-			if resp.NextPage == 0 {
-				break
-			}
-			options.ListOptions.Page = resp.NextPage
-		}
-		return repositories, nil
+		return getGithubStarredRepositories(ctx, client.(*github.Client), ignoreFork)
 	}
 
 	options := github.RepositoryListOptions{Type: githubRepoType}
-	githubNamespaceWhitelistLength := len(githubNamespaceWhitelist)
 
 	for {
 		repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
-		if err == nil {
-			for _, repo := range repos {
-				if *repo.Fork && ignoreFork {
-					continue
-				}
-				namespace := strings.Split(*repo.FullName, "/")[0]
-
-				if githubNamespaceWhitelistLength > 0 && !contains(githubNamespaceWhitelist, namespace) {
-					continue
-				}
-
-				if useHTTPSClone != nil && *useHTTPSClone {
-					cloneURL = *repo.CloneURL
-				} else {
-					cloneURL = *repo.SSHURL
-				}
-				repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: *repo.Name, Namespace: namespace, Private: *repo.Private})
-			}
-		} else {
+		if err != nil {
 			return nil, err
+		}
+		for _, repo := range repos {
+			if *repo.Fork && ignoreFork {
+				continue
+			}
+			namespace := strings.Split(*repo.FullName, "/")[0]
+
+			if len(githubNamespaceWhitelist) > 0 && !contains(githubNamespaceWhitelist, namespace) {
+				continue
+			}
+
+			cloneURL := getCloneURL(*repo.CloneURL, *repo.SSHURL)
+			repositories = append(repositories, &Repository{
+				CloneURL:  cloneURL,
+				Name:      *repo.Name,
+				Namespace: namespace,
+				Private:   *repo.Private,
+			})
+		}
+		if resp.NextPage == 0 {
+			break
+		}
+		options.ListOptions.Page = resp.NextPage
+	}
+	return repositories, nil
+}
+
+func getGithubStarredRepositories(ctx context.Context, client *github.Client, ignoreFork bool) ([]*Repository, error) {
+	var repositories []*Repository
+	options := github.ActivityListStarredOptions{}
+
+	for {
+		stars, resp, err := client.Activity.ListStarred(ctx, "", &options)
+		if err != nil {
+			return nil, err
+		}
+		for _, star := range stars {
+			if *star.Repository.Fork && ignoreFork {
+				continue
+			}
+			namespace := strings.Split(*star.Repository.FullName, "/")[0]
+			cloneURL := getCloneURL(*star.Repository.CloneURL, *star.Repository.SSHURL)
+			repositories = append(repositories, &Repository{
+				CloneURL:  cloneURL,
+				Name:      *star.Repository.Name,
+				Namespace: namespace,
+				Private:   *star.Repository.Private,
+			})
 		}
 		if resp.NextPage == 0 {
 			break
