@@ -37,26 +37,32 @@ func getLocalOrgMigrationFilepath(backupDir, org string, migrationID int64) stri
 	return path.Join(backupDir, fmt.Sprintf("%s-migration-%d.tar.gz", org, migrationID))
 }
 
-func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository, retry bool, maxNumRetries int) (*github.UserMigration, error) {
-	var m *github.UserMigration
-	var err error
-	var resp *github.Response
+// buildRepoPaths converts a slice of repositories to a slice of repository paths
+func buildRepoPaths(repos []*Repository) []string {
+	repoPaths := make([]string, 0, len(repos))
+	for _, repo := range repos {
+		repoPaths = append(repoPaths, fmt.Sprintf("%s/%s", repo.Namespace, repo.Name))
+	}
+	return repoPaths
+}
 
+func createGithubUserMigration(ctx context.Context, client interface{}, repos []*Repository, retry bool, maxNumRetries int) (*github.UserMigration, error) {
 	migrationOpts := github.UserMigrationOptions{
 		LockRepositories:   false,
 		ExcludeAttachments: false,
 	}
-	var repoPaths []string
-	for _, repo := range repos {
-		repoPaths = append(repoPaths, fmt.Sprintf("%s/%s", repo.Namespace, repo.Name))
-	}
+	repoPaths := buildRepoPaths(repos)
 
 	numAttempts := 1
 	if retry {
 		numAttempts += maxNumRetries
 	}
 
+	var m *github.UserMigration
+	var resp *github.Response
+	var err error
 	var errResponse []byte
+
 	for i := 1; i <= numAttempts; i++ {
 		m, resp, err = client.(*github.Client).Migrations.StartUserMigration(ctx, repoPaths, &migrationOpts)
 		if err == nil {
@@ -76,10 +82,7 @@ func createGithubOrgMigration(ctx context.Context, client interface{}, org strin
 		LockRepositories:   false,
 		ExcludeAttachments: false,
 	}
-	var repoPaths []string
-	for _, repo := range repos {
-		repoPaths = append(repoPaths, fmt.Sprintf("%s/%s", repo.Namespace, repo.Name))
-	}
+	repoPaths := buildRepoPaths(repos)
 
 	m, resp, err := client.(*github.Client).Migrations.StartMigration(ctx, org, repoPaths, &migrationOpts)
 	if err != nil {
@@ -111,24 +114,7 @@ func downloadGithubUserMigrationData(
 				return err
 			}
 			archiveFilepath := getLocalMigrationFilepath(backupDir, *ms.ID)
-			log.Printf("Downloading file to: %s\n", archiveFilepath)
-			resp, err := http.Get(archiveURL)
-			if err != nil {
-				return fmt.Errorf("error downloading archive:%v", err)
-			}
-			defer resp.Body.Close()
-
-			out, err := os.Create(archiveFilepath)
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-
-			_, err = io.Copy(out, resp.Body)
-			if err != nil {
-				return err
-			}
-			return nil
+			return downloadMigrationArchive(archiveURL, archiveFilepath)
 		default:
 			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
 			time.Sleep(migrationStatePollingDuration)
@@ -161,21 +147,7 @@ func downloadGithubOrgMigrationData(
 			}
 
 			archiveFilepath := getLocalOrgMigrationFilepath(backupDir, org, *ms.ID)
-			log.Printf("Downloading file to: %s\n", archiveFilepath)
-
-			resp, err := http.Get(archiveURL)
-			if err != nil {
-				return fmt.Errorf("error downloading archive:%v", err)
-			}
-			defer resp.Body.Close()
-			out, err := os.Create(archiveFilepath)
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-
-			_, err = io.Copy(out, resp.Body)
-			return err
+			return downloadMigrationArchive(archiveURL, archiveFilepath)
 		default:
 			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
 			time.Sleep(migrationStatePollingDuration)
@@ -185,6 +157,26 @@ func downloadGithubOrgMigrationData(
 			}
 		}
 	}
+}
+
+// downloadMigrationArchive downloads a migration archive from the given URL to the specified filepath
+func downloadMigrationArchive(archiveURL, archiveFilepath string) error {
+	log.Printf("Downloading file to: %s\n", archiveFilepath)
+
+	resp, err := http.Get(archiveURL)
+	if err != nil {
+		return fmt.Errorf("error downloading archive:%v", err)
+	}
+	defer resp.Body.Close()
+
+	out, err := os.Create(archiveFilepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
 }
 
 // ListGithubUserMigrationsResult type is for listing migration result
