@@ -88,6 +88,8 @@ func cloneNewRepo(repoDir string, repo *Repository, bare bool) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
+// setupBackupDir determines and creates the backup directory path
+// It uses the provided backupDir if set, otherwise defaults to ~/.gitbackup/<githost>
 func setupBackupDir(backupDir, service, githostURL *string) string {
 	var gitHost, backupPath string
 	var err error

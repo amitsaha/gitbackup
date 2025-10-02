@@ -1,5 +1,6 @@
 package main
 
+// appConfig holds the application configuration
 type appConfig struct {
 	service       string
 	gitHostURL    string
@@ -9,6 +10,7 @@ type appConfig struct {
 	useHTTPSClone bool
 	bare          bool
 
+	// GitHub specific configuration
 	githubRepoType                    string
 	githubNamespaceWhitelist          []string
 	githubCreateUserMigration         bool
@@ -17,6 +19,7 @@ type appConfig struct {
 	githubListUserMigrations          bool
 	githubWaitForMigrationComplete    bool
 
+	// GitLab specific configuration
 	gitlabProjectVisibility     string
 	gitlabProjectMembershipType string
 }
