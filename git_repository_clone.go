@@ -6,17 +6,22 @@ import (
 	"sync"
 )
 
+// handleGitRepositoryClone clones or updates all repositories for the configured service
 func handleGitRepositoryClone(client interface{}, c *appConfig) error {
 
 	// Used for waiting for all the goroutines to finish before exiting
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
+	// Set global variables used by helper functions
+	useHTTPSClone = &c.useHTTPSClone
+	ignorePrivate = &c.ignorePrivate
+
 	tokens := make(chan bool, MaxConcurrentClones)
 	gitHostUsername = getUsername(client, c.service)
 
-	if len(gitHostUsername) == 0 && !*ignorePrivate && *useHTTPSClone {
-		log.Fatal("Your Git host's username is needed for backing up private repositories via HTTPS")
+	if len(gitHostUsername) == 0 && c.ignorePrivate && c.useHTTPSClone {
+		return fmt.Errorf("your Git host's username is needed for backing up private repositories via HTTPS")
 	}
 
 	repositories, err := getRepositories(
