@@ -11,7 +11,7 @@ type Response struct {
 	*http.Response
 
 	// These fields provide the page values for paginating through a set of
-	// results.  Any or all of these may be set to the zero value for
+	// results. Any or all of these may be set to the zero value for
 	// responses that are not part of a paginated set, or for which there
 	// are no additional pages.
 
@@ -21,8 +21,7 @@ type Response struct {
 	LastPage  int
 }
 
-// Repository is a container for the details for a repository
-// we will backup
+// Repository represents a git repository to be backed up
 type Repository struct {
 	CloneURL  string
 	Name      string
@@ -30,6 +29,8 @@ type Repository struct {
 	Private   bool
 }
 
+// getRepositories retrieves all repositories from the specified git service
+// that match the given criteria (repo type, visibility, membership, etc.)
 func getRepositories(
 	client interface{},
 	service string, githubRepoType string, githubNamespaceWhitelist []string,

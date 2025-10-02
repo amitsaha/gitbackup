@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// initConfig initializes and parses command-line flags into an appConfig struct
 func initConfig(args []string) (*appConfig, error) {
 
 	var githubNamespaceWhitelistString string
@@ -69,21 +70,22 @@ func initConfig(args []string) (*appConfig, error) {
 		return nil, err
 	}
 
-	// Split namespaces
-	if len(c.githubNamespaceWhitelist) > 0 {
+	// Parse namespace whitelist
+	if len(githubNamespaceWhitelistString) > 0 {
 		c.githubNamespaceWhitelist = strings.Split(githubNamespaceWhitelistString, ",")
 	}
 	c.backupDir = setupBackupDir(&c.backupDir, &c.service, &c.gitHostURL)
 	return &c, nil
 }
 
+// validateConfig validates the configuration and returns an error if invalid
 func validateConfig(c *appConfig) error {
 	if _, ok := knownServices[c.service]; !ok {
-		return errors.New("Please specify the git service type: github, gitlab, bitbucket")
+		return errors.New("please specify the git service type: github, gitlab, bitbucket")
 	}
 
 	if !validGitlabProjectMembership(c.gitlabProjectMembershipType) {
-		return errors.New("Please specify a valid gitlab project membership - all/owner/member")
+		return errors.New("please specify a valid gitlab project membership - all/owner/member/starred")
 	}
 	return nil
 }
