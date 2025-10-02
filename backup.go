@@ -22,54 +22,70 @@ var gethomeDir = homedir.Dir
 func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) ([]byte, error) {
 	defer wg.Done()
 
+	repoDir := getRepoDir(backupDir, repo, bare)
+
+	_, err := appFS.Stat(repoDir)
+
+	var stdoutStderr []byte
+	if err == nil {
+		stdoutStderr, err = updateExistingRepo(repoDir, repo.Name, bare)
+	} else {
+		stdoutStderr, err = cloneNewRepo(repoDir, repo, bare)
+	}
+	return stdoutStderr, err
+}
+
+// getRepoDir returns the directory path for a repository
+func getRepoDir(backupDir string, repo *Repository, bare bool) string {
 	var dirName string
 	if bare {
 		dirName = repo.Name + ".git"
 	} else {
 		dirName = repo.Name
 	}
-	repoDir := path.Join(backupDir, repo.Namespace, dirName)
+	return path.Join(backupDir, repo.Namespace, dirName)
+}
 
-	_, err := appFS.Stat(repoDir)
-
-	var stdoutStderr []byte
-	if err == nil {
-		log.Printf("%s exists, updating. \n", repo.Name)
-		var cmd *exec.Cmd
-		if bare {
-			cmd = execCommand(gitCommand, "-C", repoDir, "remote", "update", "--prune")
-		} else {
-			cmd = execCommand(gitCommand, "-C", repoDir, "pull")
-		}
-		stdoutStderr, err = cmd.CombinedOutput()
+// updateExistingRepo updates an existing repository
+func updateExistingRepo(repoDir, repoName string, bare bool) ([]byte, error) {
+	log.Printf("%s exists, updating. \n", repoName)
+	var cmd *exec.Cmd
+	if bare {
+		cmd = execCommand(gitCommand, "-C", repoDir, "remote", "update", "--prune")
 	} else {
-		log.Printf("Cloning %s\n", repo.Name)
-		log.Printf("%#v\n", repo)
-
-		if repo.Private && ignorePrivate != nil && *ignorePrivate {
-			log.Printf("Skipping %s as it is a private repo.\n", repo.Name)
-			return stdoutStderr, nil
-		}
-
-		if useHTTPSClone != nil && *useHTTPSClone {
-			// Add username and token to the clone URL
-			// https://gitlab.com/amitsaha/testproject1 => https://amitsaha:token@gitlab.com/amitsaha/testproject1
-			u, err := url.Parse(repo.CloneURL)
-			if err != nil {
-				log.Fatalf("Invalid clone URL: %v\n", err)
-			}
-			repo.CloneURL = u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
-		}
-
-		var cmd *exec.Cmd
-		if bare {
-			cmd = execCommand(gitCommand, "clone", "--mirror", repo.CloneURL, repoDir)
-		} else {
-			cmd = execCommand(gitCommand, "clone", repo.CloneURL, repoDir)
-		}
-		stdoutStderr, err = cmd.CombinedOutput()
+		cmd = execCommand(gitCommand, "-C", repoDir, "pull")
 	}
-	return stdoutStderr, err
+	return cmd.CombinedOutput()
+}
+
+// cloneNewRepo clones a new repository
+func cloneNewRepo(repoDir string, repo *Repository, bare bool) ([]byte, error) {
+	log.Printf("Cloning %s\n", repo.Name)
+	log.Printf("%#v\n", repo)
+
+	if repo.Private && ignorePrivate != nil && *ignorePrivate {
+		log.Printf("Skipping %s as it is a private repo.\n", repo.Name)
+		return nil, nil
+	}
+
+	cloneURL := repo.CloneURL
+	if useHTTPSClone != nil && *useHTTPSClone {
+		// Add username and token to the clone URL
+		// https://gitlab.com/amitsaha/testproject1 => https://amitsaha:token@gitlab.com/amitsaha/testproject1
+		u, err := url.Parse(repo.CloneURL)
+		if err != nil {
+			log.Fatalf("Invalid clone URL: %v\n", err)
+		}
+		cloneURL = u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
+	}
+
+	var cmd *exec.Cmd
+	if bare {
+		cmd = execCommand(gitCommand, "clone", "--mirror", cloneURL, repoDir)
+	} else {
+		cmd = execCommand(gitCommand, "clone", cloneURL, repoDir)
+	}
+	return cmd.CombinedOutput()
 }
 
 func setupBackupDir(backupDir, service, githostURL *string) string {

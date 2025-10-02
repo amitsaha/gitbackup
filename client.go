@@ -72,85 +72,112 @@ func getToken(service string) (string, error) {
 }
 
 func newClient(service string, gitHostURL string) interface{} {
-	var gitHostURLParsed *url.URL
-	var err error
+	gitHostURLParsed := parseGitHostURL(gitHostURL)
 
-	// If a git host URL has been passed in, we assume it's
-	// a gitlab installation
-	if len(gitHostURL) != 0 {
-		gitHostURLParsed, err = url.Parse(gitHostURL)
-		if err != nil {
-			log.Fatalf("Invalid gitlab URL: %s", gitHostURL)
-		}
-		api, _ := url.Parse("api/v4/")
-		gitHostURLParsed = gitHostURLParsed.ResolveReference(api)
+	switch service {
+	case "github":
+		return newGitHubClient(gitHostURLParsed)
+	case "gitlab":
+		return newGitLabClient(gitHostURLParsed)
+	case "bitbucket":
+		return newBitbucketClient(gitHostURLParsed)
+	default:
+		return nil
+	}
+}
+
+// parseGitHostURL parses the git host URL if provided
+func parseGitHostURL(gitHostURL string) *url.URL {
+	if len(gitHostURL) == 0 {
+		return nil
 	}
 
-	if service == "github" {
-		githubToken := os.Getenv("GITHUB_TOKEN")
-		if githubToken == "" {
-			githubToken, err = getToken("GITHUB")
-			if err != nil {
-				githubToken = startOAuthFlow()
-			}
-			if githubToken == "" {
-				log.Fatal("GitHub token not available")
-			} else {
-				err := saveToken("GITHUB", githubToken)
-				if err != nil {
-					log.Fatal("Error saving token")
-				}
-			}
-		}
-		gitHostToken = githubToken
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: githubToken},
-		)
-		tc := oauth2.NewClient(context.Background(), ts)
-		client := github.NewClient(tc)
-		if gitHostURLParsed != nil {
-			client.BaseURL = gitHostURLParsed
-		}
-		return client
+	gitHostURLParsed, err := url.Parse(gitHostURL)
+	if err != nil {
+		log.Fatalf("Invalid git host URL: %s", gitHostURL)
+	}
+	api, _ := url.Parse("api/v4/")
+	return gitHostURLParsed.ResolveReference(api)
+}
+
+// newGitHubClient creates a new GitHub client
+func newGitHubClient(gitHostURLParsed *url.URL) *github.Client {
+	githubToken := getOrCreateGitHubToken()
+	gitHostToken = githubToken
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: githubToken},
+	)
+	tc := oauth2.NewClient(context.Background(), ts)
+	client := github.NewClient(tc)
+
+	if gitHostURLParsed != nil {
+		client.BaseURL = gitHostURLParsed
+	}
+	return client
+}
+
+// getOrCreateGitHubToken retrieves or creates a GitHub token
+func getOrCreateGitHubToken() string {
+	githubToken := os.Getenv("GITHUB_TOKEN")
+	if githubToken != "" {
+		return githubToken
 	}
 
-	if service == "gitlab" {
-		gitlabToken := os.Getenv("GITLAB_TOKEN")
-		if gitlabToken == "" {
-			log.Fatal("GITLAB_TOKEN environment variable not set")
-		}
-		gitHostToken = gitlabToken
-
-		var baseUrlOption gitlab.ClientOptionFunc
-		if gitHostURLParsed != nil {
-			baseUrlOption = gitlab.WithBaseURL(gitHostURLParsed.String())
-		}
-		client, err := gitlab.NewClient(gitlabToken, baseUrlOption)
-		if err != nil {
-			log.Fatalf("Error creating gitlab client: %v", err)
-		}
-		return client
+	githubToken, err := getToken("GITHUB")
+	if err != nil {
+		githubToken = startOAuthFlow()
 	}
 
-	if service == "bitbucket" {
-		bitbucketUsername := os.Getenv("BITBUCKET_USERNAME")
-		if bitbucketUsername == "" {
-			log.Fatal("BITBUCKET_USERNAME environment variable not set")
-		}
-
-		bitbucketPassword := os.Getenv("BITBUCKET_PASSWORD")
-		if bitbucketPassword == "" {
-			log.Fatal("BITBUCKET_PASSWORD environment variable not set")
-		}
-
-		gitHostToken = bitbucketPassword
-
-		client := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPassword)
-		if gitHostURLParsed != nil {
-			client.SetApiBaseURL(*gitHostURLParsed)
-		}
-		return client
+	if githubToken == "" {
+		log.Fatal("GitHub token not available")
 	}
 
-	return nil
+	err = saveToken("GITHUB", githubToken)
+	if err != nil {
+		log.Fatal("Error saving token")
+	}
+
+	return githubToken
+}
+
+// newGitLabClient creates a new GitLab client
+func newGitLabClient(gitHostURLParsed *url.URL) *gitlab.Client {
+	gitlabToken := os.Getenv("GITLAB_TOKEN")
+	if gitlabToken == "" {
+		log.Fatal("GITLAB_TOKEN environment variable not set")
+	}
+	gitHostToken = gitlabToken
+
+	var baseUrlOption gitlab.ClientOptionFunc
+	if gitHostURLParsed != nil {
+		baseUrlOption = gitlab.WithBaseURL(gitHostURLParsed.String())
+	}
+
+	client, err := gitlab.NewClient(gitlabToken, baseUrlOption)
+	if err != nil {
+		log.Fatalf("Error creating gitlab client: %v", err)
+	}
+	return client
+}
+
+// newBitbucketClient creates a new Bitbucket client
+func newBitbucketClient(gitHostURLParsed *url.URL) *bitbucket.Client {
+	bitbucketUsername := os.Getenv("BITBUCKET_USERNAME")
+	if bitbucketUsername == "" {
+		log.Fatal("BITBUCKET_USERNAME environment variable not set")
+	}
+
+	bitbucketPassword := os.Getenv("BITBUCKET_PASSWORD")
+	if bitbucketPassword == "" {
+		log.Fatal("BITBUCKET_PASSWORD environment variable not set")
+	}
+
+	gitHostToken = bitbucketPassword
+
+	client := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPassword)
+	if gitHostURLParsed != nil {
+		client.SetApiBaseURL(*gitHostURLParsed)
+	}
+	return client
 }
