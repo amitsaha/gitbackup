@@ -19,7 +19,6 @@ func getGitlabRepositories(
 	}
 
 	var repositories []*Repository
-	var cloneURL string
 
 	var visibility gitlab.VisibilityValue
 	var boolTrue bool = true
@@ -27,7 +26,6 @@ func getGitlabRepositories(
 	gitlabListOptions := gitlab.ListProjectsOptions{}
 
 	switch gitlabProjectMembershipType {
-
 	case "owner":
 		gitlabListOptions.Owned = &boolTrue
 	case "member":
@@ -61,12 +59,13 @@ func getGitlabRepositories(
 		}
 		for _, repo := range repos {
 			namespace := strings.Split(repo.PathWithNamespace, "/")[0]
-			if useHTTPSClone != nil && *useHTTPSClone {
-				cloneURL = repo.WebURL
-			} else {
-				cloneURL = repo.SSHURLToRepo
-			}
-			repositories = append(repositories, &Repository{CloneURL: cloneURL, Name: repo.Name, Namespace: namespace, Private: repo.Visibility == "private"})
+			cloneURL := getCloneURL(repo.WebURL, repo.SSHURLToRepo)
+			repositories = append(repositories, &Repository{
+				CloneURL:  cloneURL,
+				Name:      repo.Name,
+				Namespace: namespace,
+				Private:   repo.Visibility == "private",
+			})
 		}
 		if resp.NextPage == 0 {
 			break

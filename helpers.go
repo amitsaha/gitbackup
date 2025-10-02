@@ -61,3 +61,11 @@ func contains(list []string, x string) bool {
 	}
 	return false
 }
+
+// getCloneURL returns the appropriate clone URL based on the useHTTPSClone setting
+func getCloneURL(httpsURL, sshURL string) string {
+	if useHTTPSClone != nil && *useHTTPSClone {
+		return httpsURL
+	}
+	return sshURL
+}
