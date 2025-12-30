@@ -5,7 +5,7 @@
 `gitbackup` currently has two operation modes.
 
 The first and original operating mode is to create clones of only your git repository. 
-This is supported for Bitbucket, GitHub and Gitlab. It runs `git clone` (the first time) and then
+This is supported for Bitbucket, GitHub, Gitlab, and Forgejo. It runs `git clone` (the first time) and then
 subsequently `git pull`. You can also configure it to perform a bare clone instead. This means that
 if you mess around your original repo, `gitbackup` will introduce the mess into your backup as well.
 
