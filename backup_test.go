@@ -149,6 +149,7 @@ func TestSetupBackupDir(t *testing.T) {
 
 	serviceGithubCustomUrl := "https://company.github.com"
 	serviceGitlabCustomUrl := "https://company.gitlab.com"
+	serviceForgejoCustomUrl := "https://company.forgejo.com"
 
 	var testConfigs = []struct {
 		backupRootDir  string
@@ -204,6 +205,30 @@ func TestSetupBackupDir(t *testing.T) {
 			"bitbucket",
 			"",
 			"/home/fakeuser/.gitbackup/bitbucket.org",
+		},
+		{
+			backupRoot,
+			"forgejo",
+			"",
+			"/my/backup/root/codeberg.org",
+		},
+		{
+			"",
+			"forgejo",
+			"",
+			"/home/fakeuser/.gitbackup/codeberg.org",
+		},
+		{
+			backupRoot,
+			"forgejo",
+			serviceForgejoCustomUrl,
+			"/my/backup/root/company.forgejo.com",
+		},
+		{
+			"",
+			"forgejo",
+			serviceForgejoCustomUrl,
+			"/home/fakeuser/.gitbackup/company.forgejo.com",
 		},
 	}
 

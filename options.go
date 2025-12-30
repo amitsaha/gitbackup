@@ -15,7 +15,7 @@ func initConfig(args []string) (*appConfig, error) {
 	fs := flag.NewFlagSet("gitbackup", flag.ExitOnError)
 
 	// Generic flags
-	fs.StringVar(&c.service, "service", "", "Git Hosted Service Name (github/gitlab/bitbucket)")
+	fs.StringVar(&c.service, "service", "", "Git Hosted Service Name (github/gitlab/bitbucket/forgejo)")
 	fs.StringVar(&c.gitHostURL, "githost.url", "", "DNS of the custom Git host")
 	fs.StringVar(&c.backupDir, "backupdir", "", "Backup directory")
 	fs.BoolVar(&c.ignorePrivate, "ignore-private", false, "Ignore private repositories/projects")
@@ -81,7 +81,7 @@ func initConfig(args []string) (*appConfig, error) {
 // validateConfig validates the configuration and returns an error if invalid
 func validateConfig(c *appConfig) error {
 	if _, ok := knownServices[c.service]; !ok {
-		return errors.New("please specify the git service type: github, gitlab, bitbucket")
+		return errors.New("please specify the git service type: github, gitlab, bitbucket, forgejo")
 	}
 
 	if !validGitlabProjectMembership(c.gitlabProjectMembershipType) {

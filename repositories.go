@@ -72,6 +72,16 @@ func getRepositories(
 			gitlabProjectMembershipType,
 			ignoreFork,
 		)
+	case "forgejo":
+		repositories, err = getForgejoRepositories(
+			client,
+			service,
+			githubRepoType,
+			githubNamespaceWhitelist,
+			gitlabProjectVisibility,
+			gitlabProjectMembershipType,
+			ignoreFork,
+		)
 	}
 	return repositories, err
 }

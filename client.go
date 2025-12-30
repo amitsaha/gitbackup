@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 	"github.com/google/go-github/v34/github"
 	bitbucket "github.com/ktrysmt/go-bitbucket"
 	gitlab "github.com/xanzy/go-gitlab"
@@ -81,6 +82,8 @@ func newClient(service string, gitHostURL string) interface{} {
 		return newGitLabClient(gitHostURLParsed)
 	case "bitbucket":
 		return newBitbucketClient(gitHostURLParsed)
+	case "forgejo":
+		return newForgejoClient(gitHostURLParsed)
 	default:
 		return nil
 	}
@@ -179,5 +182,25 @@ func newBitbucketClient(gitHostURLParsed *url.URL) *bitbucket.Client {
 	if gitHostURLParsed != nil {
 		client.SetApiBaseURL(*gitHostURLParsed)
 	}
+	return client
+}
+
+// newForgejoClient creates a new Forgejo client.
+func newForgejoClient(gitHostURLParsed *url.URL) *forgejo.Client {
+	forgejoToken := os.Getenv("FORGEJO_TOKEN")
+	if forgejoToken == "" {
+		log.Fatal("FORGEJO_TOKEN environment variable not set")
+	}
+
+	url := "https://" + knownServices["forgejo"]
+	if gitHostURLParsed != nil {
+		url = gitHostURLParsed.String()
+	}
+
+	client, err := forgejo.NewClient(url, forgejo.SetToken(forgejoToken), forgejo.SetForgejoVersion(""))
+	if err != nil {
+		log.Fatalf("Error creating forgejo client: %v", err)
+	}
+
 	return client
 }

@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"testing"
 
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 	"github.com/google/go-github/v34/github"
 	"github.com/ktrysmt/go-bitbucket"
 	gitlab "github.com/xanzy/go-gitlab"
@@ -19,6 +20,7 @@ var (
 	GitHubClient    *github.Client
 	GitLabClient    *gitlab.Client
 	BitbucketClient *bitbucket.Client
+	ForgejoClient   *forgejo.Client
 	mux             *http.ServeMux
 	server          *httptest.Server
 )
@@ -28,6 +30,7 @@ func setupRepositoryTests() {
 	os.Setenv("GITLAB_TOKEN", "$$$randome")
 	os.Setenv("BITBUCKET_USERNAME", "bbuser")
 	os.Setenv("BITBUCKET_PASSWORD", "$$$randomp")
+	os.Setenv("FORGEJO_TOKEN", "$$$randome")
 	// test server
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
@@ -46,9 +49,17 @@ func setupRepositoryTests() {
 
 	// github client configured to use test server
 	GitLabClient, err = gitlab.NewClient("", gitlab.WithBaseURL(url.String()))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	BitbucketClient = bitbucket.NewBasicAuth(os.Getenv("BITBUCKET_USERNAME"), os.Getenv("BITBUCKET_USERNAME"))
 	BitbucketClient.SetApiBaseURL(*url)
+
+	ForgejoClient, err = forgejo.NewClient(url.String(), forgejo.SetToken(os.Getenv("FORGEJO_TOKEN")), forgejo.SetForgejoVersion(""))
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func teardownRepositoryTests() {
@@ -56,6 +67,7 @@ func teardownRepositoryTests() {
 	os.Unsetenv("GITLAB_TOKEN")
 	os.Unsetenv("BITBUCKET_USERNAME")
 	os.Unsetenv("BITBUCKET_PASSWORD")
+	os.Unsetenv("FORGEJO_TOKEN")
 	server.Close()
 }
 
@@ -238,6 +250,27 @@ func TestGetBitbucketRepositories(t *testing.T) {
 	expected = append(expected, &Repository{Namespace: "abc", CloneURL: "git@bitbucket.org:abc/def.git", Name: "def", Private: true})
 	if !reflect.DeepEqual(repos, expected) {
 		for i := 0; i < len(repos); i++ {
+			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
+		}
+	}
+}
+
+func TestGetForgejoRepositories(t *testing.T) {
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
+
+	mux.HandleFunc("/api/v1/user/repos", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `[{"clone_url":"git@codeberg.org:abc/def.git","name":"def","owner":{"login":"abc"},"private":true}]`)
+	})
+
+	repos, err := getRepositories(ForgejoClient, "forgejo", "", []string{}, "", "", false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	var expected []*Repository
+	expected = append(expected, &Repository{Namespace: "abc", CloneURL: "git@codeberg.org:abc/def.git", Name: "def", Private: true})
+	if !reflect.DeepEqual(repos, expected) {
+		for i := range repos {
 			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
 		}
 	}

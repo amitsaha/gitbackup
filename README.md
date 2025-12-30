@@ -1,8 +1,9 @@
-# gitbackup - Backup your GitHub, GitLab, and Bitbucket repositories
+# gitbackup - Backup your GitHub, GitLab, Bitbucket, and Forgejo repositories
+
 Code Quality [![Go Report Card](https://goreportcard.com/badge/github.com/amitsaha/gitbackup)](https://goreportcard.com/report/github.com/amitsaha/gitbackup)
 [![.github/workflows/ci.yml](https://github.com/amitsaha/gitbackup/actions/workflows/ci.yml/badge.svg)](https://github.com/amitsaha/gitbackup/actions/workflows/ci.yml)
 
-- [gitbackup - Backup your GitHub, GitLab, and Bitbucket repositories](#gitbackup---backup-your-github-gitlab-and-bitbucket-repositories)
+- [gitbackup - Backup your GitHub, GitLab, Bitbucket, and Forgejo repositories](#gitbackup---backup-your-github-gitlab-and-bitbucket-repositories)
   - [Introduction](#introduction)
   - [Installing `gitbackup`](#installing-gitbackup)
   - [Using `gitbackup`](#using-gitbackup)
@@ -11,12 +12,14 @@ Code Quality [![Go Report Card](https://goreportcard.com/badge/github.com/amitsa
       - [Bitbucket](#bitbucket)
       - [GitHub](#github)
       - [GitLab](#gitlab)
+      - [Forgejo](#forgejo)
     - [Security and credentials](#security-and-credentials)
     - [Examples](#examples)
       - [Backing up your GitHub repositories](#backing-up-your-github-repositories)
       - [Backing up your GitLab repositories](#backing-up-your-gitlab-repositories)
       - [GitHub Enterprise or custom GitLab installation](#github-enterprise-or-custom-gitlab-installation)
       - [Backing up your Bitbucket repositories](#backing-up-your-bitbucket-repositories)
+      - [Backing up your Forgejo repositories](#backing-up-your-forgejo-repositories)
       - [Specifying a backup location](#specifying-a-backup-location)
       - [Cloning bare repositories](#cloning-bare-repositories)
       - [GitHub Migrations](#github-migrations)
@@ -25,11 +28,11 @@ Code Quality [![Go Report Card](https://goreportcard.com/badge/github.com/amitsa
 ## Introduction
 
 ``gitbackup`` is a tool to backup your git repositories from GitHub (including GitHub enterprise),
-GitLab (including custom GitLab installations), or Bitbucket.
+GitLab (including custom GitLab installations), Bitbucket, or Forgejo.
 
 ``gitbackup`` currently has two operation modes:
 
-- The first and original operating mode is to create clones of only your git repository. This is supported for Bitbucket, GitHub and Gitlab.
+- The first and original operating mode is to create clones of only your git repository. This is supported for GitHub, Gitlab, Bitbucket, and Forgejo.
 - The second operating mode is only available for GitHub where you can create a user migration (including orgs) which you get back as a .tar.gz
   file containing all the artefacts that GitHub supports via their Migration API.
   
@@ -47,11 +50,11 @@ If you are on MacOS, a community member has created a [Homebrew formula](https:/
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for
 backing up GitHub repositories, a [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens)
-for GitLab repositories, and a username and [app password](https://bitbucket.org/account/settings/app-passwords/) for
-Bitbucket repositories.
+for GitLab repositories, a username and [app password](https://bitbucket.org/account/settings/app-passwords/) for
+Bitbucket repositories, or a [Forgejo access token][https://docs.codeberg.org/advanced/access-token/] for Forgejo.
 
-You can supply the tokens to ``gitbackup`` using ``GITHUB_TOKEN`` and ``GITLAB_TOKEN`` environment variables
-respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and ``BITBUCKET_PASSWORD``.
+You can supply the tokens to ``gitbackup`` using ``GITHUB_TOKEN``, ``GITLAB_TOKEN``, or ``FORGEJO_TOKEN`` environment
+variables respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and ``BITBUCKET_PASSWORD``.
 
 ### GitHub Specific oAuth App Flow
 
@@ -87,6 +90,13 @@ For the App password, the following permissions are required:
 
 - `api`: Grants complete read/write access to the API, including all groups and projects.
 For some reason, `read_user` and `read_repository` is not sufficient.
+
+#### Forgejo
+
+The following permissions are required:
+
+- `read:repository`
+- `read:user`
 
 ### Security and credentials
 
@@ -132,7 +142,7 @@ Usage of ./gitbackup:
   -ignore-private
         Ignore private repositories/projects
   -service string
-        Git Hosted Service Name (github/gitlab/bitbucket)
+        Git Hosted Service Name (github/gitlab/bitbucket/forgejo)
   -use-https-clone
         Use HTTPS for cloning instead of SSH
 ```
@@ -233,6 +243,21 @@ To backup all your Bitbucket repositories to the default backup directory (``$HO
 $ BITBUCKET_USERNAME=username BITBUCKET_PASSWORD=password gitbackup -service bitbucket
 ```
 
+#### Backing up your Forgejo repositories
+
+The `forgejo` service backs up `codeberg.org` by default.
+To back up all your Codeberg repositories to the default directory (``$HOME/.gitbackup/``):
+
+```lang=bash
+$ FORGEJO_TOKEN=access_token gitbackup -service forgejo
+```
+
+To back up a different Forgejo instance, specify `githost.url`:
+
+```lang=bash
+$ FORGEJO_TOKEN=access_token gitbackup -service forgejo -githost.url https://git.yourhost.com
+```
+
 #### Specifying a backup location
 
 To specify a custom backup directory, we can use the ``backupdir`` flag:
@@ -242,8 +267,10 @@ $ GITHUB_TOKEN=secret$token gitbackup -service github -backupdir /data/
 ```
 
 This will create a ``github.com`` directory in ``/data`` and backup all your repositories there instead.
-Similarly, it will create a ``gitlab.com`` directory, if you are backing up repositories from ``gitlab``, and a
-``bitbucket.com`` directory if you are backing up from Bitbucket.
+Similarly, it will create a ``gitlab.com`` directory, if you are backing up repositories from ``gitlab``, a
+``bitbucket.com`` directory if you are backing up from Bitbucket, and a ``codeberg.org`` (or your custom host)
+directory if you are backing up from Forgejo.
+
 If you have specified a Git Host URL, it will create a directory structure ``data/host-url/``.
 
 

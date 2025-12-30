@@ -28,6 +28,6 @@ Usage of gitbackup:
   -ignore-private
     	Ignore private repositories/projects
   -service string
-    	Git Hosted Service Name (github/gitlab/bitbucket)
+    	Git Hosted Service Name (github/gitlab/bitbucket/forgejo)
   -use-https-clone
     	Use HTTPS for cloning instead of SSH

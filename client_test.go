@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"testing"
 
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 	"github.com/google/go-github/v34/github"
 	"github.com/ktrysmt/go-bitbucket"
 	gitlab "github.com/xanzy/go-gitlab"
@@ -43,6 +44,14 @@ func TestNewClient(t *testing.T) {
 	// Client for bitbucket.com
 	client = newClient("bitbucket", "")
 	client = client.(*bitbucket.Client)
+
+	// Client for codeberg
+	client = newClient("forgejo", "")
+	client = client.(*forgejo.Client)
+
+	// Client for forgejo
+	client = newClient("forgejo", customGitHost.String())
+	client = client.(*forgejo.Client)
 
 	// Not yet supported
 	client = newClient("notyetsupported", "")
