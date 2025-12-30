@@ -44,7 +44,15 @@ func getGithubRepositories(
 				continue
 			}
 
-			cloneURL := getCloneURL(*repo.CloneURL, *repo.SSHURL)
+			var httpsCloneURL, sshCloneURL string
+			if repo.CloneURL != nil {
+				httpsCloneURL = *repo.CloneURL
+			}
+			if repo.SSHURL != nil {
+				sshCloneURL = *repo.SSHURL
+			}
+
+			cloneURL := getCloneURL(httpsCloneURL, sshCloneURL)
 			repositories = append(repositories, &Repository{
 				CloneURL:  cloneURL,
 				Name:      *repo.Name,
@@ -74,7 +82,16 @@ func getGithubStarredRepositories(ctx context.Context, client *github.Client, ig
 				continue
 			}
 			namespace := strings.Split(*star.Repository.FullName, "/")[0]
-			cloneURL := getCloneURL(*star.Repository.CloneURL, *star.Repository.SSHURL)
+
+			var httpsCloneURL, sshCloneURL string
+			if star.Repository.CloneURL != nil {
+				httpsCloneURL = *star.Repository.CloneURL
+			}
+			if star.Repository.SSHURL != nil {
+				sshCloneURL = *star.Repository.SSHURL
+			}
+
+			cloneURL := getCloneURL(httpsCloneURL, sshCloneURL)
 			repositories = append(repositories, &Repository{
 				CloneURL:  cloneURL,
 				Name:      *star.Repository.Name,
