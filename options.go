@@ -65,6 +65,9 @@ func initConfig(args []string) (*appConfig, error) {
 		"Project type to clone (all, owner, member, starred)",
 	)
 
+	// Forgejo specific flags
+	fs.StringVar(&c.forgejoRepoType, "forgejo.repoType", "user", "Repo types to backup (user, starred)")
+
 	err := fs.Parse(args)
 	if err != nil && !errors.Is(err, flag.ErrHelp) {
 		return nil, err

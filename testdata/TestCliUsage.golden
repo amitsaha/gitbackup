@@ -3,6 +3,8 @@ Usage of gitbackup:
     	Backup directory
   -bare
     	Clone bare repositories
+  -forgejo.repoType string
+    	Repo types to backup (user, starred) (default "user")
   -githost.url string
     	DNS of the custom Git host
   -github.createUserMigration

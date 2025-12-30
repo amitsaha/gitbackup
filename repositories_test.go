@@ -79,7 +79,7 @@ func TestGetPublicGitHubRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": false, "fork": false}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "all", []string{}, "", "", false)
+	repos, err := getRepositories(GitHubClient, "github", "all", []string{}, "", "", false, "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -98,7 +98,7 @@ func TestGetPrivateGitHubRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true, "fork": false}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "all", []string{}, "", "", false)
+	repos, err := getRepositories(GitHubClient, "github", "all", []string{}, "", "", false, "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -117,7 +117,7 @@ func TestGetStarredGitHubRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"repo":{"full_name": "test/r1", "id":1, "ssh_url": "https://github.com/u/r1", "name": "r1", "private": true, "fork": false}}]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "starred", []string{}, "", "", false)
+	repos, err := getRepositories(GitHubClient, "github", "starred", []string{}, "", "", false, "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -140,7 +140,7 @@ func TestGetWhitelistGitHubRepositories(t *testing.T) {
 		]`)
 	})
 
-	repos, err := getRepositories(GitHubClient, "github", "all", []string{"test", "user1"}, "", "", false)
+	repos, err := getRepositories(GitHubClient, "github", "all", []string{"test", "user1"}, "", "", false, "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -161,7 +161,7 @@ func TestGetGitLabRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"path_with_namespace": "test/r1", "id":1, "ssh_url_to_repo": "https://gitlab.com/u/r1", "name": "r1"}]`)
 	})
 
-	repos, err := getRepositories(GitLabClient, "gitlab", "internal", []string{}, "", "", false)
+	repos, err := getRepositories(GitLabClient, "gitlab", "internal", []string{}, "", "", false, "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -186,7 +186,7 @@ func TestGetGitLabPrivateRepositories(t *testing.T) {
 	})
 
 	repos, err := getRepositories(GitLabClient, "gitlab",
-		"private", []string{}, "", "", false)
+		"private", []string{}, "", "", false, "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -213,7 +213,7 @@ func TestGetStarredGitLabRepositories(t *testing.T) {
 		fmt.Fprintf(w, `[]`)
 	})
 
-	repos, err := getRepositories(GitLabClient, "gitlab", "", []string{}, "", "starred", false)
+	repos, err := getRepositories(GitLabClient, "gitlab", "", []string{}, "", "starred", false, "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -242,7 +242,7 @@ func TestGetBitbucketRepositories(t *testing.T) {
 		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"full_name":"abc/def", "slug":"def", "is_private":true, "links":{"clone":[{"name":"https", "href":"https://bbuser@bitbucket.org/abc/def.git"}, {"name":"ssh", "href":"git@bitbucket.org:abc/def.git"}]}}]}`)
 	})
 
-	repos, err := getRepositories(BitbucketClient, "bitbucket", "", []string{}, "", "", false)
+	repos, err := getRepositories(BitbucketClient, "bitbucket", "", []string{}, "", "", false, "")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -263,7 +263,32 @@ func TestGetForgejoRepositories(t *testing.T) {
 		fmt.Fprint(w, `[{"clone_url":"git@codeberg.org:abc/def.git","name":"def","owner":{"login":"abc"},"private":true}]`)
 	})
 
-	repos, err := getRepositories(ForgejoClient, "forgejo", "", []string{}, "", "", false)
+	repos, err := getRepositories(ForgejoClient, "forgejo", "", []string{}, "", "", false, "")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	var expected []*Repository
+	expected = append(expected, &Repository{Namespace: "abc", CloneURL: "git@codeberg.org:abc/def.git", Name: "def", Private: true})
+	if !reflect.DeepEqual(repos, expected) {
+		for i := range repos {
+			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])
+		}
+	}
+}
+
+func TestGetForgejoStarredRepositories(t *testing.T) {
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
+
+	mux.HandleFunc("/api/v1/user", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"id":1234,"login":"abc"}`)
+	})
+
+	mux.HandleFunc("/api/v1/repos/search", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"data":[{"clone_url":"git@codeberg.org:abc/def.git","name":"def","owner":{"login":"abc"},"private":true}]}`)
+	})
+
+	repos, err := getRepositories(ForgejoClient, "forgejo", "", []string{}, "", "", false, "starred")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

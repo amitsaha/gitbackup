@@ -35,7 +35,7 @@ func getRepositories(
 	client interface{},
 	service string, githubRepoType string, githubNamespaceWhitelist []string,
 	gitlabProjectVisibility string, gitlabProjectMembershipType string,
-	ignoreFork bool,
+	ignoreFork bool, forgejoRepoType string,
 ) ([]*Repository, error) {
 	var repositories []*Repository
 	var err error
@@ -50,6 +50,7 @@ func getRepositories(
 			gitlabProjectVisibility,
 			gitlabProjectMembershipType,
 			ignoreFork,
+			forgejoRepoType,
 		)
 
 	case "gitlab":
@@ -61,6 +62,7 @@ func getRepositories(
 			gitlabProjectVisibility,
 			gitlabProjectMembershipType,
 			ignoreFork,
+			forgejoRepoType,
 		)
 	case "bitbucket":
 		repositories, err = getBitbucketRepositories(
@@ -71,6 +73,7 @@ func getRepositories(
 			gitlabProjectVisibility,
 			gitlabProjectMembershipType,
 			ignoreFork,
+			forgejoRepoType,
 		)
 	case "forgejo":
 		repositories, err = getForgejoRepositories(
@@ -81,6 +84,7 @@ func getRepositories(
 			gitlabProjectVisibility,
 			gitlabProjectMembershipType,
 			ignoreFork,
+			forgejoRepoType,
 		)
 	}
 	return repositories, err
