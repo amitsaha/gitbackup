@@ -11,7 +11,7 @@ func getGitlabRepositories(
 	client interface{},
 	service string, githubRepoType string, githubNamespaceWhitelist []string,
 	gitlabProjectVisibility string, gitlabProjectMembershipType string,
-	ignoreFork bool,
+	ignoreFork bool, forgejoRepoType string,
 ) ([]*Repository, error) {
 
 	if client == nil {

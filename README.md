@@ -117,6 +117,8 @@ Usage of ./gitbackup:
         Backup directory
   -bare
         Clone bare repositories
+  -forgejo.repoType string
+        Repo types to backup (user, starred) (default "user")
   -githost.url string
         DNS of the custom Git host
   -github.createUserMigration
@@ -256,6 +258,12 @@ To back up a different Forgejo instance, specify `githost.url`:
 
 ```lang=bash
 $ FORGEJO_TOKEN=access_token gitbackup -service forgejo -githost.url https://git.yourhost.com
+```
+
+To back up starred repositories instead of those you have access to, specify `forgejo.repoType`:
+
+```lang=bash
+$ FORGEJO_TOKEN=access_token gitbackup -service forgejo -forgejo.repoType starred
 ```
 
 #### Specifying a backup location

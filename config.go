@@ -22,4 +22,7 @@ type appConfig struct {
 	// GitLab specific configuration
 	gitlabProjectVisibility     string
 	gitlabProjectMembershipType string
+
+	// Forgejo specific configuration
+	forgejoRepoType string
 }

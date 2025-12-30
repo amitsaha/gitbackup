@@ -15,6 +15,7 @@ func handleGithubCreateUserMigration(client interface{}, c *appConfig) {
 		c.gitlabProjectVisibility,
 		c.gitlabProjectMembershipType,
 		c.ignoreFork,
+		c.forgejoRepoType,
 	)
 	if err != nil {
 		log.Fatalf("Error getting list of repositories: %v", err)

@@ -32,6 +32,7 @@ func handleGitRepositoryClone(client interface{}, c *appConfig) error {
 		c.gitlabProjectVisibility,
 		c.gitlabProjectMembershipType,
 		c.ignoreFork,
+		c.forgejoRepoType,
 	)
 	if err != nil {
 		return err
