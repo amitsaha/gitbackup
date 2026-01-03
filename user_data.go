@@ -96,20 +96,23 @@ func createGithubOrgMigration(ctx context.Context, client interface{}, org strin
 func downloadGithubUserMigrationData(
 	ctx context.Context, client interface{}, backupDir string, id *int64, migrationStatePollingDuration time.Duration,
 ) error {
-
-	var ms *github.UserMigration
-
-	ms, _, err := client.(*github.Client).Migrations.UserMigrationStatus(ctx, *id)
+	ghClient := client.(*github.Client)
+	ms, _, err := ghClient.Migrations.UserMigrationStatus(ctx, *id)
 	if err != nil {
 		return err
 	}
 
+	return pollUserMigrationStatus(ctx, ghClient, backupDir, ms, migrationStatePollingDuration)
+}
+
+// pollUserMigrationStatus polls for migration completion and downloads when ready
+func pollUserMigrationStatus(ctx context.Context, client *github.Client, backupDir string, ms *github.UserMigration, pollDuration time.Duration) error {
 	for {
 		switch *ms.State {
 		case migrationStateFailed:
 			return errors.New("migration failed")
 		case migrationStateExported:
-			archiveURL, err := client.(*github.Client).Migrations.UserMigrationArchiveURL(ctx, *ms.ID)
+			archiveURL, err := client.Migrations.UserMigrationArchiveURL(ctx, *ms.ID)
 			if err != nil {
 				return err
 			}
@@ -117,9 +120,10 @@ func downloadGithubUserMigrationData(
 			return downloadMigrationArchive(archiveURL, archiveFilepath)
 		default:
 			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
-			time.Sleep(migrationStatePollingDuration)
+			time.Sleep(pollDuration)
 
-			ms, _, err = client.(*github.Client).Migrations.UserMigrationStatus(ctx, *ms.ID)
+			var err error
+			ms, _, err = client.Migrations.UserMigrationStatus(ctx, *ms.ID)
 			if err != nil {
 				return err
 			}
@@ -130,18 +134,23 @@ func downloadGithubUserMigrationData(
 func downloadGithubOrgMigrationData(
 	ctx context.Context, client interface{}, org string, backupDir string, id *int64, migrationStatePollingDuration time.Duration,
 ) error {
-	var ms *github.Migration
-	ms, _, err := client.(*github.Client).Migrations.MigrationStatus(ctx, org, *id)
+	ghClient := client.(*github.Client)
+	ms, _, err := ghClient.Migrations.MigrationStatus(ctx, org, *id)
 	if err != nil {
 		return err
 	}
 
+	return pollOrgMigrationStatus(ctx, ghClient, org, backupDir, ms, migrationStatePollingDuration)
+}
+
+// pollOrgMigrationStatus polls for organization migration completion and downloads when ready
+func pollOrgMigrationStatus(ctx context.Context, client *github.Client, org, backupDir string, ms *github.Migration, pollDuration time.Duration) error {
 	for {
 		switch *ms.State {
 		case migrationStateFailed:
 			return errors.New("org migration failed")
 		case migrationStateExported:
-			archiveURL, err := client.(*github.Client).Migrations.MigrationArchiveURL(ctx, org, *ms.ID)
+			archiveURL, err := client.Migrations.MigrationArchiveURL(ctx, org, *ms.ID)
 			if err != nil {
 				return err
 			}
@@ -150,8 +159,9 @@ func downloadGithubOrgMigrationData(
 			return downloadMigrationArchive(archiveURL, archiveFilepath)
 		default:
 			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
-			time.Sleep(migrationStatePollingDuration)
-			ms, _, err = client.(*github.Client).Migrations.MigrationStatus(ctx, org, *ms.ID)
+			time.Sleep(pollDuration)
+			var err error
+			ms, _, err = client.Migrations.MigrationStatus(ctx, org, *ms.ID)
 			if err != nil {
 				return err
 			}
