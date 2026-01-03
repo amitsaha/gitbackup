@@ -9,6 +9,11 @@ import (
 // handleGitRepositoryClone clones or updates all repositories for the configured service
 func handleGitRepositoryClone(client interface{}, c *appConfig) error {
 
+	// Check if git is available before proceeding
+	if err := checkGitAvailability(); err != nil {
+		return err
+	}
+
 	// Used for waiting for all the goroutines to finish before exiting
 	var wg sync.WaitGroup
 	defer wg.Wait()
