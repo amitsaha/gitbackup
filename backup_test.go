@@ -243,3 +243,40 @@ func TestSetupBackupDir(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckGitAvailability(t *testing.T) {
+	// Save original lookPath
+	originalLookPath := lookPath
+	defer func() {
+		lookPath = originalLookPath
+	}()
+
+	t.Run("git is available", func(t *testing.T) {
+		lookPath = func(file string) (string, error) {
+			if file == "git" {
+				return "/usr/bin/git", nil
+			}
+			return "", fmt.Errorf("not found")
+		}
+		err := checkGitAvailability()
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+	})
+
+	t.Run("git is not available", func(t *testing.T) {
+		lookPath = func(file string) (string, error) {
+			return "", fmt.Errorf("executable file not found in $PATH")
+		}
+		err := checkGitAvailability()
+		if err == nil {
+			t.Error("Expected error when git is not available, got nil")
+		}
+		expectedMsg := "git command not found in PATH"
+		if err != nil && len(err.Error()) > 0 {
+			if err.Error()[:len(expectedMsg)] != expectedMsg {
+				t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
+			}
+		}
+	})
+}
