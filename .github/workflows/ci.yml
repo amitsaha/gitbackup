@@ -67,6 +67,8 @@ jobs:
   goreleaser_check:
     runs-on: ubuntu-latest
     name: GoReleaser Check
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
