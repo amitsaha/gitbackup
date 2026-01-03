@@ -323,7 +323,7 @@ workflow via scheduled github actions [here](https://github.com/amitsaha/gitback
 
 ## Building
 
-If you have Go 1.24.x installed, you can clone the repository and:
+If you have Go 1.25.x installed, you can clone the repository and:
 
 ```
 $ go build
