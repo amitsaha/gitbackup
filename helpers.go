@@ -11,37 +11,48 @@ import (
 
 // getUsername retrieves the username for the authenticated user from the git service
 func getUsername(client interface{}, service string) string {
-
 	if client == nil {
 		log.Fatalf("Couldn't acquire a client to talk to %s", service)
 	}
 
-	if service == "github" {
-		ctx := context.Background()
-		user, _, err := client.(*github.Client).Users.Get(ctx, "")
-		if err != nil {
-			log.Fatal("Error retrieving username", err.Error())
-		}
-		return *user.Login
+	switch service {
+	case "github":
+		return getGithubUsername(client.(*github.Client))
+	case "gitlab":
+		return getGitlabUsername(client.(*gitlab.Client))
+	case "bitbucket":
+		return getBitbucketUsername(client.(*bitbucket.Client))
+	default:
+		return ""
 	}
+}
 
-	if service == "gitlab" {
-		user, _, err := client.(*gitlab.Client).Users.CurrentUser()
-		if err != nil {
-			log.Fatal("Error retrieving username", err.Error())
-		}
-		return user.Username
+// getGithubUsername retrieves the GitHub username
+func getGithubUsername(client *github.Client) string {
+	ctx := context.Background()
+	user, _, err := client.Users.Get(ctx, "")
+	if err != nil {
+		log.Fatal("Error retrieving username", err.Error())
 	}
+	return *user.Login
+}
 
-	if service == "bitbucket" {
-		user, err := client.(*bitbucket.Client).User.Profile()
-		if err != nil {
-			log.Fatal("Error retrieving username", err.Error())
-		}
-		return user.Username
+// getGitlabUsername retrieves the GitLab username
+func getGitlabUsername(client *gitlab.Client) string {
+	user, _, err := client.Users.CurrentUser()
+	if err != nil {
+		log.Fatal("Error retrieving username", err.Error())
 	}
+	return user.Username
+}
 
-	return ""
+// getBitbucketUsername retrieves the Bitbucket username
+func getBitbucketUsername(client *bitbucket.Client) string {
+	user, err := client.User.Profile()
+	if err != nil {
+		log.Fatal("Error retrieving username", err.Error())
+	}
+	return user.Username
 }
 
 // validGitlabProjectMembership checks if the given membership type is valid

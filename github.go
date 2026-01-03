@@ -19,46 +19,30 @@ func getGithubRepositories(
 		log.Fatalf("Couldn't acquire a client to talk to %s", service)
 	}
 
-	var repositories []*Repository
-
 	ctx := context.Background()
 
 	if githubRepoType == "starred" {
 		return getGithubStarredRepositories(ctx, client.(*github.Client), ignoreFork)
 	}
 
-	options := github.RepositoryListOptions{Type: githubRepoType}
+	return getGithubUserRepositories(ctx, client.(*github.Client), githubRepoType, githubNamespaceWhitelist, ignoreFork)
+}
+
+// getGithubUserRepositories retrieves user repositories (not starred) from GitHub
+func getGithubUserRepositories(ctx context.Context, client *github.Client, repoType string, namespaceWhitelist []string, ignoreFork bool) ([]*Repository, error) {
+	var repositories []*Repository
+	options := github.RepositoryListOptions{Type: repoType}
 
 	for {
-		repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
+		repos, resp, err := client.Repositories.List(ctx, "", &options)
 		if err != nil {
 			return nil, err
 		}
 		for _, repo := range repos {
-			if *repo.Fork && ignoreFork {
+			if shouldSkipGithubRepo(repo, namespaceWhitelist, ignoreFork) {
 				continue
 			}
-			namespace := strings.Split(*repo.FullName, "/")[0]
-
-			if len(githubNamespaceWhitelist) > 0 && !contains(githubNamespaceWhitelist, namespace) {
-				continue
-			}
-
-			var httpsCloneURL, sshCloneURL string
-			if repo.CloneURL != nil {
-				httpsCloneURL = *repo.CloneURL
-			}
-			if repo.SSHURL != nil {
-				sshCloneURL = *repo.SSHURL
-			}
-
-			cloneURL := getCloneURL(httpsCloneURL, sshCloneURL)
-			repositories = append(repositories, &Repository{
-				CloneURL:  cloneURL,
-				Name:      *repo.Name,
-				Namespace: namespace,
-				Private:   *repo.Private,
-			})
+			repositories = append(repositories, buildGithubRepository(repo))
 		}
 		if resp.NextPage == 0 {
 			break
@@ -66,6 +50,35 @@ func getGithubRepositories(
 		options.ListOptions.Page = resp.NextPage
 	}
 	return repositories, nil
+}
+
+// shouldSkipGithubRepo determines if a repository should be skipped based on filters
+func shouldSkipGithubRepo(repo *github.Repository, namespaceWhitelist []string, ignoreFork bool) bool {
+	if *repo.Fork && ignoreFork {
+		return true
+	}
+	namespace := strings.Split(*repo.FullName, "/")[0]
+	return len(namespaceWhitelist) > 0 && !contains(namespaceWhitelist, namespace)
+}
+
+// buildGithubRepository converts a GitHub repository to our Repository type
+func buildGithubRepository(repo *github.Repository) *Repository {
+	namespace := strings.Split(*repo.FullName, "/")[0]
+	
+	var httpsCloneURL, sshCloneURL string
+	if repo.CloneURL != nil {
+		httpsCloneURL = *repo.CloneURL
+	}
+	if repo.SSHURL != nil {
+		sshCloneURL = *repo.SSHURL
+	}
+
+	return &Repository{
+		CloneURL:  getCloneURL(httpsCloneURL, sshCloneURL),
+		Name:      *repo.Name,
+		Namespace: namespace,
+		Private:   *repo.Private,
+	}
 }
 
 func getGithubStarredRepositories(ctx context.Context, client *github.Client, ignoreFork bool) ([]*Repository, error) {
@@ -81,23 +94,7 @@ func getGithubStarredRepositories(ctx context.Context, client *github.Client, ig
 			if *star.Repository.Fork && ignoreFork {
 				continue
 			}
-			namespace := strings.Split(*star.Repository.FullName, "/")[0]
-
-			var httpsCloneURL, sshCloneURL string
-			if star.Repository.CloneURL != nil {
-				httpsCloneURL = *star.Repository.CloneURL
-			}
-			if star.Repository.SSHURL != nil {
-				sshCloneURL = *star.Repository.SSHURL
-			}
-
-			cloneURL := getCloneURL(httpsCloneURL, sshCloneURL)
-			repositories = append(repositories, &Repository{
-				CloneURL:  cloneURL,
-				Name:      *star.Repository.Name,
-				Namespace: namespace,
-				Private:   *star.Repository.Private,
-			})
+			repositories = append(repositories, buildGithubRepository(star.Repository))
 		}
 		if resp.NextPage == 0 {
 			break
