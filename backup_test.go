@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"sync"
 	"testing"
 
@@ -273,10 +274,8 @@ func TestCheckGitAvailability(t *testing.T) {
 			t.Error("Expected error when git is not available, got nil")
 		}
 		expectedMsg := "git command not found in PATH"
-		if err != nil && len(err.Error()) > 0 {
-			if err.Error()[:len(expectedMsg)] != expectedMsg {
-				t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
-			}
+		if err != nil && !strings.HasPrefix(err.Error(), expectedMsg) {
+			t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
 		}
 	})
 }
