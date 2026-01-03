@@ -23,7 +23,7 @@
 
 ### Go Conventions
 - Follow standard Go formatting (use `gofmt`)
-- Use Go 1.24 features and syntax
+- Use Go 1.25 features and syntax
 - Keep functions focused and single-purpose
 - Use descriptive variable names (e.g., `backupDir`, `ignorePrivate`)
 
