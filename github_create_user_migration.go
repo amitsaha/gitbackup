@@ -8,6 +8,9 @@ import (
 	"github.com/google/go-github/v34/github"
 )
 
+// defaultMigrationPollingInterval is the default time to wait between migration status checks
+const defaultMigrationPollingInterval = 60 * time.Second
+
 func handleGithubCreateUserMigration(client interface{}, c *appConfig) {
 	repos, err := getRepositories(
 		client,
@@ -41,12 +44,11 @@ func createUserMigration(client interface{}, c *appConfig, repos []*Repository) 
 	}
 
 	if c.githubWaitForMigrationComplete {
-		migrationStatePollingDuration := 60 * time.Second
 		err = downloadGithubUserMigrationData(
 			context.Background(),
 			client, c.backupDir,
 			m.ID,
-			migrationStatePollingDuration,
+			defaultMigrationPollingInterval,
 		)
 		if err != nil {
 			log.Fatalf("Error querying/downloading migration: %v", err)
@@ -85,14 +87,13 @@ func createOrganizationMigration(client interface{}, c *appConfig, org *github.O
 	}
 	
 	if c.githubWaitForMigrationComplete {
-		migrationStatePollingDuration := 60 * time.Second
 		downloadGithubOrgMigrationData(
 			context.Background(),
 			client,
 			*org.Login,
 			c.backupDir,
 			oMigration.ID,
-			migrationStatePollingDuration,
+			defaultMigrationPollingInterval,
 		)
 	}
 }

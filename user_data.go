@@ -107,6 +107,7 @@ func downloadGithubUserMigrationData(
 
 // pollUserMigrationStatus polls for migration completion and downloads when ready
 func pollUserMigrationStatus(ctx context.Context, client *github.Client, backupDir string, ms *github.UserMigration, pollDuration time.Duration) error {
+	var err error
 	for {
 		switch *ms.State {
 		case migrationStateFailed:
@@ -122,7 +123,6 @@ func pollUserMigrationStatus(ctx context.Context, client *github.Client, backupD
 			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
 			time.Sleep(pollDuration)
 
-			var err error
 			ms, _, err = client.Migrations.UserMigrationStatus(ctx, *ms.ID)
 			if err != nil {
 				return err
@@ -145,6 +145,7 @@ func downloadGithubOrgMigrationData(
 
 // pollOrgMigrationStatus polls for organization migration completion and downloads when ready
 func pollOrgMigrationStatus(ctx context.Context, client *github.Client, org, backupDir string, ms *github.Migration, pollDuration time.Duration) error {
+	var err error
 	for {
 		switch *ms.State {
 		case migrationStateFailed:
@@ -160,7 +161,6 @@ func pollOrgMigrationStatus(ctx context.Context, client *github.Client, org, bac
 		default:
 			log.Printf("Waiting for migration state to be exported: %s\n", *ms.State)
 			time.Sleep(pollDuration)
-			var err error
 			ms, _, err = client.Migrations.MigrationStatus(ctx, org, *ms.ID)
 			if err != nil {
 				return err
