@@ -63,3 +63,19 @@ jobs:
         with:
           name: testdata-windows
           path: testdata
+  
+  goreleaser_check:
+    runs-on: ubuntu-latest
+    name: GoReleaser Check
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: Run GoReleaser in snapshot mode
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: --snapshot --skip=publish --clean
