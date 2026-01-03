@@ -63,29 +63,40 @@ func cloneNewRepo(repoDir string, repo *Repository, bare bool) ([]byte, error) {
 	log.Printf("Cloning %s\n", repo.Name)
 	log.Printf("%#v\n", repo)
 
-	if repo.Private && ignorePrivate != nil && *ignorePrivate {
+	if shouldSkipPrivateRepo(repo) {
 		log.Printf("Skipping %s as it is a private repo.\n", repo.Name)
 		return nil, nil
 	}
 
-	cloneURL := repo.CloneURL
-	if useHTTPSClone != nil && *useHTTPSClone {
-		// Add username and token to the clone URL
-		// https://gitlab.com/amitsaha/testproject1 => https://amitsaha:token@gitlab.com/amitsaha/testproject1
-		u, err := url.Parse(repo.CloneURL)
-		if err != nil {
-			log.Fatalf("Invalid clone URL: %v\n", err)
-		}
-		cloneURL = u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
+	cloneURL := buildAuthenticatedCloneURL(repo.CloneURL)
+	cmd := buildGitCloneCommand(cloneURL, repoDir, bare)
+	return cmd.CombinedOutput()
+}
+
+// shouldSkipPrivateRepo checks if a private repo should be skipped
+func shouldSkipPrivateRepo(repo *Repository) bool {
+	return repo.Private && ignorePrivate != nil && *ignorePrivate
+}
+
+// buildAuthenticatedCloneURL adds authentication to the clone URL if using HTTPS
+func buildAuthenticatedCloneURL(originalURL string) string {
+	if useHTTPSClone == nil || !*useHTTPSClone {
+		return originalURL
 	}
 
-	var cmd *exec.Cmd
-	if bare {
-		cmd = execCommand(gitCommand, "clone", "--mirror", cloneURL, repoDir)
-	} else {
-		cmd = execCommand(gitCommand, "clone", cloneURL, repoDir)
+	u, err := url.Parse(originalURL)
+	if err != nil {
+		log.Fatalf("Invalid clone URL: %v\n", err)
 	}
-	return cmd.CombinedOutput()
+	return u.Scheme + "://" + gitHostUsername + ":" + gitHostToken + "@" + u.Host + u.Path
+}
+
+// buildGitCloneCommand creates the appropriate git clone command
+func buildGitCloneCommand(cloneURL, repoDir string, bare bool) *exec.Cmd {
+	if bare {
+		return execCommand(gitCommand, "clone", "--mirror", cloneURL, repoDir)
+	}
+	return execCommand(gitCommand, "clone", cloneURL, repoDir)
 }
 
 // setupBackupDir determines and creates the backup directory path
