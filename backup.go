@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"os/exec"
@@ -16,6 +17,16 @@ var execCommand = exec.Command
 var appFS = afero.NewOsFs()
 var gitCommand = "git"
 var gethomeDir = homedir.Dir
+var lookPath = exec.LookPath
+
+// checkGitAvailability verifies that the git command is available in the system PATH
+func checkGitAvailability() error {
+	_, err := lookPath(gitCommand)
+	if err != nil {
+		return fmt.Errorf("git command not found in PATH. Please install git to use gitbackup. Visit https://git-scm.com/downloads for installation instructions")
+	}
+	return nil
+}
 
 // Check if we have a copy of the repo already, if
 // we do, we update the repo, else we do a fresh clone
