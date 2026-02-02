@@ -73,7 +73,7 @@ func getToken(service string) (string, error) {
 }
 
 func newClient(service string, gitHostURL string) interface{} {
-	gitHostURLParsed := parseGitHostURL(gitHostURL)
+	gitHostURLParsed := parseGitHostURL(gitHostURL, service)
 
 	switch service {
 	case "github":
@@ -90,7 +90,10 @@ func newClient(service string, gitHostURL string) interface{} {
 }
 
 // parseGitHostURL parses the git host URL if provided
-func parseGitHostURL(gitHostURL string) *url.URL {
+// TODO: there is a chance, this parsing breaks more than
+// one git service
+// https://github.com/amitsaha/gitbackup/issues/195
+func parseGitHostURL(gitHostURL string, service string) *url.URL {
 	if len(gitHostURL) == 0 {
 		return nil
 	}
@@ -98,6 +101,11 @@ func parseGitHostURL(gitHostURL string) *url.URL {
 	gitHostURLParsed, err := url.Parse(gitHostURL)
 	if err != nil {
 		log.Fatalf("Invalid git host URL: %s", gitHostURL)
+	}
+
+	// temp fix for https://github.com/amitsaha/gitbackup/issues/193
+	if service == "forgejo" {
+		return gitHostURLParsed
 	}
 	api, _ := url.Parse("api/v4/")
 	return gitHostURLParsed.ResolveReference(api)
@@ -197,6 +205,7 @@ func newForgejoClient(gitHostURLParsed *url.URL) *forgejo.Client {
 		url = gitHostURLParsed.String()
 	}
 
+	log.Println("Creating forgejo client", url)
 	client, err := forgejo.NewClient(url, forgejo.SetToken(forgejoToken), forgejo.SetForgejoVersion(""))
 	if err != nil {
 		log.Fatalf("Error creating forgejo client: %v", err)
