@@ -7,7 +7,7 @@ Code Quality [![Go Report Card](https://goreportcard.com/badge/github.com/amitsa
 # Commerical Support
 
 As of February 2026, [Common Loop Works Pty Ltd](https://abr.business.gov.au/ABN/View?id=49688912389), a software development, 
-machine learning and cloud advisory company, founded by [Amit Saha](https://au.linkedin.com/in/echorand) supports commercial development of `gitbackup`.
+machine learning and cloud advisory company, founded by [Amit Saha](https://au.linkedin.com/in/echorand) supports commercial development and support of `gitbackup`.
 Contact us for any custom on-prem or cloud deployment, new feature requests or expedite any bug fixes.
 
 # User guide
