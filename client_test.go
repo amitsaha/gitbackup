@@ -15,30 +15,30 @@ func TestNewClient(t *testing.T) {
 	defer teardownRepositoryTests()
 
 	customGitHost, _ := url.Parse("https://git.mycompany.com")
-	// http://stackoverflow.com/questions/23051339/how-to-avoid-end-of-url-slash-being-removed-when-resolvereference-in-go
+	// GitLab expects /api/v4/ appended
 	api, _ := url.Parse("api/v4/")
-	expectedGitHostBaseURL := customGitHost.ResolveReference(api)
+	expectedGitLabBaseURL := customGitHost.ResolveReference(api)
 
 	// Client for github.com
 	client := newClient("github", "")
 	client = client.(*github.Client)
 
-	// Client for Enterprise Github
+	// Client for Enterprise Github - should use the URL as-is, not append /api/v4/
 	client = newClient("github", customGitHost.String())
 	gotBaseURL := client.(*github.Client).BaseURL
-	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
-		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
+	if gotBaseURL.String() != customGitHost.String() {
+		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", customGitHost, gotBaseURL)
 	}
 
 	// Client for gitlab.com
 	client = newClient("gitlab", "")
 	client = client.(*gitlab.Client)
 
-	// Client for custom gitlab installation
+	// Client for custom gitlab installation - should append /api/v4/
 	client = newClient("gitlab", customGitHost.String())
 	gotBaseURL = client.(*gitlab.Client).BaseURL()
-	if gotBaseURL.String() != expectedGitHostBaseURL.String() {
-		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitHostBaseURL, gotBaseURL)
+	if gotBaseURL.String() != expectedGitLabBaseURL.String() {
+		t.Errorf("Expected BaseURL to be: %v, Got: %v\n", expectedGitLabBaseURL, gotBaseURL)
 	}
 
 	// Client for bitbucket.com
