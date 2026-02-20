@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/url"
+	"os"
 	"testing"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
@@ -59,4 +60,24 @@ func TestNewClient(t *testing.T) {
 		t.Errorf("Expected nil")
 	}
 
+}
+
+func TestNewBitbucketClientWithToken(t *testing.T) {
+	setupRepositoryTests()
+	defer teardownRepositoryTests()
+
+	// Set BITBUCKET_TOKEN and unset BITBUCKET_PASSWORD to test token auth path
+	os.Setenv("BITBUCKET_TOKEN", "$$$randomtoken")
+	os.Unsetenv("BITBUCKET_PASSWORD")
+	defer os.Unsetenv("BITBUCKET_TOKEN")
+
+	client := newClient("bitbucket", "")
+	if client == nil {
+		t.Fatal("Expected non-nil bitbucket client")
+	}
+	_ = client.(*bitbucket.Client)
+
+	if gitHostToken != "$$$randomtoken" {
+		t.Errorf("Expected gitHostToken to be BITBUCKET_TOKEN value, got: %v", gitHostToken)
+	}
 }
