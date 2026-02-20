@@ -59,11 +59,11 @@ If you are on MacOS, a community member has created a [Homebrew formula](https:/
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for
 backing up GitHub repositories, a [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens)
-for GitLab repositories, a username and [app password](https://bitbucket.org/account/settings/app-passwords/) for
+for GitLab repositories, a username and [API token](https://support.atlassian.com/bitbucket-cloud/docs/api-tokens/) (or [app password](https://bitbucket.org/account/settings/app-passwords/)) for
 Bitbucket repositories, or a [Forgejo access token][https://docs.codeberg.org/advanced/access-token/] for Forgejo.
 
 You can supply the tokens to ``gitbackup`` using ``GITHUB_TOKEN``, ``GITLAB_TOKEN``, or ``FORGEJO_TOKEN`` environment
-variables respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and ``BITBUCKET_PASSWORD``.
+variables respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and either ``BITBUCKET_TOKEN`` or ``BITBUCKET_PASSWORD``.
 
 ### GitHub Specific oAuth App Flow
 
@@ -84,10 +84,18 @@ time you run it, it will ask you for the keyring password and retrieve the token
 
 #### Bitbucket
 
-For the App password, the following permissions are required:
+**API tokens** (recommended):
+
+- `read:user:bitbucket`
+- `read:workspace:bitbucket`
+- `read:repository:bitbucket`
+
+**App passwords** (deprecated, disabled after June 9, 2026):
 
 - `Account:Read`
 - `Repositories:Read`
+
+**Note:** Bitbucket has deprecated app passwords. Use [API tokens](https://support.atlassian.com/bitbucket-cloud/docs/api-tokens/) instead by setting the ``BITBUCKET_TOKEN`` environment variable.
 
 #### GitHub
 
@@ -249,6 +257,14 @@ $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -githost.url https://git.y
 #### Backing up your Bitbucket repositories
 
 To backup all your Bitbucket repositories to the default backup directory (``$HOME/.gitbackup/``):
+
+Using an API token (recommended):
+
+```lang=bash
+$ BITBUCKET_USERNAME=username BITBUCKET_TOKEN=token gitbackup -service bitbucket
+```
+
+Using an app password (deprecated, disabled after June 9, 2026):
 
 ```lang=bash
 $ BITBUCKET_USERNAME=username BITBUCKET_PASSWORD=password gitbackup -service bitbucket

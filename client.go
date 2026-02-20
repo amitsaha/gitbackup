@@ -176,14 +176,17 @@ func newBitbucketClient(gitHostURLParsed *url.URL) *bitbucket.Client {
 		log.Fatal("BITBUCKET_USERNAME environment variable not set")
 	}
 
-	bitbucketPassword := os.Getenv("BITBUCKET_PASSWORD")
+	bitbucketPassword := os.Getenv("BITBUCKET_TOKEN")
 	if bitbucketPassword == "" {
-		log.Fatal("BITBUCKET_PASSWORD environment variable not set")
+		bitbucketPassword = os.Getenv("BITBUCKET_PASSWORD")
+	}
+	if bitbucketPassword == "" {
+		log.Fatal("BITBUCKET_TOKEN or BITBUCKET_PASSWORD environment variable must be set")
 	}
 
 	gitHostToken = bitbucketPassword
-
 	client := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPassword)
+
 	if gitHostURLParsed != nil {
 		client.SetApiBaseURL(*gitHostURLParsed)
 	}
