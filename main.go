@@ -26,6 +26,22 @@ var knownServices = map[string]string{
 
 func main() {
 
+	// Handle subcommands before flag parsing
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "init":
+			if err := handleInitConfig(); err != nil {
+				log.Fatal(err)
+			}
+			return
+		case "validate":
+			if err := handleValidateConfig(); err != nil {
+				log.Fatal(err)
+			}
+			return
+		}
+	}
+
 	c, err := initConfig(os.Args[1:])
 	if err != nil {
 		log.Fatal(err)
