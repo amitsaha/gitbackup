@@ -90,9 +90,6 @@ func newClient(service string, gitHostURL string) interface{} {
 }
 
 // parseGitHostURL parses the git host URL if provided
-// TODO: there is a chance, this parsing breaks more than
-// one git service
-// https://github.com/amitsaha/gitbackup/issues/195
 func parseGitHostURL(gitHostURL string, service string) *url.URL {
 	if len(gitHostURL) == 0 {
 		return nil
@@ -103,12 +100,12 @@ func parseGitHostURL(gitHostURL string, service string) *url.URL {
 		log.Fatalf("Invalid git host URL: %s", gitHostURL)
 	}
 
-	// temp fix for https://github.com/amitsaha/gitbackup/issues/193
-	if service == "forgejo" {
-		return gitHostURLParsed
+	// Only GitLab requires /api/v4/ to be appended
+	if service == "gitlab" {
+		api, _ := url.Parse("api/v4/")
+		return gitHostURLParsed.ResolveReference(api)
 	}
-	api, _ := url.Parse("api/v4/")
-	return gitHostURLParsed.ResolveReference(api)
+	return gitHostURLParsed
 }
 
 // newGitHubClient creates a new GitHub client
