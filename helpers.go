@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 	"github.com/google/go-github/v34/github"
 	"github.com/ktrysmt/go-bitbucket"
 	gitlab "github.com/xanzy/go-gitlab"
@@ -39,6 +40,14 @@ func getUsername(client interface{}, service string) string {
 			log.Fatal("Error retrieving username", err.Error())
 		}
 		return user.Username
+	}
+
+	if service == "forgejo" {
+		user, _, err := client.(*forgejo.Client).GetMyUserInfo()
+		if err != nil {
+			log.Fatal("Error retrieving username", err.Error())
+		}
+		return user.UserName
 	}
 
 	return ""

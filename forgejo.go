@@ -67,7 +67,7 @@ func paginateForgejoRepositories(fetch func(page int) ([]*forgejo.Repository, *f
 
 		for _, repo := range results {
 			repositories = append(repositories, &Repository{
-				CloneURL:  repo.CloneURL,
+				CloneURL:  getCloneURL(repo.CloneURL, repo.SSHURL),
 				Name:      repo.Name,
 				Namespace: repo.Owner.UserName,
 				Private:   repo.Private,

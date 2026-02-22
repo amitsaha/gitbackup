@@ -260,7 +260,7 @@ func TestGetForgejoRepositories(t *testing.T) {
 	defer teardownRepositoryTests()
 
 	mux.HandleFunc("/api/v1/user/repos", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `[{"clone_url":"git@codeberg.org:abc/def.git","name":"def","owner":{"login":"abc"},"private":true}]`)
+		fmt.Fprint(w, `[{"clone_url":"https://codeberg.org/abc/def.git","ssh_url":"git@codeberg.org:abc/def.git","name":"def","owner":{"login":"abc"},"private":true}]`)
 	})
 
 	repos, err := getRepositories(ForgejoClient, "forgejo", "", []string{}, "", "", false, "")
@@ -285,7 +285,7 @@ func TestGetForgejoStarredRepositories(t *testing.T) {
 	})
 
 	mux.HandleFunc("/api/v1/repos/search", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `{"data":[{"clone_url":"git@codeberg.org:abc/def.git","name":"def","owner":{"login":"abc"},"private":true}]}`)
+		fmt.Fprint(w, `{"data":[{"clone_url":"https://codeberg.org/abc/def.git","ssh_url":"git@codeberg.org:abc/def.git","name":"def","owner":{"login":"abc"},"private":true}]}`)
 	})
 
 	repos, err := getRepositories(ForgejoClient, "forgejo", "", []string{}, "", "", false, "starred")
