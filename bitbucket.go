@@ -1,26 +1,18 @@
 package main
 
 import (
-	"log"
 	"strings"
 
 	bitbucket "github.com/ktrysmt/go-bitbucket"
 )
 
 func getBitbucketRepositories(
-	client interface{},
-	service string, githubRepoType string, githubNamespaceWhitelist []string,
-	gitlabProjectVisibility string, gitlabProjectMembershipType string,
-	ignoreFork bool, forgejoRepoType string,
+	client *bitbucket.Client,
 ) ([]*Repository, error) {
-
-	if client == nil {
-		log.Fatalf("Couldn't acquire a client to talk to %s", service)
-	}
 
 	var repositories []*Repository
 
-	resp, err := client.(*bitbucket.Client).Workspaces.List()
+	resp, err := client.Workspaces.List()
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +20,7 @@ func getBitbucketRepositories(
 	for _, workspace := range resp.Workspaces {
 		options := &bitbucket.RepositoriesOptions{Owner: workspace.Slug}
 
-		resp, err := client.(*bitbucket.Client).Repositories.ListForAccount(options)
+		resp, err := client.Repositories.ListForAccount(options)
 		if err != nil {
 			return nil, err
 		}

@@ -8,45 +8,38 @@ import (
 )
 
 func getForgejoRepositories(
-	client interface{},
-	service string, githubRepoType string, githubNamespaceWhitelist []string,
-	gitlabProjectVisibility string, gitlabProjectMembershipType string,
-	ignoreFork bool, forgejoRepoType string,
+	client *forgejo.Client,
+	forgejoRepoType string,
 ) ([]*Repository, error) {
-	if client == nil {
-		log.Fatalf("Couldn't acquire a client to talk to %s", service)
-	}
-
-	forgejoClient := client.(*forgejo.Client)
 
 	switch forgejoRepoType {
 	case "starred":
-		user, _, err := forgejoClient.GetMyUserInfo()
+		user, _, err := client.GetMyUserInfo()
 		if err != nil {
-			log.Fatalf("Error fetching user info from %s: %v", service, err)
+			log.Fatalf("Error fetching user info from forgejo: %v", err)
 		}
 
 		log.Printf("Found user %s with ID %d", user.UserName, user.ID)
 
 		repos, err := paginateForgejoRepositories(func(page int) ([]*forgejo.Repository, *forgejo.Response, error) {
-			return forgejoClient.SearchRepos(forgejo.SearchRepoOptions{
+			return client.SearchRepos(forgejo.SearchRepoOptions{
 				ListOptions:     forgejo.ListOptions{Page: page},
 				StarredByUserID: user.ID,
 			})
 		})
 		if err != nil {
-			return nil, fmt.Errorf("fetching starred repositories from %s: %v", service, err)
+			return nil, fmt.Errorf("fetching starred repositories from forgejo: %v", err)
 		}
 
 		return repos, nil
 	case "user", "":
 		repos, err := paginateForgejoRepositories(func(page int) ([]*forgejo.Repository, *forgejo.Response, error) {
-			return forgejoClient.ListMyRepos(forgejo.ListReposOptions{
+			return client.ListMyRepos(forgejo.ListReposOptions{
 				ListOptions: forgejo.ListOptions{Page: page},
 			})
 		})
 		if err != nil {
-			return nil, fmt.Errorf("fetching user repositories from %s: %v", service, err)
+			return nil, fmt.Errorf("fetching user repositories from forgejo: %v", err)
 		}
 
 		return repos, nil

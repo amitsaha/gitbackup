@@ -2,35 +2,29 @@ package main
 
 import (
 	"context"
-	"log"
 	"strings"
 
 	"github.com/google/go-github/v34/github"
 )
 
 func getGithubRepositories(
-	client interface{},
-	service string, githubRepoType string, githubNamespaceWhitelist []string,
-	gitlabProjectVisibility string, gitlabProjectMembershipType string,
-	ignoreFork bool, forgejoRepoType string,
+	client *github.Client,
+	githubRepoType string, githubNamespaceWhitelist []string,
+	ignoreFork bool,
 ) ([]*Repository, error) {
-
-	if client == nil {
-		log.Fatalf("Couldn't acquire a client to talk to %s", service)
-	}
 
 	var repositories []*Repository
 
 	ctx := context.Background()
 
 	if githubRepoType == "starred" {
-		return getGithubStarredRepositories(ctx, client.(*github.Client), ignoreFork)
+		return getGithubStarredRepositories(ctx, client, ignoreFork)
 	}
 
 	options := github.RepositoryListOptions{Type: githubRepoType}
 
 	for {
-		repos, resp, err := client.(*github.Client).Repositories.List(ctx, "", &options)
+		repos, resp, err := client.Repositories.List(ctx, "", &options)
 		if err != nil {
 			return nil, err
 		}

@@ -1,22 +1,15 @@
 package main
 
 import (
-	"log"
 	"strings"
 
 	gitlab "github.com/xanzy/go-gitlab"
 )
 
 func getGitlabRepositories(
-	client interface{},
-	service string, githubRepoType string, githubNamespaceWhitelist []string,
+	client *gitlab.Client,
 	gitlabProjectVisibility string, gitlabProjectMembershipType string,
-	ignoreFork bool, forgejoRepoType string,
 ) ([]*Repository, error) {
-
-	if client == nil {
-		log.Fatalf("Couldn't acquire a client to talk to %s", service)
-	}
 
 	var repositories []*Repository
 
@@ -53,7 +46,7 @@ func getGitlabRepositories(
 	}
 
 	for {
-		repos, resp, err := client.(*gitlab.Client).Projects.ListProjects(&gitlabListOptions)
+		repos, resp, err := client.Projects.ListProjects(&gitlabListOptions)
 		if err != nil {
 			return nil, err
 		}

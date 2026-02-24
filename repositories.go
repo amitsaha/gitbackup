@@ -1,7 +1,13 @@
 package main
 
 import (
+	"log"
 	"net/http"
+
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
+	"github.com/google/go-github/v34/github"
+	bitbucket "github.com/ktrysmt/go-bitbucket"
+	gitlab "github.com/xanzy/go-gitlab"
 )
 
 // Response is derived from the following sources:
@@ -37,53 +43,34 @@ func getRepositories(
 	gitlabProjectVisibility string, gitlabProjectMembershipType string,
 	ignoreFork bool, forgejoRepoType string,
 ) ([]*Repository, error) {
+	if client == nil {
+		log.Fatalf("Couldn't acquire a client to talk to %s", service)
+	}
+
 	var repositories []*Repository
 	var err error
 
 	switch service {
 	case "github":
 		repositories, err = getGithubRepositories(
-			client,
-			service,
+			client.(*github.Client),
 			githubRepoType,
 			githubNamespaceWhitelist,
-			gitlabProjectVisibility,
-			gitlabProjectMembershipType,
 			ignoreFork,
-			forgejoRepoType,
 		)
-
 	case "gitlab":
 		repositories, err = getGitlabRepositories(
-			client,
-			service,
-			githubRepoType,
-			githubNamespaceWhitelist,
+			client.(*gitlab.Client),
 			gitlabProjectVisibility,
 			gitlabProjectMembershipType,
-			ignoreFork,
-			forgejoRepoType,
 		)
 	case "bitbucket":
 		repositories, err = getBitbucketRepositories(
-			client,
-			service,
-			githubRepoType,
-			githubNamespaceWhitelist,
-			gitlabProjectVisibility,
-			gitlabProjectMembershipType,
-			ignoreFork,
-			forgejoRepoType,
+			client.(*bitbucket.Client),
 		)
 	case "forgejo":
 		repositories, err = getForgejoRepositories(
-			client,
-			service,
-			githubRepoType,
-			githubNamespaceWhitelist,
-			gitlabProjectVisibility,
-			gitlabProjectMembershipType,
-			ignoreFork,
+			client.(*forgejo.Client),
 			forgejoRepoType,
 		)
 	}
