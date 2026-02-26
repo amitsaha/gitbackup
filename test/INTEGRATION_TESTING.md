@@ -18,7 +18,7 @@ Each contributor creates their own test accounts. The script expects a standard 
 2. Create two repositories:
    - `gitbackup-test-public` (public)
    - `gitbackup-test-private` (private)
-3. Fork any public `hello-world` repo (for testing `-ignore-fork`)
+3. Fork any public repo and rename it to `gitbackup-test-ignore-fork` (for testing `-ignore-fork`)
 
 ### GitLab
 
@@ -26,7 +26,7 @@ Each contributor creates their own test accounts. The script expects a standard 
 2. Create two projects:
    - `gitbackup-test-public` (public)
    - `gitbackup-test-private` (private)
-3. Fork any public `hello-world` project (for testing `-ignore-fork`)
+3. Fork any public project and rename it to `gitbackup-test-ignore-fork` (for testing `-ignore-fork`)
 
 ### Bitbucket
 
@@ -34,7 +34,7 @@ Each contributor creates their own test accounts. The script expects a standard 
 2. Create a workspace and two repositories:
    - `gitbackup-test-public` (public)
    - `gitbackup-test-private` (private)
-3. Fork any public `hello-world` repo into your workspace (for testing `-ignore-fork`)
+3. Fork any public repo into your workspace and rename it to `gitbackup-test-ignore-fork` (for testing `-ignore-fork`)
 
 ### Forgejo (Codeberg)
 
@@ -42,7 +42,7 @@ Each contributor creates their own test accounts. The script expects a standard 
 2. Create two repositories:
    - `gitbackup-test-public` (public)
    - `gitbackup-test-private` (private)
-3. Fork any public `hello-world` repo (for testing `-ignore-fork`)
+3. Fork any public repo and rename it to `gitbackup-test-ignore-fork` (for testing `-ignore-fork`)
 
 ## Environment Setup
 

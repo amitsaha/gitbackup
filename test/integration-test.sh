@@ -199,12 +199,12 @@ run_service_tests() {
 
     echo "  Running clone without -ignore-fork (fork should be present)..."
     if run_gitbackup -service "$service" -backupdir "$tmpdir" $extra_flags; then
-        if check_repo_exists "$tmpdir" "hello-world"; then
-            echo "    Found hello-world (forked repo)"
+        if check_repo_exists "$tmpdir" "gitbackup-test-ignore-fork"; then
+            echo "    Found gitbackup-test-ignore-fork (forked repo)"
             pass "$service ($label): fork present without -ignore-fork"
         else
-            echo "    Missing hello-world (forked repo)"
-            fail "$service ($label): fork present without -ignore-fork — hello-world not found"
+            echo "    Missing gitbackup-test-ignore-fork (forked repo)"
+            fail "$service ($label): fork present without -ignore-fork — gitbackup-test-ignore-fork not found"
         fi
     else
         fail "$service ($label): fork present without -ignore-fork — gitbackup exited with error"
@@ -217,11 +217,11 @@ run_service_tests() {
 
     echo "  Running clone with -ignore-fork..."
     if run_gitbackup -service "$service" -backupdir "$tmpdir" -ignore-fork $extra_flags; then
-        if check_repo_exists "$tmpdir" "hello-world"; then
-            echo "    Found hello-world (unexpected — should be skipped)"
+        if check_repo_exists "$tmpdir" "gitbackup-test-ignore-fork"; then
+            echo "    Found gitbackup-test-ignore-fork (unexpected — should be skipped)"
             fail "$service ($label): ignore-fork — forked repo should have been skipped"
         else
-            echo "    Correctly skipped hello-world"
+            echo "    Correctly skipped gitbackup-test-ignore-fork"
             # Verify non-fork repos are still present
             all_found=true
             for repo_name in $EXPECTED_REPOS; do
