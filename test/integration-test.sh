@@ -193,6 +193,56 @@ run_service_tests() {
     fi
 
     rm -rf "$tmpdir"
+
+    # Test 5: Ignore fork
+    tmpdir=$(mktemp -d)
+
+    echo "  Running clone without -ignore-fork (fork should be present)..."
+    if run_gitbackup -service "$service" -backupdir "$tmpdir" $extra_flags; then
+        if check_repo_exists "$tmpdir" "hello-world"; then
+            echo "    Found hello-world (forked repo)"
+            pass "$service ($label): fork present without -ignore-fork"
+        else
+            echo "    Missing hello-world (forked repo)"
+            fail "$service ($label): fork present without -ignore-fork — hello-world not found"
+        fi
+    else
+        fail "$service ($label): fork present without -ignore-fork — gitbackup exited with error"
+    fi
+
+    rm -rf "$tmpdir"
+
+    # Test 6: Ignore fork (with flag)
+    tmpdir=$(mktemp -d)
+
+    echo "  Running clone with -ignore-fork..."
+    if run_gitbackup -service "$service" -backupdir "$tmpdir" -ignore-fork $extra_flags; then
+        if check_repo_exists "$tmpdir" "hello-world"; then
+            echo "    Found hello-world (unexpected — should be skipped)"
+            fail "$service ($label): ignore-fork — forked repo should have been skipped"
+        else
+            echo "    Correctly skipped hello-world"
+            # Verify non-fork repos are still present
+            all_found=true
+            for repo_name in $EXPECTED_REPOS; do
+                if check_repo_exists "$tmpdir" "$repo_name"; then
+                    echo "    Found $repo_name"
+                else
+                    echo "    Missing $repo_name"
+                    all_found=false
+                fi
+            done
+            if $all_found; then
+                pass "$service ($label): ignore-fork"
+            else
+                fail "$service ($label): ignore-fork — non-fork repos missing"
+            fi
+        fi
+    else
+        fail "$service ($label): ignore-fork — gitbackup exited with error"
+    fi
+
+    rm -rf "$tmpdir"
     trap - RETURN
 }
 
