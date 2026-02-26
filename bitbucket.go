@@ -8,6 +8,7 @@ import (
 
 func getBitbucketRepositories(
 	client *bitbucket.Client,
+	ignoreFork bool,
 ) ([]*Repository, error) {
 
 	var repositories []*Repository
@@ -26,6 +27,9 @@ func getBitbucketRepositories(
 		}
 
 		for _, repo := range resp.Items {
+			if repo.Parent != nil && ignoreFork {
+				continue
+			}
 			namespace := strings.Split(repo.Full_name, "/")[0]
 
 			httpsURL, sshURL := extractBitbucketCloneURLs(repo.Links)

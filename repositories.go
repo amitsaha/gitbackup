@@ -63,15 +63,18 @@ func getRepositories(
 			client.(*gitlab.Client),
 			gitlabProjectVisibility,
 			gitlabProjectMembershipType,
+			ignoreFork,
 		)
 	case "bitbucket":
 		repositories, err = getBitbucketRepositories(
 			client.(*bitbucket.Client),
+			ignoreFork,
 		)
 	case "forgejo":
 		repositories, err = getForgejoRepositories(
 			client.(*forgejo.Client),
 			forgejoRepoType,
+			ignoreFork,
 		)
 	}
 	return repositories, err

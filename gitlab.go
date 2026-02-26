@@ -9,6 +9,7 @@ import (
 func getGitlabRepositories(
 	client *gitlab.Client,
 	gitlabProjectVisibility string, gitlabProjectMembershipType string,
+	ignoreFork bool,
 ) ([]*Repository, error) {
 
 	var repositories []*Repository
@@ -51,6 +52,9 @@ func getGitlabRepositories(
 			return nil, err
 		}
 		for _, repo := range repos {
+			if repo.ForkedFromProject != nil && ignoreFork {
+				continue
+			}
 			namespace := strings.Split(repo.PathWithNamespace, "/")[0]
 			cloneURL := getCloneURL(repo.WebURL, repo.SSHURLToRepo)
 			repositories = append(repositories, &Repository{

@@ -10,6 +10,7 @@ import (
 func getForgejoRepositories(
 	client *forgejo.Client,
 	forgejoRepoType string,
+	ignoreFork bool,
 ) ([]*Repository, error) {
 
 	switch forgejoRepoType {
@@ -26,7 +27,7 @@ func getForgejoRepositories(
 				ListOptions:     forgejo.ListOptions{Page: page},
 				StarredByUserID: user.ID,
 			})
-		})
+		}, ignoreFork)
 		if err != nil {
 			return nil, fmt.Errorf("fetching starred repositories from forgejo: %v", err)
 		}
@@ -37,7 +38,7 @@ func getForgejoRepositories(
 			return client.ListMyRepos(forgejo.ListReposOptions{
 				ListOptions: forgejo.ListOptions{Page: page},
 			})
-		})
+		}, ignoreFork)
 		if err != nil {
 			return nil, fmt.Errorf("fetching user repositories from forgejo: %v", err)
 		}
@@ -48,7 +49,7 @@ func getForgejoRepositories(
 	}
 }
 
-func paginateForgejoRepositories(fetch func(page int) ([]*forgejo.Repository, *forgejo.Response, error)) ([]*Repository, error) {
+func paginateForgejoRepositories(fetch func(page int) ([]*forgejo.Repository, *forgejo.Response, error), ignoreFork bool) ([]*Repository, error) {
 	var repositories []*Repository
 	page := 1
 
@@ -59,6 +60,9 @@ func paginateForgejoRepositories(fetch func(page int) ([]*forgejo.Repository, *f
 		}
 
 		for _, repo := range results {
+			if repo.Fork && ignoreFork {
+				continue
+			}
 			repositories = append(repositories, &Repository{
 				CloneURL:  getCloneURL(repo.CloneURL, repo.SSHURL),
 				Name:      repo.Name,
