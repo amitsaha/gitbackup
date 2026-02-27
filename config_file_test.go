@@ -1,12 +1,37 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
 )
+
+// buildTestConfig creates a minimal cli.App with appFlags(), runs it with the
+// given args, and returns the appConfig produced by buildConfig.
+func buildTestConfig(args []string) (*appConfig, error) {
+	var result *appConfig
+	var buildErr error
+
+	app := &cli.App{
+		Name:  "gitbackup",
+		Flags: appFlags(),
+		Action: func(cCtx *cli.Context) error {
+			result, buildErr = buildConfig(cCtx)
+			return buildErr
+		},
+	}
+
+	// urfave/cli expects the program name as args[0]
+	fullArgs := append([]string{"gitbackup"}, args...)
+	if err := app.Run(fullArgs); err != nil {
+		return nil, fmt.Errorf("app.Run: %w", err)
+	}
+	return result, buildErr
+}
 
 func TestHandleInitConfig(t *testing.T) {
 	tmpDir := t.TempDir()
@@ -127,8 +152,8 @@ func TestInitConfigWithConfigFile(t *testing.T) {
 	os.Setenv("GITLAB_TOKEN", "testtoken")
 	defer os.Unsetenv("GITLAB_TOKEN")
 
-	// initConfig with --config flag should use config file values
-	c, err := initConfig([]string{"-config", configPath})
+	// buildTestConfig with --config flag should use config file values
+	c, err := buildTestConfig([]string{"-config", configPath})
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
@@ -160,7 +185,7 @@ func TestInitConfigCLIOverridesConfigFile(t *testing.T) {
 	defer os.Unsetenv("GITLAB_TOKEN")
 
 	// CLI flag overrides service to github
-	c, err := initConfig([]string{"-config", configPath, "-service", "github"})
+	c, err := buildTestConfig([]string{"-config", configPath, "-service", "github"})
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
@@ -177,7 +202,7 @@ func TestInitConfigCLIOverridesConfigFile(t *testing.T) {
 
 func TestInitConfigNoConfigFile(t *testing.T) {
 	// No config file — should behave exactly as before
-	c, err := initConfig([]string{"-service", "github"})
+	c, err := buildTestConfig([]string{"-service", "github"})
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}

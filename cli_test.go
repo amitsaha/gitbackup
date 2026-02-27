@@ -45,7 +45,7 @@ func TestCliUsage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	gotUsage := stderr.Bytes()
+	gotUsage := stdout.Bytes()
 
 	expectedUsage, err := os.ReadFile(goldenFilepath)
 	if err != nil {

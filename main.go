@@ -1,10 +1,11 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/urfave/cli/v2"
 )
 
 // MaxConcurrentClones is the upper limit of the maximum number of
@@ -26,62 +27,66 @@ var knownServices = map[string]string{
 	"forgejo":   "codeberg.org",
 }
 
-// parseSubcommandFlags parses --config and --help flags for a subcommand.
-func parseSubcommandFlags(name, description string, args []string) string {
-	var configPath string
-	fs := flag.NewFlagSet("gitbackup "+name, flag.ExitOnError)
-	fs.StringVar(&configPath, "config", "", "Path to config file (default: OS config directory)")
-	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: gitbackup %s [--config path]\n\n", name)
-		fmt.Fprintf(os.Stderr, "%s\n\n", description)
-		fs.PrintDefaults()
-	}
-	fs.Parse(args)
-	return configPath
-}
-
 func main() {
-
-	// Handle subcommands before flag parsing
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "init":
-			configPath := parseSubcommandFlags("init", "Create a default gitbackup.yml configuration file.", os.Args[2:])
-			if err := handleInitConfig(configPath); err != nil {
-				log.Fatal(err)
+	app := &cli.App{
+		Name:  "gitbackup",
+		Usage: "Backup your Git repositories from GitHub, GitLab, Bitbucket, or Forgejo",
+		Flags: appFlags(),
+		Action: func(cCtx *cli.Context) error {
+			c, err := buildConfig(cCtx)
+			if err != nil {
+				return err
 			}
-			return
-		case "validate":
-			configPath := parseSubcommandFlags("validate", "Validate the gitbackup.yml configuration file.", os.Args[2:])
-			if err := handleValidateConfig(configPath); err != nil {
-				log.Fatal(err)
+			err = validateConfig(c)
+			if err != nil {
+				return err
 			}
-			return
-		}
+
+			client := newClient(c.service, c.gitHostURL)
+
+			if c.githubListUserMigrations {
+				handleGithubListUserMigrations(client, c)
+			} else if c.githubCreateUserMigration {
+				handleGithubCreateUserMigration(client, c)
+			} else {
+				if err := handleGitRepositoryClone(client, c); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+		Commands: []*cli.Command{
+			{
+				Name:  "init",
+				Usage: "Create a default gitbackup.yml configuration file",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "config",
+						Usage: "Path to config file (default: OS config directory)",
+					},
+				},
+				Action: func(cCtx *cli.Context) error {
+					return handleInitConfig(cCtx.String("config"))
+				},
+			},
+			{
+				Name:  "validate",
+				Usage: "Validate the gitbackup.yml configuration file",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "config",
+						Usage: "Path to config file (default: OS config directory)",
+					},
+				},
+				Action: func(cCtx *cli.Context) error {
+					return handleValidateConfig(cCtx.String("config"))
+				},
+			},
+		},
 	}
 
-	c, err := initConfig(os.Args[1:])
-	if err != nil {
+	if err := app.Run(os.Args); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		log.Fatal(err)
-	}
-	err = validateConfig(c)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	client := newClient(c.service, c.gitHostURL)
-	var executionErr error
-
-	// TODO implement validation of options so that we don't
-	// allow multiple operations at one go
-	if c.githubListUserMigrations {
-		handleGithubListUserMigrations(client, c)
-	} else if c.githubCreateUserMigration {
-		handleGithubCreateUserMigration(client, c)
-	} else {
-		executionErr = handleGitRepositoryClone(client, c)
-	}
-	if executionErr != nil {
-		log.Fatal(executionErr)
 	}
 }
