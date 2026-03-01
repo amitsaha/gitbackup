@@ -22,14 +22,24 @@ if [[ -f "$SCRIPT_DIR/.env" ]]; then
 fi
 
 VERBOSE=false
+TEST_SSH=false
+TEST_HTTPS=false
 SERVICES=()
 
 for arg in "$@"; do
     case "$arg" in
         -v|--verbose) VERBOSE=true ;;
+        --ssh|-ssh) TEST_SSH=true ;;
+        --https|-https) TEST_HTTPS=true ;;
         *) SERVICES+=("$arg") ;;
     esac
 done
+
+# If neither is specified, test both
+if ! $TEST_SSH && ! $TEST_HTTPS; then
+    TEST_SSH=true
+    TEST_HTTPS=true
+fi
 
 if [[ ${#SERVICES[@]} -eq 0 ]]; then
     SERVICES=(github gitlab bitbucket forgejo)
@@ -216,12 +226,12 @@ run_service_tests() {
 
     log "  Running clone without -ignore-fork (fork should be present)..."
     if run_gitbackup -service "$service" -backupdir "$tmpdir" $extra_flags; then
-        if check_repo_exists "$tmpdir" "gitbackup-test-ignore-fork"; then
-            log "    Found gitbackup-test-ignore-fork (forked repo)"
+        if check_repo_exists "$tmpdir" "gitbackup-test-fork"; then
+            log "    Found gitbackup-test-fork (forked repo)"
             pass "$service ($label): fork present without -ignore-fork"
         else
-            log "    Missing gitbackup-test-ignore-fork (forked repo)"
-            fail "$service ($label): fork present without -ignore-fork — gitbackup-test-ignore-fork not found"
+            log "    Missing gitbackup-test-fork (forked repo)"
+            fail "$service ($label): fork present without -ignore-fork — gitbackup-test-fork not found"
         fi
     else
         fail "$service ($label): fork present without -ignore-fork — gitbackup exited with error"
@@ -234,11 +244,11 @@ run_service_tests() {
 
     log "  Running clone with -ignore-fork..."
     if run_gitbackup -service "$service" -backupdir "$tmpdir" -ignore-fork $extra_flags; then
-        if check_repo_exists "$tmpdir" "gitbackup-test-ignore-fork"; then
-            log "    Found gitbackup-test-ignore-fork (unexpected — should be skipped)"
+        if check_repo_exists "$tmpdir" "gitbackup-test-fork"; then
+            log "    Found gitbackup-test-fork (unexpected — should be skipped)"
             fail "$service ($label): ignore-fork — forked repo should have been skipped"
         else
-            log "    Correctly skipped gitbackup-test-ignore-fork"
+            log "    Correctly skipped gitbackup-test-fork"
             # Verify non-fork repos are still present
             all_found=true
             for repo_name in $EXPECTED_REPOS; do
@@ -277,20 +287,27 @@ run_starred_tests() {
 
     log "  Running starred repos clone..."
     if run_gitbackup -service "$service" -backupdir "$tmpdir" -use-https-clone $extra_flags; then
-        if check_repo_exists "$tmpdir" "gitbackup-test-public"; then
-            log "    Found gitbackup-test-public (starred)"
+        if check_repo_exists "$tmpdir" "gitbackup-test-starred"; then
+            log "    Found gitbackup-test-starred"
         else
-            log "    Missing gitbackup-test-public (starred)"
-            fail "$service ($label): starred — gitbackup-test-public not found"
+            log "    Missing gitbackup-test-starred"
+            fail "$service ($label): starred — gitbackup-test-starred not found"
             rm -rf "$tmpdir"
             trap - RETURN
             return
         fi
-        if check_repo_exists "$tmpdir" "gitbackup-test-private"; then
-            log "    Found gitbackup-test-private (unexpected — not starred)"
-            fail "$service ($label): starred — gitbackup-test-private should not be present"
+        local unexpected_found=false
+        for repo_name in gitbackup-test-public gitbackup-test-private; do
+            if check_repo_exists "$tmpdir" "$repo_name"; then
+                log "    Found $repo_name (unexpected — not starred)"
+                unexpected_found=true
+            else
+                log "    Correctly excluded $repo_name (not starred)"
+            fi
+        done
+        if $unexpected_found; then
+            fail "$service ($label): starred — non-starred repos should not be present"
         else
-            log "    Correctly excluded gitbackup-test-private (not starred)"
             pass "$service ($label): starred"
         fi
     else
@@ -314,43 +331,41 @@ for service in "${SERVICES[@]}"; do
     case "$service" in
         github)
             check_env github GITHUB_TOKEN || continue
-            run_service_tests github "SSH"
-            run_service_tests github "HTTPS" "-use-https-clone"
-            run_starred_tests github "starred" "-github.repoType starred"
+            $TEST_SSH && run_service_tests github "SSH"
+            $TEST_HTTPS && run_service_tests github "HTTPS" "-use-https-clone"
+            $TEST_HTTPS && run_starred_tests github "starred" "-github.repoType starred"
             ;;
         gitlab)
             check_env gitlab GITLAB_TOKEN || continue
-            run_service_tests gitlab "SSH" "-gitlab.projectVisibility all -gitlab.projectMembershipType owner"
-            run_service_tests gitlab "HTTPS" "-gitlab.projectVisibility all -gitlab.projectMembershipType owner -use-https-clone"
-            run_starred_tests gitlab "starred" "-gitlab.projectVisibility all -gitlab.projectMembershipType starred"
+            $TEST_SSH && run_service_tests gitlab "SSH" "-gitlab.projectVisibility all -gitlab.projectMembershipType owner"
+            $TEST_HTTPS && run_service_tests gitlab "HTTPS" "-gitlab.projectVisibility all -gitlab.projectMembershipType owner -use-https-clone"
+            $TEST_HTTPS && run_starred_tests gitlab "starred" "-gitlab.projectVisibility all -gitlab.projectMembershipType starred"
             ;;
         bitbucket)
             check_env bitbucket BITBUCKET_USERNAME BITBUCKET_TOKEN || continue
-            run_service_tests bitbucket "SSH"
-            run_service_tests bitbucket "HTTPS" "-use-https-clone"
+            $TEST_SSH && run_service_tests bitbucket "SSH"
+            $TEST_HTTPS && run_service_tests bitbucket "HTTPS" "-use-https-clone"
             ;;
         forgejo)
             check_env forgejo FORGEJO_TOKEN || continue
-            run_service_tests forgejo "SSH" "-githost.url https://codeberg.org"
-            run_service_tests forgejo "HTTPS" "-githost.url https://codeberg.org -use-https-clone"
-            run_starred_tests forgejo "starred" "-githost.url https://codeberg.org -forgejo.repoType starred"
+            $TEST_SSH && run_service_tests forgejo "SSH" "-githost.url https://codeberg.org"
+            $TEST_HTTPS && run_service_tests forgejo "HTTPS" "-githost.url https://codeberg.org -use-https-clone"
+            $TEST_HTTPS && run_starred_tests forgejo "starred" "-githost.url https://codeberg.org -forgejo.repoType starred"
             ;;
     esac
 done
 
 # --- Summary (verbose only) ---
 
-if $VERBOSE; then
-    log ""
-    log "${BOLD}==============================${RESET}"
-    log "Results: $PASSED passed, $FAILED failed"
-    log ""
-    for r in "${RESULTS[@]}"; do
-        log "  $r"
-    done
-    log "Elapsed: $((SECONDS - START_TIME))s"
-    log "${BOLD}==============================${RESET}"
-fi
+log ""
+log "${BOLD}==============================${RESET}"
+log "Results: $PASSED passed, $FAILED failed"
+log ""
+for r in "${RESULTS[@]}"; do
+    log "  $r"
+done
+log "Elapsed: $((SECONDS - START_TIME))s"
+log "${BOLD}==============================${RESET}"
 
 if [[ $FAILED -gt 0 ]]; then
     exit 1
