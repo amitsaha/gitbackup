@@ -15,20 +15,20 @@ Each contributor creates their own test accounts. The script expects a standard 
 ### GitHub
 
 1. Create a [personal access token](https://github.com/settings/tokens) with `repo` scope
-2. Create two repositories:
+2. Create three repositories:
    - `gitbackup-test-public` (public)
    - `gitbackup-test-private` (private)
-3. Fork any public repo and rename it to `gitbackup-test-ignore-fork` (for testing `-ignore-fork`)
-4. Star the `gitbackup-test-public` repository
+   - `gitbackup-test-starred` (public) — star this repo (for testing starred repo filtering)
+3. Fork any public repo and rename it to `gitbackup-test-fork` (for testing `-ignore-fork`)
 
 ### GitLab
 
 1. Create a [personal access token](https://gitlab.com/-/user_settings/personal_access_tokens) with `read_api` scope
-2. Create two projects:
+2. Create three projects:
    - `gitbackup-test-public` (public)
    - `gitbackup-test-private` (private)
-3. Fork any public project and rename it to `gitbackup-test-ignore-fork` (for testing `-ignore-fork`)
-4. Star the `gitbackup-test-public` project
+   - `gitbackup-test-starred` (public) — star this project (for testing starred project filtering)
+3. Fork any public project and rename it to `gitbackup-test-fork` (for testing `-ignore-fork`)
 
 ### Bitbucket
 
@@ -36,16 +36,16 @@ Each contributor creates their own test accounts. The script expects a standard 
 2. Create a workspace and two repositories:
    - `gitbackup-test-public` (public)
    - `gitbackup-test-private` (private)
-3. Fork any public repo into your workspace and rename it to `gitbackup-test-ignore-fork` (for testing `-ignore-fork`)
+3. Fork any public repo into your workspace and rename it to `gitbackup-test-fork` (for testing `-ignore-fork`)
 
 ### Forgejo (Codeberg)
 
-1. Create an [access token](https://codeberg.org/user/settings/applications) with `read:repository` permission
-2. Create two repositories:
+1. Create an [access token](https://codeberg.org/user/settings/applications) with `read:repository` and `read:user` permissions
+2. Create three repositories:
    - `gitbackup-test-public` (public)
    - `gitbackup-test-private` (private)
-3. Fork any public repo and rename it to `gitbackup-test-ignore-fork` (for testing `-ignore-fork`)
-4. Star the `gitbackup-test-public` repository
+   - `gitbackup-test-starred` (public) — star this repo (for testing starred repo filtering)
+3. Fork any public repo and rename it to `gitbackup-test-fork` (for testing `-ignore-fork`)
 
 ## Environment Setup
 
