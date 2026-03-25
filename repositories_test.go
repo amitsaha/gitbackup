@@ -53,7 +53,10 @@ func setupRepositoryTests() {
 		log.Fatal(err)
 	}
 
-	BitbucketClient = bitbucket.NewBasicAuth(os.Getenv("BITBUCKET_USERNAME"), os.Getenv("BITBUCKET_USERNAME"))
+	BitbucketClient, err = bitbucket.NewBasicAuth(os.Getenv("BITBUCKET_USERNAME"), os.Getenv("BITBUCKET_PASSWORD"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	BitbucketClient.SetApiBaseURL(*url)
 
 	ForgejoClient, err = forgejo.NewClient(url.String(), forgejo.SetToken(os.Getenv("FORGEJO_TOKEN")), forgejo.SetForgejoVersion(""))
