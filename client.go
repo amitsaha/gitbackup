@@ -185,7 +185,10 @@ func newBitbucketClient(gitHostURLParsed *url.URL) *bitbucket.Client {
 	}
 
 	gitHostToken = bitbucketPasswordOrToken
-	client := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPasswordOrToken)
+	client, err := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPasswordOrToken)
+	if err != nil {
+		log.Fatalf("Error creating Bitbucket client: %v", err)
+	}
 
 	if gitHostURLParsed != nil {
 		client.SetApiBaseURL(*gitHostURLParsed)
