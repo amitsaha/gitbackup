@@ -15,6 +15,7 @@ Contact us for any custom on-prem or cloud deployment, new feature requests or e
 - [gitbackup - Backup your GitHub, GitLab, Bitbucket, and Forgejo repositories](#gitbackup---backup-your-github-gitlab-and-bitbucket-repositories)
   - [Introduction](#introduction)
   - [Installing `gitbackup`](#installing-gitbackup)
+    - [Docker image](#docker-image)
   - [Using `gitbackup`](#using-gitbackup)
     - [GitHub Specific oAuth App Flow](#github-specific-oauth-app-flow)
     - [OAuth Scopes/Permissions required](#oauth-scopespermissions-required)
@@ -55,6 +56,66 @@ Binary releases are available from the [Releases](https://github.com/amitsaha/gi
 and architecture and copy the binary somewhere in your ``$PATH``. It is recommended to rename the binary to `gitbackup` or `gitbackup.exe` (on Windows).
 
 If you are on MacOS, a community member has created a [Homebrew formula](https://formulae.brew.sh/formula/gitbackup).
+
+### Docker image
+
+Docker images are published to [GitHub Container Registry](https://github.com/amitsaha/gitbackup/pkgs/container/gitbackup) on every release:
+
+```bash
+docker pull ghcr.io/amitsaha/gitbackup:<version>
+```
+
+Replace `<version>` with the desired release tag (e.g. `0.9.1`).
+
+#### Running with a volume mount
+
+The container runs as a non-root user (`nonroot`, UID `65532`). You must ensure the backup directory on the host is writable by that UID before mounting it:
+
+```bash
+mkdir -p /data/gitbackup
+chown 65532:65532 /data/gitbackup
+```
+
+Then run the container, mounting the directory as the backup target:
+
+```bash
+docker run --rm \
+  -e GITHUB_TOKEN=<your-token> \
+  -v /data/gitbackup:/backup \
+  ghcr.io/amitsaha/gitbackup:<version> \
+  -service github -backupdir /backup
+```
+
+#### HTTPS cloning (recommended in containers)
+
+By default `gitbackup` clones repositories over SSH, which requires access to an SSH key and a populated `known_hosts` file inside the container. The simpler alternative is to use HTTPS cloning via the `-use-https-clone` flag — no SSH keys are required:
+
+```bash
+docker run --rm \
+  -e GITHUB_TOKEN=<your-token> \
+  -v /data/gitbackup:/backup \
+  ghcr.io/amitsaha/gitbackup:<version> \
+  -service github -backupdir /backup -use-https-clone
+```
+
+#### SSH cloning
+
+If you need SSH cloning, mount your private key and `known_hosts` into the container user's home directory. Because the container user is `nonroot` (UID `65532`), ensure the key file is readable by that UID:
+
+```bash
+# Make a copy of the key owned by UID 65532
+cp $HOME/.ssh/id_rsa /tmp/gitbackup_id_rsa
+chown 65532 /tmp/gitbackup_id_rsa
+chmod 600 /tmp/gitbackup_id_rsa
+
+docker run --rm \
+  -e GITHUB_TOKEN=<your-token> \
+  -v /data/gitbackup:/backup \
+  -v /tmp/gitbackup_id_rsa:/home/nonroot/.ssh/id_rsa:ro \
+  -v $HOME/.ssh/known_hosts:/home/nonroot/.ssh/known_hosts:ro \
+  ghcr.io/amitsaha/gitbackup:<version> \
+  -service github -backupdir /backup
+```
 
 ## Using `gitbackup`
 
