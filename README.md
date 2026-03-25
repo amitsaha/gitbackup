@@ -440,7 +440,7 @@ To backup all your Bitbucket repositories to the default backup directory (``$HO
 Using an API token (recommended):
 
 ```lang=bash
-$ BITBUCKET_USERNAME=username BITBUCKET_TOKEN=token gitbackup -service bitbucket
+$ BITBUCKET_USERNAME=<your atlassian email> BITBUCKET_TOKEN=token gitbackup -service bitbucket
 ```
 
 Using an app password (deprecated, disabled after June 9, 2026):
