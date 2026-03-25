@@ -9,8 +9,16 @@ COPY . .
 
 RUN CGO_ENABLED=0 go build -o /gitbackup .
 
-FROM gcr.io/distroless/static-debian12
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -g 65532 nonroot \
+    && useradd -r -u 65532 -g nonroot -d /home/nonroot -m nonroot
 
 COPY --from=builder /gitbackup /gitbackup
+
+USER nonroot:nonroot
 
 ENTRYPOINT ["/gitbackup"]
