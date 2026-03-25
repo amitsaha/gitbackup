@@ -67,28 +67,18 @@ docker pull ghcr.io/amitsaha/gitbackup:<version>
 
 Replace `<version>` with the desired release tag (e.g. `0.9.1`).
 
-#### Running with a volume mount
+The container runs as a non-root user (`nonroot`, UID `65532`). HTTPS cloning (`-use-https-clone`) is recommended inside containers because it requires no SSH key management.
 
-The container runs as a non-root user (`nonroot`, UID `65532`). You must ensure the backup directory on the host is writable by that UID before mounting it:
+#### Linux
+
+On Linux, Docker runs natively so container UIDs map directly to host UIDs. Before mounting a backup directory, grant write access to UID `65532`:
 
 ```bash
 mkdir -p /data/gitbackup
 chown 65532:65532 /data/gitbackup
 ```
 
-Then run the container, mounting the directory as the backup target:
-
-```bash
-docker run --rm \
-  -e GITHUB_TOKEN=<your-token> \
-  -v /data/gitbackup:/backup \
-  ghcr.io/amitsaha/gitbackup:<version> \
-  -service github -backupdir /backup
-```
-
-#### HTTPS cloning (recommended in containers)
-
-By default `gitbackup` clones repositories over SSH, which requires access to an SSH key and a populated `known_hosts` file inside the container. The simpler alternative is to use HTTPS cloning via the `-use-https-clone` flag — no SSH keys are required:
+Run with HTTPS cloning (recommended):
 
 ```bash
 docker run --rm \
@@ -98,12 +88,9 @@ docker run --rm \
   -service github -backupdir /backup -use-https-clone
 ```
 
-#### SSH cloning
-
-If you need SSH cloning, mount your private key and `known_hosts` into the container user's home directory. Because the container user is `nonroot` (UID `65532`), ensure the key file is readable by that UID:
+If you need SSH cloning, make a copy of your private key readable by UID `65532` and mount it:
 
 ```bash
-# Make a copy of the key owned by UID 65532
 cp $HOME/.ssh/id_rsa /tmp/gitbackup_id_rsa
 chown 65532 /tmp/gitbackup_id_rsa
 chmod 600 /tmp/gitbackup_id_rsa
@@ -116,6 +103,65 @@ docker run --rm \
   ghcr.io/amitsaha/gitbackup:<version> \
   -service github -backupdir /backup
 ```
+
+#### macOS
+
+Docker Desktop for Mac runs containers inside a Linux VM and translates volume mounts through its filesystem layer (VirtioFS). Because of this translation, the container UID (`65532`) is mapped automatically — you do **not** need to `chown` the host directory. Paths use the same Unix syntax as Linux.
+
+```bash
+mkdir -p $HOME/gitbackup
+
+docker run --rm \
+  -e GITHUB_TOKEN=<your-token> \
+  -v $HOME/gitbackup:/backup \
+  ghcr.io/amitsaha/gitbackup:<version> \
+  -service github -backupdir /backup -use-https-clone
+```
+
+SSH cloning on macOS requires the same key-ownership step as Linux. Although VirtioFS handles write permissions for the backup directory automatically, `git` performs a strict ownership check on the SSH private key inside the container — the key file must be owned by the user running inside the container (UID `65532`). Host UIDs on macOS are unrelated to container UIDs, so the ownership must be set explicitly on a copy of the key:
+
+```bash
+cp $HOME/.ssh/id_rsa /tmp/gitbackup_id_rsa
+chown 65532 /tmp/gitbackup_id_rsa
+chmod 600 /tmp/gitbackup_id_rsa
+
+docker run --rm \
+  -e GITHUB_TOKEN=<your-token> \
+  -v $HOME/gitbackup:/backup \
+  -v /tmp/gitbackup_id_rsa:/home/nonroot/.ssh/id_rsa:ro \
+  -v $HOME/.ssh/known_hosts:/home/nonroot/.ssh/known_hosts:ro \
+  ghcr.io/amitsaha/gitbackup:<version> \
+  -service github -backupdir /backup
+```
+
+#### Windows
+
+Docker Desktop for Windows (WSL2 backend recommended) translates volume mounts through the WSL2 VM, so no `chown` is needed on the host directory. Use PowerShell syntax for environment variables and paths:
+
+```powershell
+# PowerShell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\gitbackup"
+
+docker run --rm `
+  -e GITHUB_TOKEN=$env:GITHUB_TOKEN `
+  -v "${env:USERPROFILE}\gitbackup:/backup" `
+  ghcr.io/amitsaha/gitbackup:<version> `
+  -service github -backupdir /backup -use-https-clone
+```
+
+If you prefer Command Prompt:
+
+```cmd
+mkdir %USERPROFILE%\gitbackup
+
+docker run --rm ^
+  -e GITHUB_TOKEN=%GITHUB_TOKEN% ^
+  -v "%USERPROFILE%\gitbackup:/backup" ^
+  ghcr.io/amitsaha/gitbackup:<version> ^
+  -service github -backupdir /backup -use-https-clone
+```
+
+SSH cloning on Windows requires your SSH key to be accessible from WSL2 or Docker Desktop. The recommended approach is to store your key under WSL2 and mount it using a WSL path, or use HTTPS cloning to avoid SSH key management altogether.
 
 ## Using `gitbackup`
 
