@@ -166,7 +166,7 @@ SSH cloning on Windows requires your SSH key to be accessible from WSL2 or Docke
 ## Using `gitbackup`
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for
-backing up GitHub repositories, a [GitLab personal access token](https://gitlab.com/profile/personal_access_tokens)
+backing up GitHub repositories, a [GitLab personal access token](https://gitlab.com/-/user_settings/personal_access_tokens)
 for GitLab repositories, a username and [API token](https://support.atlassian.com/bitbucket-cloud/docs/api-tokens/) (or [app password](https://bitbucket.org/account/settings/app-passwords/)) for
 Bitbucket repositories, or a [Forgejo access token][https://docs.codeberg.org/advanced/access-token/] for Forgejo.
 
