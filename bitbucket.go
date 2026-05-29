@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"os"
 	"strings"
 
 	bitbucket "github.com/ktrysmt/go-bitbucket"
@@ -11,15 +13,26 @@ func getBitbucketRepositories(
 	ignoreFork bool,
 ) ([]*Repository, error) {
 
-	var repositories []*Repository
-
-	resp, err := client.Workspaces.List()
-	if err != nil {
-		return nil, err
+	// As of April 14, 2026 Atlassian removed the cross-workspace listing
+	// endpoints (/2.0/workspaces and /2.0/user/permissions/workspaces) under
+	// changelog entries CHANGE-2770 / CHANGE-3022. There is no supported way
+	// to enumerate the workspaces a user belongs to programmatically. The
+	// caller must supply the workspace slugs via BITBUCKET_WORKSPACES
+	// (comma-separated).
+	workspacesEnv := os.Getenv("BITBUCKET_WORKSPACES")
+	if workspacesEnv == "" {
+		log.Fatal("BITBUCKET_WORKSPACES environment variable not set (comma-separated workspace slugs)")
 	}
 
-	for _, workspace := range resp.Workspaces {
-		options := &bitbucket.RepositoriesOptions{Owner: workspace.Slug}
+	var repositories []*Repository
+
+	for _, slug := range strings.Split(workspacesEnv, ",") {
+		slug = strings.TrimSpace(slug)
+		if slug == "" {
+			continue
+		}
+
+		options := &bitbucket.RepositoriesOptions{Owner: slug}
 
 		resp, err := client.Repositories.ListForAccount(options)
 		if err != nil {

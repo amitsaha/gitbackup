@@ -167,11 +167,11 @@ SSH cloning on Windows requires your SSH key to be accessible from WSL2 or Docke
 
 ``gitbackup`` requires a [GitHub API access token](https://github.com/blog/1509-personal-api-tokens) for
 backing up GitHub repositories, a [GitLab personal access token](https://gitlab.com/-/user_settings/personal_access_tokens)
-for GitLab repositories, a username and [API token](https://support.atlassian.com/bitbucket-cloud/docs/api-tokens/) (or [app password](https://bitbucket.org/account/settings/app-passwords/)) for
+for GitLab repositories, an Atlassian account email plus an [API token](https://support.atlassian.com/bitbucket-cloud/docs/api-tokens/) (or [app password](https://bitbucket.org/account/settings/app-passwords/)) for
 Bitbucket repositories, or a [Forgejo access token][https://docs.codeberg.org/advanced/access-token/] for Forgejo.
 
 You can supply the tokens to ``gitbackup`` using ``GITHUB_TOKEN``, ``GITLAB_TOKEN``, or ``FORGEJO_TOKEN`` environment
-variables respectively, and the Bitbucket credentials with ``BITBUCKET_USERNAME`` and either ``BITBUCKET_TOKEN`` or ``BITBUCKET_PASSWORD``.
+variables respectively, and the Bitbucket credentials with ``BITBUCKET_EMAIL`` (or ``BITBUCKET_USERNAME`` for legacy app-password setups) and either ``BITBUCKET_TOKEN`` or ``BITBUCKET_PASSWORD``. Bitbucket additionally requires ``BITBUCKET_WORKSPACES`` (comma-separated workspace slugs) because Atlassian removed the cross-workspace listing APIs on April 14, 2026.
 
 ### GitHub Specific oAuth App Flow
 
@@ -435,18 +435,22 @@ $ GITLAB_TOKEN=secret$token gitbackup -service gitlab -githost.url https://git.y
 
 #### Backing up your Bitbucket repositories
 
+Atlassian removed the cross-workspace listing endpoints on April 14, 2026.
+There is no supported way to enumerate the workspaces a user belongs to programmatically, so you must list them
+explicitly via ``BITBUCKET_WORKSPACES``.
+
 To backup all your Bitbucket repositories to the default backup directory (``$HOME/.gitbackup/``):
 
 Using an API token (recommended):
 
 ```lang=bash
-$ BITBUCKET_USERNAME=<your atlassian email> BITBUCKET_TOKEN=token gitbackup -service bitbucket
+$ BITBUCKET_EMAIL=<your atlassian email> BITBUCKET_TOKEN=token BITBUCKET_WORKSPACES=ws1,ws2 gitbackup -service bitbucket
 ```
 
 Using an app password (deprecated, disabled after June 9, 2026):
 
 ```lang=bash
-$ BITBUCKET_USERNAME=username BITBUCKET_PASSWORD=password gitbackup -service bitbucket
+$ BITBUCKET_USERNAME=username BITBUCKET_PASSWORD=password BITBUCKET_WORKSPACES=ws1,ws2 gitbackup -service bitbucket
 ```
 
 #### Backing up your Forgejo repositories
