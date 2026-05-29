@@ -30,6 +30,7 @@ func setupRepositoryTests() {
 	os.Setenv("GITLAB_TOKEN", "$$$randome")
 	os.Setenv("BITBUCKET_USERNAME", "bbuser")
 	os.Setenv("BITBUCKET_PASSWORD", "$$$randomp")
+	os.Setenv("BITBUCKET_WORKSPACES", "ws1,ws2")
 	os.Setenv("FORGEJO_TOKEN", "$$$randome")
 	// test server
 	mux = http.NewServeMux()
@@ -237,12 +238,11 @@ func TestGetBitbucketRepositories(t *testing.T) {
 	setupRepositoryTests()
 	defer teardownRepositoryTests()
 
-	mux.HandleFunc("/workspaces", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"slug": "abc"}]}`)
+	mux.HandleFunc("/repositories/ws1", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"full_name":"ws1/repo1", "slug":"repo1", "is_private":true, "links":{"clone":[{"name":"https", "href":"https://bbuser@bitbucket.org/ws1/repo1.git"}, {"name":"ssh", "href":"git@bitbucket.org:ws1/repo1.git"}]}}]}`)
 	})
-
-	mux.HandleFunc("/repositories/abc", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"full_name":"abc/def", "slug":"def", "is_private":true, "links":{"clone":[{"name":"https", "href":"https://bbuser@bitbucket.org/abc/def.git"}, {"name":"ssh", "href":"git@bitbucket.org:abc/def.git"}]}}]}`)
+	mux.HandleFunc("/repositories/ws2", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"pagelen": 10, "page": 1, "size": 1, "values": [{"full_name":"ws2/repo2", "slug":"repo2", "is_private":true, "links":{"clone":[{"name":"https", "href":"https://bbuser@bitbucket.org/ws2/repo2.git"}, {"name":"ssh", "href":"git@bitbucket.org:ws2/repo2.git"}]}}]}`)
 	})
 
 	repos, err := getRepositories(BitbucketClient, "bitbucket", "", []string{}, "", "", false, "")
@@ -250,7 +250,11 @@ func TestGetBitbucketRepositories(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 	var expected []*Repository
-	expected = append(expected, &Repository{Namespace: "abc", CloneURL: "git@bitbucket.org:abc/def.git", Name: "def", Private: true})
+	expected = append(
+		expected,
+		&Repository{Namespace: "ws1", CloneURL: "git@bitbucket.org:ws1/repo1.git", Name: "repo1", Private: true},
+		&Repository{Namespace: "ws2", CloneURL: "git@bitbucket.org:ws2/repo2.git", Name: "repo2", Private: true},
+	)
 	if !reflect.DeepEqual(repos, expected) {
 		for i := 0; i < len(repos); i++ {
 			t.Errorf("Expected %+v, Got %+v", expected[i], repos[i])

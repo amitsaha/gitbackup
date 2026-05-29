@@ -171,9 +171,16 @@ func newGitLabClient(gitHostURLParsed *url.URL) *gitlab.Client {
 
 // newBitbucketClient creates a new Bitbucket client
 func newBitbucketClient(gitHostURLParsed *url.URL) *bitbucket.Client {
-	bitbucketUsername := os.Getenv("BITBUCKET_USERNAME")
-	if bitbucketUsername == "" {
-		log.Fatal("BITBUCKET_USERNAME environment variable not set")
+	// Atlassian API tokens are scoped to the Atlassian account, which is
+	// identified by an email address rather than a Bitbucket username.
+	// Prefer BITBUCKET_EMAIL for clarity and fall back to BITBUCKET_USERNAME
+	// for backwards compatibility with legacy app-password setups.
+	bitbucketEmailOrUsername := os.Getenv("BITBUCKET_EMAIL")
+	if bitbucketEmailOrUsername == "" {
+		bitbucketEmailOrUsername = os.Getenv("BITBUCKET_USERNAME")
+	}
+	if bitbucketEmailOrUsername == "" {
+		log.Fatal("BITBUCKET_EMAIL or BITBUCKET_USERNAME environment variable not set")
 	}
 
 	bitbucketPasswordOrToken := os.Getenv("BITBUCKET_TOKEN")
@@ -185,7 +192,7 @@ func newBitbucketClient(gitHostURLParsed *url.URL) *bitbucket.Client {
 	}
 
 	gitHostToken = bitbucketPasswordOrToken
-	client, err := bitbucket.NewBasicAuth(bitbucketUsername, bitbucketPasswordOrToken)
+	client, err := bitbucket.NewBasicAuth(bitbucketEmailOrUsername, bitbucketPasswordOrToken)
 	if err != nil {
 		log.Fatalf("Error creating Bitbucket client: %v", err)
 	}
