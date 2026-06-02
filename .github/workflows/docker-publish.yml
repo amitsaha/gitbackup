@@ -41,5 +41,6 @@ jobs:
         with:
           context: .
           push: true
+          provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
