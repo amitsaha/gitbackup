@@ -3,8 +3,16 @@
 Code Quality [![Go Report Card](https://goreportcard.com/badge/github.com/amitsaha/gitbackup)](https://goreportcard.com/report/github.com/amitsaha/gitbackup)
 [![.github/workflows/ci.yml](https://github.com/amitsaha/gitbackup/actions/workflows/ci.yml/badge.svg)](https://github.com/amitsaha/gitbackup/actions/workflows/ci.yml)
 
+# Hosted gitbackup service
 
-# Commerical Support
+You may be interested in [sourcekeeping.com](https://sourcekeeping.com), a hosted git backup service that aims to give back control to you
+over your backups and takes the pain away from managing your own backup schedule. Of course, with the promise of taking the pain
+away, I also ask you to trust me, we will try to minimize how much you have to trust us! 
+
+It's in early development stages, so, if things work great, and if not, let us (me) know!
+
+
+# Commercial Support
 
 As of February 2026, [Common Loop Works Pty Ltd](https://abr.business.gov.au/ABN/View?id=49688912389), a software development, 
 machine learning and cloud advisory company, founded by [Amit Saha](https://au.linkedin.com/in/echorand) supports commercial development and support of `gitbackup`.
