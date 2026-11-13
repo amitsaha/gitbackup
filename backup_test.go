@@ -20,6 +20,14 @@ func fakePullCommand(command string, args ...string) (cmd *exec.Cmd) {
 	return cmd
 }
 
+func fakeFailingPullCommand(command string, args ...string) *exec.Cmd {
+	cs := []string{"-test.run=TestHelperFailingPullProcess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+	return cmd
+}
+
 func fakeCloneCommand(command string, args ...string) (cmd *exec.Cmd) {
 	cs := []string{"-test.run=TestHelperCloneProcess", "--", command}
 	cs = append(cs, args...)
@@ -67,6 +75,39 @@ func TestBackup(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s", stdoutStderr)
 	}
+}
+
+func TestBackupSkipsExistingPrivateRepoWhenIgnorePrivate(t *testing.T) {
+	oldFS, oldIgnorePrivate, oldExecCommand := appFS, ignorePrivate, execCommand
+	t.Cleanup(func() {
+		appFS, ignorePrivate, execCommand = oldFS, oldIgnorePrivate, oldExecCommand
+	})
+
+	appFS = afero.NewMemMapFs()
+	ignorePrivateValue := true
+	ignorePrivate = &ignorePrivateValue
+	execCommand = fakeFailingPullCommand
+
+	backupDir := "/synthetic-backups"
+	repo := Repository{Name: "private-repo", Namespace: "synthetic-owner", Private: true}
+	if err := appFS.MkdirAll(getRepoDir(backupDir, &repo, false), 0771); err != nil {
+		t.Fatal(err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	if output, err := backUp(backupDir, &repo, false, &wg); err != nil {
+		t.Fatalf("private repository should be skipped without updating it; output=%q err=%v", output, err)
+	}
+	wg.Wait()
+}
+
+func TestHelperFailingPullProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+	fmt.Fprint(os.Stdout, "synthetic pull failure")
+	os.Exit(1)
 }
 
 func TestBareBackup(t *testing.T) {

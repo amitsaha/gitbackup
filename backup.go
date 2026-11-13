@@ -33,6 +33,11 @@ func checkGitAvailability() error {
 func backUp(backupDir string, repo *Repository, bare bool, wg *sync.WaitGroup) ([]byte, error) {
 	defer wg.Done()
 
+	if repo.Private && ignorePrivate != nil && *ignorePrivate {
+		log.Printf("Skipping %s as it is a private repo.\n", repo.Name)
+		return nil, nil
+	}
+
 	repoDir := getRepoDir(backupDir, repo, bare)
 
 	_, err := appFS.Stat(repoDir)
@@ -73,11 +78,6 @@ func updateExistingRepo(repoDir, repoName string, bare bool) ([]byte, error) {
 func cloneNewRepo(repoDir string, repo *Repository, bare bool) ([]byte, error) {
 	log.Printf("Cloning %s\n", repo.Name)
 	log.Printf("%#v\n", repo)
-
-	if repo.Private && ignorePrivate != nil && *ignorePrivate {
-		log.Printf("Skipping %s as it is a private repo.\n", repo.Name)
-		return nil, nil
-	}
 
 	cloneURL := repo.CloneURL
 	if useHTTPSClone != nil && *useHTTPSClone {
